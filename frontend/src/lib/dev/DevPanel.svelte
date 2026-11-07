@@ -4,7 +4,7 @@
 		itemKey: string; series: string; record_key: string; year: number; field: string; unit: string;
 		recorded: number | string; expected: number | string; expected_from: string; context: string;
 		gap: number | null; status: 'fixed' | 'check'; explanation: string; options: Option[];
-		default: string; inForce: string; tco2e: number; at_stake: number;
+		default: string; inForce: string; tco2e: number; at_stake: number; ai?: { model: string; sentence: string } | null;
 	};
 	type Series = { label: string; expectedFrom: string; noise?: number; n?: number; flagged: number };
 	type Point = { s: string; x: number; y: number; st: 'ok' | 'fixed' | 'check'; k: string };
@@ -128,7 +128,7 @@
 	<ol class="steps">
 		<li><b>Predict</b> what each number should be, from an independent record (the shipment, the same month in other years, the system's usual top-up…).</li>
 		<li><b>Compare.</b> On a log scale typos land on exact lines: ×10, ×1,000, krona as euros. If exactly one typo explains a gap, it is fixed.</li>
-		<li><b>Rank by tonnes of CO₂ at stake.</b> You check the top of the list.</li>
+		<li><b>Rank by tonnes of CO₂ at stake.</b> You check the top of the list. An AI writes one plain sentence per item; it explains, it never decides.</li>
 	</ol>
 
 	{#if error}<p class="error">{error}</p>{/if}
@@ -202,6 +202,7 @@
 						{#if d}<span class="done" title="Decided by {d.reviewer}">✓</span>{/if}
 					</button>
 					{#if open === it.itemKey}
+						{#if it.ai}<p class="ai"><span>AI · Claude Haiku 5.5</span>{it.ai.sentence}</p>{/if}
 						<p class="change">Recorded <code>{num(it.recorded)} {it.unit}</code> · expected <code>{num(it.expected)} {it.unit}</code></p>
 						<p class="why">{it.explanation}</p>
 						<div class="opts">
@@ -266,7 +267,9 @@
 	.what small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 10px ui-monospace, monospace; color: var(--text-faint); }
 	.stake { font-variant-numeric: tabular-nums; color: #ff9d72; font-size: 11px; white-space: nowrap; }
 	.done { color: #9fe8b8; font-weight: 700; }
-	.change, .why, .opts, .card .sub { margin: 6px 10px 0; }
+	.change, .why, .opts, .ai, .card .sub { margin: 6px 10px 0; }
+	.ai { padding: 6px 8px; border-left: 3px solid #c6a8ea; border-radius: 4px; background: rgba(198, 168, 234, 0.08); font-size: 11.5px; color: var(--text); }
+	.ai span { display: block; font-size: 9px; letter-spacing: 0.06em; color: #d7a8ea; }
 	.change { font-size: 11px; color: var(--text-dim); }
 	.why { font-size: 11px; color: var(--text-dim); }
 	code { font: 11px ui-monospace, monospace; color: var(--text); }

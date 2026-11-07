@@ -70,6 +70,12 @@ refrigerants, kWh/MWh for meters, a misplaced decimal point for farm answers, kr
 - **Tonnes at stake:** for every option, how much the footprint would move, with the package's own
   emission factors. The list is sorted by it.
 
+**One sentence from an AI.** For each item, Claude Haiku 5.5 writes one plain sentence: what went
+wrong and what it was fixed to, or what to check. It is given the facts the method computed, including
+the known cause for that kind of record (for example "kWh typed into the MWh column"), so it doesn't
+guess. It explains; it never changes a number or decides a status. Answers are cached, so re-runs cost
+nothing, and without an `ANTHROPIC_API_KEY` everything else runs the same.
+
 In the app's **Dev** tab a person sees the scatter plot, the 2025 footprint, and the list. For each
 number they pick an option ("divide by 1,000", "use the registry", "keep the recorded value"…),
 signed with their name. Decisions are saved in MongoDB, and the next pipeline run applies them. Raw
@@ -109,13 +115,13 @@ Scored on the organisers' published 2023–2024 answers:
 ## Run it
 
 ```sh
-pip install pandas pyarrow pymongo
+pip install pandas pyarrow pymongo anthropic
 python3 -m quality.pipeline                          # -> quality/out/ (items, scatter, footprint, 2025 submission files)
 python3 -m unittest discover -s quality/tests -t .   # tests for the method
 python3 -m quality.publish_mongo                     # -> MongoDB Atlas (MONGODB_URI in frontend/.env)
 ```
 
-`--no-decisions` ignores the choices saved in the app.
+`--no-decisions` ignores the choices saved in the app; `--no-ai` skips the sentences.
 
 MongoDB collections: `dev_runs` (method, noise per series, scores, totals, scatter points),
 `dev_items` (every flagged number with its options and tonnes), `dev_decisions` (people's choices),

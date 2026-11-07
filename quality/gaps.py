@@ -86,6 +86,7 @@ class Item:
     default: str = ''        # option applied until a person decides
     tco2e: float = 0.0       # footprint change of the default option
     at_stake: float = 0.0    # the largest |change| among the options: the ranking key
+    ai: dict | None = None   # one plain sentence from Claude (quality.ai); explains, never decides
 
     def row(self) -> dict:
         return asdict(self)

@@ -102,6 +102,8 @@ def main():
     ap.add_argument('--package', type=Path, default=Path(os.environ.get('APETIT_PACKAGE', DEFAULT_PACKAGE)))
     ap.add_argument('--out', type=Path, default=DEFAULT_OUT)
     ap.add_argument('--no-decisions', action='store_true', help='ignore decisions saved in the app')
+    ap.add_argument('--no-ai', action='store_true', help='skip the one-sentence explanations even if ANTHROPIC_API_KEY is set')
+    ap.add_argument('--ai-limit', type=int, default=250, help='max items explained (most tonnes at stake first)')
     args = ap.parse_args()
     pkg, out = args.package, args.out
     out.mkdir(parents=True, exist_ok=True)
@@ -109,6 +111,10 @@ def main():
     from quality import gaps
     raw, IO, RC, SC = load(pkg)
     items, points, meta = gaps.evaluate(raw)
+    from quality.ai import AI, MODEL
+    ai = AI(enabled=not args.no_ai)
+    ai.explain(items, meta, args.ai_limit)
+    ai.save()
     decisions = {} if args.no_decisions else load_decisions()
     clean, keep_soil = gaps.apply(raw, items, decisions)
     T, inv = footprint(clean, IO, RC, corrected=True, keep_soil=keep_soil)
@@ -147,6 +153,7 @@ def main():
                    'decided': sum(1 for i in items if i.key in decisions),
                    'byYear': {str(k): int(v) for k, v in df.groupby('year').size().items()}},
         'awaitingTonnes': open_t,
+        'ai': {'model': MODEL, 'available': ai.available, 'sentences': sum(1 for i in items if i.ai), 'calls': ai.calls, 'errors': ai.errors[:5]},
         'scores': {'A1_dev': {k: a1[k] for k in ('score', 'precision', 'recall', 'f1', 'type_accuracy', 'n_flagged', 'n_true')},
                    'A1_recall_by_type': a1['recall_by_type'], 'bySeries': by_series, 'byStatus': by_status,
                    'A2_dev': {str(y): v for y, v in a2.items()}, 'baselines': BASELINES},
@@ -176,6 +183,7 @@ def main():
     for y in DEV_YEARS:
         print(f"A2 {y}: curated {a2[y]['curated']} vs raw {a2[y]['raw']} (baseline {BASELINES[f'A2_{y}']})")
     print('2025 totals:', summary['totals']['curated']['2025'], '· awaiting a person:', open_t['2025'], 't')
+    print(f"AI: {'on' if ai.available else 'off (no ANTHROPIC_API_KEY)'} · sentences {summary['ai']['sentences']} · new calls {ai.calls} · errors {len(ai.errors)}")
     print(f'Wrote {out}')
 
 
