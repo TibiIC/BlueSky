@@ -1,0 +1,235 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Climate Lens · Field studio</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f0e6;color:#203b31;font:16px system-ui}header,main,footer{max-width:1240px;margin:auto;padding:22px 28px}header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #d9d8c7}header strong{font-size:23px}small,.eyebrow{letter-spacing:.13em;text-transform:uppercase;font-size:11px;font-weight:750}main{display:grid;grid-template-columns: .9fr 1.1fr;gap:25px}h1,h2{font-family:Georgia,serif;line-height:1.08;margin:12px 0}h1{font-size:clamp(36px,5vw,66px)}h2{font-size:32px}p{line-height:1.55}.panel{background:#fffdf6;border:1px solid #dedbce;border-radius:24px;padding:23px}.scene{position:relative;overflow:hidden;background:#c5dbc6;border-radius:22px;isolation:isolate;margin-top:22px}.scene svg{display:block;width:100%;height:auto}.farm-buttons{position:absolute;inset:auto 8px 10px;display:flex;gap:6px;justify-content:center}.farm-buttons button{flex:1;padding:10px 4px;font-size:13px}.cloud{animation:drift 15s ease-in-out infinite alternate}.sprout{transform-box:fill-box;transform-origin:bottom center;animation:sway 2.8s ease-in-out infinite alternate}.scene:has(button[data-active="true"]) .sprout{animation-duration:2s}@keyframes drift{to{transform:translateX(42px)}}@keyframes sway{to{transform:rotate(5deg)}}@keyframes enter{from{opacity:.5;transform:translateY(5px)}to{opacity:1;transform:none}}.reveal{animation:enter .24s ease-out}@media(prefers-reduced-motion:reduce){*{animation:none!important}}button,select,input{font:inherit;color:inherit;background:#fffdf6;border:1px solid #bdc6b2;border-radius:9px;padding:10px}button{cursor:pointer;font-weight:650}button:hover{background:#e1ebd8}button[data-active=true]{background:#244b39;color:white;border-color:#244b39}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #bb682a;outline-offset:2px}nav{display:flex;flex-wrap:wrap;gap:6px;margin:15px 0}nav button{font-size:13px}.eyebrow{color:#6a7049}.inputs{display:grid;gap:9px;margin:18px 0}.inputs label{display:grid;gap:4px;font-size:13px;font-weight:650}.action{background:#e5eddb;border-radius:15px;padding:17px;margin:12px 0}.action p{margin:6px 0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.stats div{background:#e5eddb;padding:12px;border-radius:12px}.stats strong{font-size:22px;display:block}.numbers{display:grid;grid-template-columns:1fr 1fr;gap:8px}.numbers label{font-size:13px;display:grid;gap:4px}.numbers input{width:100%}details{margin-top:13px;border-top:1px solid #ddd9ca;padding-top:12px}summary{cursor:pointer;font-weight:700}a{color:#245940}footer{font-size:13px}@media(max-width:760px){main{grid-template-columns:1fr}header,main,footer{padding:15px}.panel{padding:15px}}
+body{background:#0d151c;color:#e5eee7}header{border-color:#304344}header strong,.eyebrow{color:#a4e7b9}.panel{background:#14222a;border-color:#344b4d}button,select,input{background:#182a31;color:#e5eee7;border-color:#40595b}button:hover{background:#284b47}button[data-active=true]{background:#a4e7b9;color:#10251d;border-color:#a4e7b9}.action,.stats div{background:#1e3639;border:1px solid #375754}a{color:#a4e7b9}details{border-color:#344b4d}h1,h2{font-family:system-ui;letter-spacing:-.045em}.scene{border:1px solid #345554}.plot{cursor:pointer}.plot path{fill:#244440;stroke:#71918a;stroke-width:2;transition:fill .2s,stroke .2s}.plot:hover path,.plot.active path{fill:url(#lines);stroke:#a4e7b9;stroke-width:3}.plot text{fill:#d3ffdd;font:700 19px monospace;pointer-events:none}.scan{animation:sweep 7s linear infinite;pointer-events:none}@keyframes sweep{from{transform:translateY(0);opacity:0}20%{opacity:1}to{transform:translateY(235px);opacity:0}}.next{margin-top:12px}.subtle{color:#a8bbb8}.farm-world,.stress-overlay{transition:filter .6s,opacity .6s}.stress-overlay{opacity:0}.scene.stressed .farm-world{filter:sepia(.54) saturate(.69)}.scene.stressed .stress-overlay{opacity:.7}.scene.stressed .scan{stroke:#e2b28a}.scene.stressed{border-color:#9a7059}.plot path{fill:#52644a;fill-opacity:.85}.plot:hover path,.plot.active path{fill-opacity:1}.climate-bar{display:grid;gap:5px;margin:14px 0}.climate-bar label{font-size:13px;font-weight:700}.chat{margin-top:14px}.chat form{display:flex;gap:7px}.chat input{flex:1;min-width:0}.chat #reply{white-space:pre-line}.tag{font:700 11px monospace;letter-spacing:.08em;color:#e6b890}.guide{border-left:2px solid #71918a;padding-left:13px;margin:14px 0}.weather{opacity:0;transition:opacity .55s}.scene[data-weather=heat] .weather-heat,.scene[data-weather=rain] .weather-rain,.scene[data-weather=winter] .weather-winter{opacity:1}.scene[data-weather=heat]{border-color:#d08a50}.scene[data-weather=rain]{border-color:#689fb7}.scene[data-weather=winter]{border-color:#a2bed2}.scene[data-weather=heat] .stress-overlay{opacity:.85}.scene[data-weather=rain] .stress-overlay,.scene[data-weather=winter] .stress-overlay{opacity:0}.scene[data-weather=heat] .farm-world{filter:sepia(.65) saturate(1.25)}.scene[data-weather=winter] .farm-world{filter:saturate(.25) brightness(1.34)}.scene[data-weather=rain] .farm-world{filter:hue-rotate(18deg) brightness(.82)}.scene.stressed svg{filter:contrast(1.12)}.scene[data-weather=rain] .rain-lines{animation:rainfall .55s linear infinite}.scene[data-weather=rain] .rain-ring{animation:ripple 1.5s ease-out infinite}.scene[data-weather=winter] .snowfall{animation:flurry 3.7s linear infinite}.scene[data-weather=heat] .weather-drift,.scene[data-weather=heat] .heat-wave{animation:dust 2.8s ease-in-out infinite alternate}.weather-hud{position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;background:#0e1c24e8;border:1px solid #a4c9ba75;border-radius:9px;padding:8px 10px;color:#edf8ee;font:700 10px monospace;pointer-events:none}.weather-dot{width:7px;height:7px;border-radius:50%;background:#a4e7b9;box-shadow:0 0 9px currentColor}.scene[data-weather=heat] .weather-dot{background:#f6a765}.scene[data-weather=rain] .weather-dot{background:#8ad9ff}.scene[data-weather=winter] .weather-dot{background:#e7f6ff}@keyframes rainfall{to{transform:translate(-14px,25px)}}@keyframes flurry{to{transform:translate(24px,38px)}}@keyframes ripple{from{opacity:.9}to{opacity:0}}@keyframes dust{to{transform:translate(16px,-4px);opacity:.3}}@media(max-width:500px){.weather-hud{top:48px;font-size:9px}}.plot path{fill:#435740;stroke:#71918a}.plot:hover path,.plot.active path{fill:#52704e;stroke:#b9efc0}.plot:has(use[href="#crop-carrot"]) path{fill:#574b3c}.plot:has(use[href="#crop-carrot"]).active path{fill:#786146}.bee-hover{animation:beehover 3.8s ease-in-out infinite alternate}.scene.stressed .bee-hover{animation:none;opacity:.42}.scene.stressed .plot use{filter:saturate(.58) brightness(.83)}.scene.stressed .farm-world{opacity:.67}.scene.stressed svg{filter:contrast(1.16) saturate(.87)}.scene[data-weather=heat] .stress-overlay{opacity:1}.scene[data-weather=clear] .weather,.scene[data-weather=clear] .stress-overlay{transition:none;opacity:0}.scene[data-weather=rain] .rain-lines{animation-duration:.9s}@keyframes beehover{to{transform:translate(5px,-4px)}}.soil-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.soil-grid label{display:grid;gap:6px;min-width:0}.soil-grid img{width:100%;height:130px;object-fit:contain;background:#101c22;border-radius:10px}.soil-grid input{max-width:100%}.soil-check label{display:block;margin:.45rem 0}.soil-check input{margin-right:.5rem}</style>
+<header><strong>◈ Climate Lens</strong><small>Field studio / Apetit challenge demo</small></header>
+<main><section><div class="eyebrow">01 / Choose a crop</div><h1>Field Operations<br>Console</h1><p>Pick a crop, enter what you see, and compare the next action with its cost and evidence.</p>
+<div class="scene">
+<svg viewBox="0 0 520 410" role="img" aria-label="Night survey map of three selectable crop plots">
+<defs>
+<pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#527875" stroke-opacity=".27"/></pattern>
+<pattern id="lines" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0V9" stroke="#91e6b0" stroke-opacity=".35"/></pattern>
+<clipPath id="bed0"><path d="M40 190 138 164 190 223 85 254Z"/></clipPath><clipPath id="bed1"><path d="M169 147 267 120 327 177 221 205Z"/></clipPath><clipPath id="bed2"><path d="M293 105 390 79 459 129 349 158Z"/></clipPath><radialGradient id="sun"><stop stop-color="#ffe297"/><stop offset=".3" stop-color="#ffac50"/><stop offset="1" stop-color="#fa6d37" stop-opacity="0"/></radialGradient>
+<linearGradient id="storm" x2="0" y2="1"><stop stop-color="#19243f"/><stop offset="1" stop-color="#56b6dc" stop-opacity="0"/></linearGradient>
+<linearGradient id="frost" x2="0" y2="1"><stop stop-color="#c4e5fc" stop-opacity=".62"/><stop offset="1" stop-color="#83aec6" stop-opacity=".12"/></linearGradient><g id="crop-carrot"><path d="M-9-3Q0-9 9-3Q9 7-2 18Q-7 22-7 14Z" fill="#f1a05a" stroke="#783e2c" stroke-width="1.4"/><path d="M-6 4l6 2m-7 4 5 2" stroke="#a95431" stroke-width="1.4"/><path d="M0-4Q-11-9-9-18Q-1-17 1-7Q3-21 11-19Q12-11 4-5" fill="#94c67e" stroke="#39654a" stroke-width="1.4"/></g>
+<g id="crop-pea"><path d="M-11 6Q-12-1-3-8Q5-13 12-9Q11 6 0 11Q-6 13-11 6Z" fill="#93c779" stroke="#3b634b" stroke-width="1.8"/><circle cx="-5" cy="4" r="2.6" fill="#d1e5a0"/><circle cx="0" cy="0" r="2.6" fill="#d1e5a0"/><circle cx="5" cy="-4" r="2.6" fill="#d1e5a0"/></g>
+<g id="crop-rape"><path d="M0 15V-7M0 8l-8-6M0 7l8-6" stroke="#91b781" stroke-width="2"/><g fill="#edcf70"><circle cx="-5" cy="-8" r="4.3"/><circle cx="5" cy="-8" r="4.3"/><circle cy="-13" r="4.3"/><circle cy="-3" r="4.3"/></g><circle cy="-8" r="2.6" fill="#a56e3e"/></g>
+<g id="field-bee"><path d="M-2-3Q-13-19-14-9Q-14-3-4 0M2-3Q12-17 14-8Q15-2 5 0" fill="#c5dce0" stroke="#678a94"/><ellipse cy="3" rx="10" ry="6" fill="#e9ba59" stroke="#222a2b" stroke-width="1.5"/><path d="M-4-2v10M2-2v10" stroke="#293132" stroke-width="2.6"/><circle cx="9" cy="2" r="3.7" fill="#293132"/><path d="M10-1l4-4m-3 5 5-1" stroke="#cdd4bd" stroke-width="1.2"/></g></defs>
+<rect width="520" height="410" fill="#101f25"/><rect width="520" height="410" fill="url(#grid)"/>
+<g fill="none" stroke="#304e50"><path d="M-20 119Q151 202 277 123T560 115"/><path d="M-20 135Q151 218 277 139T560 131"/><path d="M-20 151Q151 234 277 155T560 147"/><path d="M-20 167Q151 250 277 171T560 163"/><path d="M-20 183Q151 266 277 187T560 179"/></g>
+<path d="M-20 320Q200 260 257 331T550 291" stroke="#47768b" stroke-width="16" fill="none" opacity=".58"/>
+<g font-family="monospace" font-size="12" fill="#9ab6ae"><text x="21" y="29">FIELD SURVEY // FINLAND</text><text x="21" y="49">SCHEMATIC MAP · 03 SITES</text><text x="455" y="32">N ↑</text></g>
+<g class="farm-world">
+<path d="M0 99Q92 52 184 84T361 65T520 55V111Q408 85 332 121T159 110T0 140Z" fill="#243c38"/>
+<path d="M0 137Q95 82 160 130T321 139T520 110V158Q436 156 363 177T165 166T0 171Z" fill="#315448"/>
+<path d="M213 249Q289 220 326 166T407 153" fill="none" stroke="#9f8265" stroke-width="8" opacity=".54"/>
+<g fill="#17312b"><path d="m30 158 18-44 16 44zm25 2 18-54 20 54zm387 23 16-46 17 46zm22 4 20-62 19 62zm24 4 15-46 17 46z"/></g>
+<g transform="translate(355 182)"><path d="M0 23 37 3 72 20 36 40Z" fill="#573a36"/><path d="M0 23v31l36 19V40Z" fill="#854e46"/><path d="M36 40v33l36-20V20Z" fill="#653c3b"/><path d="M9 43v-9l10 5v9Z" fill="#e4ba79"/><path d="M45 48v-7l11-6v7Z" fill="#b6ddd0"/><path d="M-5 23 37-7 78 19 36 44Z" fill="#374245" stroke="#8b8580"/></g>
+<g fill="#98b798" opacity=".65"><circle cx="33" cy="280" r="2"/><circle cx="46" cy="278" r="2"/><circle cx="448" cy="229" r="2"/><circle cx="467" cy="233" r="2"/></g>
+</g><g id="plots">
+<g class="plot" data-plot="0"><path d="M40 190 138 164 190 223 85 254Z"/><use href="#crop-carrot" x="70" y="198" pointer-events="none"/><use href="#crop-carrot" x="105" y="188" pointer-events="none"/><use href="#crop-carrot" x="143" y="204" pointer-events="none"/><use href="#crop-carrot" x="91" y="228" pointer-events="none"/><use href="#crop-carrot" x="127" y="219" pointer-events="none"/></g>
+<g class="plot" data-plot="1"><path d="M169 147 267 120 327 177 221 205Z"/><use href="#crop-pea" x="204" y="156" pointer-events="none"/><use href="#crop-pea" x="244" y="143" pointer-events="none"/><use href="#crop-pea" x="276" y="151" pointer-events="none"/><use href="#crop-pea" x="232" y="178" pointer-events="none"/><use href="#crop-pea" x="270" y="179" pointer-events="none"/><g transform="translate(290 134)" pointer-events="none"><g class="bee-hover"><use href="#field-bee"/></g></g></g>
+<g class="plot" data-plot="2"><path d="M293 105 390 79 459 129 349 158Z"/><use href="#crop-rape" x="330" y="111" pointer-events="none"/><use href="#crop-rape" x="365" y="101" pointer-events="none"/><use href="#crop-rape" x="395" y="110" pointer-events="none"/><use href="#crop-rape" x="356" y="133" pointer-events="none"/><use href="#crop-rape" x="390" y="133" pointer-events="none"/><g transform="translate(420 109)" pointer-events="none"><g class="bee-hover"><use href="#field-bee"/></g></g></g>
+</g>
+
+<g class="stress-overlay" pointer-events="none" fill="none" stroke="#d3a270" opacity=".7">
+<path d="m25 265 16 3 7 15 17-4 12 9m-29-5-10 11m78-18 11-7 15 12 15-7m256-8 11-14 18 8 17-9m-17 9 4 13"/>
+<path d="M15 95Q196 60 329 93T520 73" stroke-width="20" stroke-opacity=".13"/>
+</g><g class="weather weather-heat" pointer-events="none">
+<rect width="520" height="410" fill="#e68b43" opacity=".17"/>
+<circle cx="421" cy="80" r="111" fill="url(#sun)"/><circle cx="421" cy="80" r="21" fill="#ffd68b"/>
+
+<g class="heat-wave" fill="none" stroke="#ffe2aa" opacity=".6"><path d="M45 143q24-8 48 0t48 0m137 52q24-8 48 0t48 0m-241 76q24-8 48 0t48 0"/></g></g>
+<g class="weather weather-rain" pointer-events="none">
+<rect width="520" height="280" fill="url(#storm)"/><path d="M0 322Q196 252 261 331T520 296" fill="none" stroke="#82d3e9" opacity=".55" stroke-width="22"/>
+<g class="rain-lines" fill="none" stroke="#a5deff" stroke-width="1.6" opacity=".62"><path d="M178 174l-14 25"/><path d="M438 285l-14 25"/><path d="M298 205l-14 25"/><path d="M231 365l-14 25"/><path d="M496 373l-14 25"/><path d="M534 53l-14 25"/><path d="M527 230l-14 25"/><path d="M251 363l-14 25"/><path d="M13 -33l-14 25"/><path d="M389 259l-14 25"/><path d="M448 -5l-14 25"/><path d="M158 366l-14 25"/><path d="M247 79l-14 25"/><path d="M53 183l-14 25"/><path d="M426 275l-14 25"/><path d="M462 -23l-14 25"/><path d="M346 236l-14 25"/><path d="M519 315l-14 25"/><path d="M128 292l-14 25"/><path d="M387 -29l-14 25"/><path d="M168 339l-14 25"/><path d="M100 23l-14 25"/><path d="M30 192l-14 25"/><path d="M174 242l-14 25"/><path d="M361 165l-14 25"/><path d="M506 37l-14 25"/><path d="M201 300l-14 25"/></g>
+<g class="rain-ring" fill="none" stroke="#bbebfb"><ellipse cx="125" cy="287" rx="23" ry="5"/><ellipse cx="391" cy="301" rx="26" ry="6"/></g></g>
+<g class="weather weather-winter" pointer-events="none">
+<rect width="520" height="410" fill="url(#frost)"/>
+<path d="M0 286Q113 259 174 283T328 265T520 252V350Q412 323 322 359T129 343T0 356Z" fill="#d6e9ec" opacity=".48"/>
+<g class="snowfall" fill="#e7f5ff" opacity=".88"><circle cx="417" cy="379" r="3"/><circle cx="58" cy="147" r="1"/><circle cx="264" cy="337" r="2"/><circle cx="35" cy="214" r="1"/><circle cx="174" cy="201" r="1"/><circle cx="346" cy="330" r="1"/><circle cx="154" cy="381" r="3"/><circle cx="50" cy="129" r="1"/><circle cx="490" cy="14" r="1"/><circle cx="374" cy="78" r="2"/><circle cx="436" cy="248" r="3"/><circle cx="315" cy="71" r="2"/><circle cx="142" cy="369" r="1"/><circle cx="391" cy="350" r="1"/><circle cx="24" cy="135" r="2"/><circle cx="255" cy="299" r="3"/><circle cx="263" cy="349" r="3"/><circle cx="141" cy="68" r="1"/><circle cx="97" cy="203" r="1"/><circle cx="191" cy="12" r="3"/><circle cx="144" cy="36" r="1"/><circle cx="288" cy="64" r="2"/><circle cx="332" cy="202" r="3"/><circle cx="224" cy="318" r="1"/><circle cx="185" cy="94" r="3"/><circle cx="206" cy="363" r="1"/><circle cx="516" cy="381" r="1"/><circle cx="8" cy="198" r="3"/><circle cx="65" cy="203" r="1"/><circle cx="238" cy="129" r="2"/></g></g>
+</svg><div class="weather-hud"><span class="weather-dot"></span><span id="weather-name">Field survey</span></div><div id="farm" class="farm-buttons"></div></div>
+<p id="location"></p><div class="climate-bar"><label for="climate">Climate stress scenario</label><select id="climate"><option value="0">Heat and dry spells</option><option value="1">Heavy rain and wet ground</option><option value="2">Unstable winters</option></select><small id="stress-label" class="tag"></small></div></section>
+<section class="panel"><div class="eyebrow">02 / Explore the decision</div><nav id="tabs" aria-label="Decision views"></nav><div id="view"></div><details class="chat"><summary>Ask the field guide</summary><p class="subtle">Offline answers from this guide. Ask about timing, costs, crop traits, or biotech evidence.</p><form id="chat-form"><input id="question" aria-label="Question for the field guide" placeholder="What should I do next?" required><button type="submit">Ask</button></form><p id="reply" aria-live="polite"></p></details></section></main>
+<footer>Prototype · Field guidance links to its sources. Financial and emissions inputs are illustrative.</footer>
+<script>
+const data =
+[{"label": "Satakunta · Carrots", "bio": "Overwintered adults move into carrots in early to mid-June in Finnish observations. The most vulnerable plants are at cotyledon to four-leaf stage. Adult feeding can curl young leaves, and discoloration can emerge later and has other possible causes.", "links": [["Luke Finnish carrot IPM guide", "https://www.luke.fi/fi/luonnonvaratieto/tiedetta-ja-tietoa/ipm-oppaat/porkkana/porkkanan-tuholaistorjunta"], ["Apetit grower netting case", "https://apetit.fi/2022/10/03/hyonteisverkoilla-varmempi-ja-laadukkaampi-sato-viljelija-nakee-selkean-eron-satotasoon/"], ["Tukes IPM", "https://tukes.fi/en/safe-use-of-plant-protection-products/integrated-pest-management"]], "plan": ["Plan monitoring and cover access before emergence. Compare covered and uncovered strips only where appropriate and agreed with the grower.", "Record flight observations, leaf injury, marketable root yield, labor and net reuse.", "Screen root quality and tolerance to locally confirmed damage. Compare conventional varieties alongside the existing netting practice.", "Daucus carota"], "sample": null, "stages": {"Pre-emergence / emergence": {"Local flight reported or field has a history of psyllid damage": ["Fit insect netting before exposure", "Install fine mesh (0.6 × 0.6 mm or smaller) by the start of emergence. Seal every edge to the soil and check for tears or lifted edges after field access or wind.", "Confirm local flight and agree when covers can be opened with the grower. Log install date, mesh size and observations."], "No local flight signal or history known": ["Set up monitoring and prepare netting", "Check local flight reports, inspect seedlings and confirm net availability. In at-risk fields, the installation window closes at the start of emergence.", "Confirm field history and review the plan with the grower before emergence."]}, "Seedlings up to four leaves": {"Adults or curled young leaves observed": ["Scout immediately and inspect cover integrity", "Inspect young leaves and check inside and outside any cover. Repair gaps. If uncovered, ask the grower adviser whether netting can still prevent further entry without enclosing pests already present.", "Photograph and record adults and symptoms. Existing injury will need separate assessment."], "No local flight signal or history known": ["Set up monitoring and prepare netting", "Check local flight reports, inspect seedlings and confirm net availability. In at-risk fields, the installation window closes at the start of emergence.", "Confirm field history and review the plan with the grower before emergence."]}, "Later growth": {"Discoloration or poor growth observed": ["Check the cause before choosing a control", "Inspect roots and field patterns. Ask an adviser to distinguish psyllid-associated symptoms from carrot fly, nutrition, compaction or excess moisture.", "Do not infer the cause from discoloration alone."]}}}, {"label": "Säkylä · Frozen peas", "bio": "Larvae overwinter in soil cocoons. Adults emerge and lay eggs on pea plants. Hatched larvae enter young pods, then leave mature pods and return to the soil. UK calendar dates in the linked source are not Finnish flight dates.", "links": [["AHDB pea moth biology and monitoring", "https://horticulture.ahdb.org.uk/knowledge-library/biology-and-management-of-the-pea-moth"], ["Tukes IPM", "https://tukes.fi/en/safe-use-of-plant-protection-products/integrated-pest-management"]], "plan": ["Compare maturity groups and staggered sowing against the factory intake calendar.", "Record flowering, trap catches, young pod damage, marketable yield and delivery times.", "Screen maturity timing and freezing quality. For pea moth, compare damage under similar pest pressure and separate resistance from simply missing the moth flight window.", "Pisum sativum"], "sample": {"id": "sakyla-peas", "crop": "Frozen peas", "site": "Säkylä", "scenario": "Wet harvest · illustrative", "hazard": "A narrow harvest window may concentrate deliveries.", "trait": "Harvest-window flexibility", "area": 100, "yield_low": 4, "yield_high": 5, "demand": 500, "premium": 40, "action_cost": 1200, "baseline_co2": 82, "action": "Stagger sowing", "seed_query": "Pisum sativum", "research": "Screen maturity timing and quality retention across harvest dates."}, "stages": {"Before flowering": {"Field or nearby pea fields have a damage history": ["Prepare or check pheromone traps", "Prioritize fields with prior damage or nearby pea production. Log catches alongside flowering and early pod development.", "Use local monitoring before deciding whether an intervention is justified."], "No flight or damage information": ["Prepare or check pheromone traps", "Prioritize fields with prior damage or nearby pea production. Log catches alongside flowering and early pod development.", "Use local monitoring before deciding whether an intervention is justified."]}, "Flowering / young pods": {"Pheromone traps detect moths": ["Check whether flight overlaps susceptible crop stages", "Record trap catches and crop stage, inspect pods and consult local advisers on interpretation. Prioritize plots with sustained catches or prior damage.", "Trap detection alone does not establish a Finnish treatment threshold."], "No flight or damage information": ["Prepare or check pheromone traps", "Prioritize fields with prior damage or nearby pea production. Log catches alongside flowering and early pod development.", "Use local monitoring before deciding whether an intervention is justified."]}, "Pod fill / harvest": {"Larvae or damaged pods observed": ["Sample pods and flag affected lots", "Open representative pods, record damage and notify quality or harvest leads. Follow the buyer's acceptance process.", "Record affected areas for next season's trap placement and rotation review."]}}}, {"label": "Kantvik · Winter rapeseed", "bio": "Establishment precedes winter exposure. Spring stand assessment separates establishment problems from possible overwintering losses. VARPSI treats winter survival as a key uncertainty.", "links": [["Finnish VARPSI oilseed project", "https://pyhajarvi-instituutti.fi/hanke/rypsin-ja-rapsinviljelyvarmuuden-ja-maaran-lisaaminen/"], ["Tukes IPM", "https://tukes.fi/en/safe-use-of-plant-protection-products/integrated-pest-management"]], "plan": ["Compare winter and spring forms, rotation fit, drainage and local establishment records.", "Record autumn stands, spring survival, usable yield and oil quality across sites and years.", "Screen winter survival and yield stability using local multi-season variety trials.", "Brassica napus"], "sample": {"id": "kantvik-oilseeds", "crop": "Winter rapeseed", "site": "Kantvik", "scenario": "Winter stress · illustrative", "hazard": "Poor overwintering may reduce the volume available for crushing.", "trait": "Winter survival", "area": 200, "yield_low": 1.5, "yield_high": 2.2, "demand": 480, "premium": 65, "action_cost": 2600, "baseline_co2": 95, "action": "Trial an alternative winter variety", "seed_query": "Brassica napus", "research": "Compare survival, usable yield and oil quality in local variety trials."}, "stages": {"Autumn establishment": {"Poor or patchy establishment": ["Diagnose establishment problems before winter", "Map weak patches and inspect seedbed, drainage and emergence. Record sowing date, variety and stand density.", "Set spring sampling points in affected and healthy zones."]}, "Spring regrowth": {"Stand gaps or suspected winterkill": ["Measure surviving stands before changing supply plans", "Sample live plants across representative zones, map gaps and review the stand with an adviser. Compare keeping the crop with reseeding and backup procurement.", "Use local crop and contract criteria before setting a minimum viable stand."]}, "Next-season planning": {"Repeated winter losses in local fields": ["Compare locally tested varieties and spring alternatives", "Review trial survival and yield across seasons. Compare alternative winter varieties or spring forms with the current rotation.", "Use local multi-season evidence, grower costs and contract requirements before ranking."]}}}];
+const $=id=>document.getElementById(id);
+const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tabs=['Field action','Impact','Cultivation','Breeding','Biotech'];
+let crop=0,tab=0,stage=0,obs=0,choice=0;
+const fmt=n=>new Intl.NumberFormat('en',{maximumFractionDigits:1}).format(n);
+const select=(label,id,options,active)=>'<label>'+label+'<select id="'+id+'">'+options.map((v,i)=>'<option value="'+i+'" '+(i===active?'selected':'')+'>'+esc(v)+'</option>').join('')+'</select></label>';
+const metric=(label,value)=>'<div><strong>'+esc(value)+'</strong>'+esc(label)+'</div>';
+const netCalc=(area,price,years,labor,value,saved)=>{const cost=area*(price/years+labor);return [cost,value?cost/value:null,saved*value-cost]};
+function fields(items,calculate){
+ $('numbers').innerHTML=items.map(([label,value,min],i)=>'<label>'+label+'<input id="n'+i+'" type="number" step="any" min="'+min+'" value="'+value+'"></label>').join('');
+ const update=()=>{const controls=items.map((_,i)=>$('n'+i));const v=controls.map(x=>x.valueAsNumber);$('stats').innerHTML=controls.every(x=>x.checkValidity())&&v.every(Number.isFinite)?calculate(v):'Enter valid values to compare.'};
+ $('numbers').oninput=update;update();
+}
+function render(){
+ const c=data[crop], stages=Object.keys(c.stages), observations=Object.keys(c.stages[stages[stage]]), action=c.stages[stages[stage]][observations[obs]];
+ $('farm').innerHTML=data.map((d,i)=>'<button data-active="'+(i===crop)+'" aria-pressed="'+(i===crop)+'">'+['Carrots','Peas','Rapeseed'][i]+'</button>').join('');
+ [...$('farm').children].forEach((b,i)=>b.onclick=()=>{crop=i;stage=0;obs=0;choice=0;tab=0;render();$('farm').children[i].focus()});
+ $('location').textContent='Selected field / '+c.label;
+ document.querySelectorAll('[data-plot]').forEach((plot,i)=>{plot.classList.toggle('active',i===crop);plot.onclick=()=>{crop=i;stage=0;obs=0;choice=0;tab=0;render();$('farm').children[i].focus()};});
+ $('tabs').innerHTML=tabs.map((t,i)=>'<button data-active="'+(i===tab)+'" aria-pressed="'+(i===tab)+'">'+t+'</button>').join('');
+ [...$('tabs').children].forEach((b,i)=>b.onclick=()=>{tab=i;choice=0;render();$('tabs').children[i].focus()});
+ const v=$('view');v.classList.remove('reveal');void v.offsetWidth;v.classList.add('reveal');
+ if(tab===0){
+ v.innerHTML='<div class="inputs">'+select('Crop stage','stage',stages,stage)+select('Field observation','obs',observations,obs)+'</div><div class="action"><div class="eyebrow">Recommended next step</div><h2>'+esc(action[0])+'</h2><p>'+esc(action[1])+'</p><p><b>Check next:</b> '+esc(action[2])+'</p></div><details><summary>Pest cycle / crop biology and sources</summary><p>'+esc(c.bio)+'</p>'+c.links.map(([l,u])=>'<p><a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(l)+'</a></p>').join('')+'</details>'+
+ (crop<2?'<details><summary>Non-chemical first · escalation check</summary><p><label><input type="checkbox"> Current monitoring recorded</label><br><label><input type="checkbox"> Applicable local action threshold confirmed and met</label><br><label><input type="checkbox"> Feasible non-chemical options assessed and insufficient</label></p><p id="gate" aria-live="polite">Continue prevention and monitoring.</p></details>':'');
+ $('stage').onchange=e=>{stage=+e.target.value;obs=0;render();$('stage').focus()};
+ $('obs').onchange=e=>{obs=+e.target.value;render();$('obs').focus()};
+ const boxes=[...v.querySelectorAll('input')];boxes.forEach(b=>b.onchange=()=>{$('gate').textContent=boxes.every(x=>x.checked)?'Refer to a qualified adviser. Any chemical option needs a current Finnish authorization and label check.':boxes[0].checked&&boxes[1].checked?'Prioritize feasible non-chemical options.':'Continue prevention and monitoring.'});
+ }else if(tab===1){
+ if(crop===0&&!(stage===0&&obs===0)){v.innerHTML='<h2>Scout first</h2><p>The netting calculator applies to the preventive netting recommendation. Return to Field action and select the pre-emergence risk observation to compare netting costs.</p>';return}
+ v.innerHTML='<h2>'+ (crop===0?'Does netting pay?':'Supply & carbon what-if')+'</h2><p>Illustrative inputs. Change them to compare outcomes.</p><div id="numbers" class="numbers"></div><div id="stats" class="stats" aria-live="polite"></div>';
+ if(crop===0)fields([['Area (ha)',5,.01],['Net purchase (€/ha)',1200,0],['Reuse (seasons)',4,1],['Seasonal labor (€/ha)',200,0],['Net value (€/t)',250,0],['Assumed saved crop (t)',12,0]],v=>{const [cost,be,gain]=netCalc(...v);return metric('Seasonal cost','€'+fmt(cost))+metric('Break-even crop',be===null?'Unavailable':fmt(be)+' t')+metric('What-if net benefit','€'+fmt(gain))});
+ else {const s=c.sample;fields([['Contracted area (ha)',s.area,0],['Usable yield (t/ha)',s.yield_low,0],['Required crop (t)',s.demand,0],['Replacement premium (€/t)',s.premium,0],['Baseline (t CO₂e)',s.baseline_co2,0],['Assumed change (t CO₂e)',0,-100000]],([a,y,d,p,b,change])=>{const gap=Math.max(0,d-a*y);return metric('Supply shortfall',fmt(gap)+' t')+metric('Replacement cost','€'+fmt(gap*p))+metric('Scenario emissions',b+change<0?'Invalid':fmt(b+change)+' t CO₂e')});}
+ }else{
+ const options=tab===2 ? [
+   ['Plan before the season',c.plan[0],c.plan[1]],
+   ['Respond to this observation',action[0],action[1]+' '+action[2]],
+ ] : tab===3 ? [
+   ['Select a trial trait',c.plan[2],c.plan[1]],
+   ['Plan a comparison','Use the current variety as the reference and compare candidates under comparable field conditions.','Record variety identity, trial site and year, management, marketable yield and buyer quality.'],
+ ] : [
+   ['Define the target', ['Reduce losses associated with confirmed psyllid pressure while maintaining marketable root quality.','Improve harvest-window flexibility while maintaining freezing quality.','Improve overwinter survival while maintaining oil quality and usable yield.'][crop],c.plan[2]],
+   ['Check research evidence','For '+c.plan[3]+', look for crop-specific studies linking a candidate gene or allele to the target trait.','Record the study, comparator, field or lab setting, effect and uncertainty. Candidate evidence has not been verified in this prototype.'],
+   ['Check access and authorization','Record the jurisdiction, authorization status, relevant patent claims and material or licensing access separately.','A research result is a lead. Commercial seed availability and authorization need independent verification.'],
+ ];
+ const selected=options[choice]||options[0];
+ v.innerHTML='<h2>'+tabs[tab]+'</h2><div class="inputs">'+select('Choose a decision','choice',options.map(x=>x[0]),choice)+'</div><div class="action"><div class="eyebrow">'+esc(selected[0])+'</div><p>'+esc(selected[1])+'</p><p><b>What to check:</b> '+esc(selected[2])+'</p></div><button id="next" class="next">'+(tab===2?'Open field action':tab===3?'Explore biotech research':'Compare conventional breeding')+'</button>';
+ $('choice').onchange=e=>{choice=+e.target.value;render();$('choice').focus()};
+ $('next').onclick=()=>{tab=tab===2?0:tab===3?4:3;choice=0;render();$('tabs').children[tab].focus()};
+
+ }
+}
+const climateNames=['Heat and dry spells','Heavy rain and wet ground','Unstable winters'];
+const climateGuide=[
+ [
+  ['Heat and dry spells can stress establishment and change the overlap between susceptible seedlings and pest activity.','Check soil moisture and local psyllid monitoring; plan cover access and irrigation with the grower.','Screen establishment and marketable root quality under heat and variable moisture. Compare alongside netting under observed pest pressure.'],
+  ['Wet ground can delay operations and obscure the cause of leaf or root symptoms.','Check drainage, trafficability and root symptoms before attributing damage to pests.','Compare root quality and marketable yield under waterlogging; record soil and duration of saturation.'],
+  ['Winter conditions may affect pest carryover, but this demo has no local overwintering model.','Use the local flight signal and seedling stage to time scouting and preventive netting.','Evaluate tolerance to confirmed psyllid damage in matched trials; no verified editing target in this guide.']
+ ],
+ [
+  ['Heat around flowering can threaten the harvest plan; pest flight can also overlap susceptible stages.','Track flowering, trap catches and pod set; review maturity groups and sowing windows with the intake team.','Screen flowering-stage heat resilience, marketable yield and freezing quality.'],
+  ['Wet fields can compress harvest windows and bunch deliveries.','Compare field access and expected maturity across blocks, then coordinate pickup with the freezing plant.','Screen maturity flexibility and marketable quality under delayed harvest.'],
+  ['This spring-sown pea case does not model crop survival over winter.','Recheck spring field access, sowing windows and local pest history.','Prioritize establishment and maturity fit; avoid borrowing winter survival traits from a different crop.']
+ ],
+ [
+  ['Dry establishment or later drought can threaten usable yield.','Compare establishment and moisture retention across fields; log survival, usable yield and oil quality.','Screen drought response and yield stability. In rapeseed, a gain-of-function BnaA6.RGA mutant showed enhanced drought tolerance in a published study. This is a research lead; local performance and trade-offs need trials.'],
+  ['Saturated soils can make establishment patchy and complicate field access.','Compare drainage and map weak areas before deciding whether to keep the stand or plan backup supply.','Screen establishment and survival under waterlogging, alongside seed yield and oil quality.'],
+  ['Freeze–thaw and uncertain winter survival can leave patchy stands.','Count live plants at spring regrowth and compare keeping the stand, reseeding and backup supply.','Screen winter survival across sites and winters. The drought-related BnaA6.RGA study does not establish freezing tolerance.']
+ ]
+];
+
+const baseRender=render;
+render=function(){
+ baseRender();
+ const scenario=Number($('climate').value)||0;
+ const [risk,act,trait]=climateGuide[crop][scenario];
+ const scene=document.querySelector('.scene');
+ const weatherOn=tab===4;
+ scene.classList.toggle('stressed',weatherOn);
+ scene.setAttribute('data-weather',weatherOn?['heat','rain','winter'][scenario]:'clear');
+ $('weather-name').textContent=weatherOn?['HEAT ALERT','HEAVY RAIN','WINTER SQUALL'][scenario]:'CLEAR SURVEY';
+ $('stress-label').textContent=tab===4?'Climate stress visualization · illustrative':'Scenario planning · illustrative';
+ $('reply').textContent='';
+ const citation=crop===2&&scenario===0?' <a href="https://pubmed.ncbi.nlm.nih.gov/32477388/" target="_blank" rel="noopener">Rapeseed study</a>':'';
+ const titles=['Climate pressure','What to measure next','Trial priority','Research direction'];
+ const extras=[
+  '<b>'+esc(climateNames[scenario])+'</b><p>'+esc(risk)+'</p><p>'+esc(act)+'</p>',
+  '<p>'+esc(act)+'</p><p>Record current practice, the comparison plot, labor and marketable tonnes before estimating benefits.</p>',
+  '<p>'+esc(trait)+'</p>'+citation,
+  '<p>'+esc(risk)+'</p><p>'+esc(trait)+'</p>'+citation+'<p class="subtle">Research screening only. No edited seed or locally validated benefit is established here.</p>'
+ ];
+ if(tab!==1){const i=tab===0?0:tab-1;$('view').insertAdjacentHTML('beforeend','<div class="guide"><h3>'+titles[i]+'</h3>'+extras[i]+'</div>');}
+};
+$('climate').onchange=()=>render();
+$('chat-form').onsubmit=e=>{
+ e.preventDefault();
+ const q=$('question').value.toLowerCase(), c=data[crop], scenario=Number($('climate').value)||0;
+ const [risk,act,trait]=climateGuide[crop][scenario];
+ const st=Object.keys(c.stages)[stage], decision=Object.values(c.stages[st])[obs];
+ let answer;
+ if(/patent|buy|licen|gmo|edit|gene|biotech/.test(q)) answer=trait+' Verify candidate evidence, authorization, patent claims and material access separately.';
+ else if(/cost|price|break.even|carbon|emission/.test(q)) answer=crop===0?'Open Impact under the preventive netting case. The calculator divides seasonal cost by net crop value per tonne to show break-even. Use the numbers currently shown there.':'Open Impact to compare your assumed yield, replacement premium and emissions. The values are illustrative.';
+ else if(/climate|weather|winter|rain|heat|drought/.test(q)) answer=risk+' '+act;
+ else if(/breed|variet|trait|trial/.test(q)) answer=trait+' '+c.plan[1];
+ else if(/when|scout|pest|cycle|action|next|what should|net|trap/.test(q)) answer=decision.join(' ')+' '+c.bio;
+ else answer='I can answer about the current crop and scenario. Try “What should I check next?”, “What trait should I screen?” or “How do I compare costs?”';
+ $('reply').textContent=answer;
+};
+const soilExamples=[[{"parcel_id": "F0028-P05", "soil_class_soilmap": "sand", "clay_pct_soilmap": "1.0", "slope_pct": "3.1", "drainage": "subsurface", "p_test_mgl_latest": "20.2"}, {"parcel_id": "F0028-P02", "soil_class_soilmap": "silt", "clay_pct_soilmap": "1.0", "slope_pct": "4.0", "drainage": "subsurface", "p_test_mgl_latest": "36.5"}, {"parcel_id": "F0028-P14", "soil_class_soilmap": "sand", "clay_pct_soilmap": "1.0", "slope_pct": "7.2", "drainage": "subsurface", "p_test_mgl_latest": "12.5"}], [{"parcel_id": "F0001-P03", "soil_class_soilmap": "fine_sand", "clay_pct_soilmap": "40.0", "slope_pct": "0.1", "drainage": "subsurface", "p_test_mgl_latest": "19.9"}, {"parcel_id": "F0001-P15", "soil_class_soilmap": "clay", "clay_pct_soilmap": "46.0", "slope_pct": "0.8", "drainage": "open_ditch", "p_test_mgl_latest": ""}, {"parcel_id": "F0001-P07", "soil_class_soilmap": "clay", "clay_pct_soilmap": "50.0", "slope_pct": "3.0", "drainage": "open_ditch", "p_test_mgl_latest": ""}], [{"parcel_id": "F0151-P01", "soil_class_soilmap": "clay", "clay_pct_soilmap": "50.0", "slope_pct": "2.4", "drainage": "subsurface", "p_test_mgl_latest": "14.3"}, {"parcel_id": "F0151-P02", "soil_class_soilmap": "clay", "clay_pct_soilmap": "42.0", "slope_pct": "0.7", "drainage": "subsurface", "p_test_mgl_latest": "14.9"}, {"parcel_id": "F0151-P09", "soil_class_soilmap": "clay", "clay_pct_soilmap": "52.0", "slope_pct": "0.9", "drainage": "open_ditch", "p_test_mgl_latest": "49.3"}]];
+const soilStates=soilExamples.map(()=>({parcel:0, photos:{}, flags:{}, ph:'', depth:''}));
+const soilChecks=[
+ ['pond','Ponding or saturated ground after rain'],
+ ['low','Affected patches follow low spots'],
+ ['tracks','Affected patches follow wheel tracks'],
+ ['roots','Roots stop or bend at a distinct layer'],
+ ['crust','Visible surface crust or large seedbed clods'],
+ ['acid','A lab report flags pH below its crop-specific target']
+];
+function soilPossibilities(flags, measuredPH){
+ const result=[];
+ if(flags.pond) result.push([flags.low?3:2,'Possible waterlogging','Compare affected and healthy spots after rain. Inspect ditch outlets and drainage before changing field operations.']);
+ if(flags.roots||flags.tracks) result.push([flags.roots&&flags.tracks?3:2,'Possible root restriction','Compare cores or spade profiles at similar moisture. Check resistance across the suspected layer before choosing a corrective action.']);
+ if(flags.crust) result.push([2,'Possible seedbed or surface crust issue','Compare emergence and surface structure with a healthy patch. Record rainfall and seedbed preparation before changing the next pass.']);
+ if(flags.acid) result.push([2,'Review the lab pH interpretation',measuredPH!==''?'Use the lab method, crop target and adviser interpretation before considering lime.':'Add the measured pH and method from the lab report before considering lime.']);
+ return result.sort((a,b)=>b[0]-a[0]);
+}
+function soilPanel(){
+ const state=soilStates[crop], entries=soilExamples[crop];
+ $('obs').closest('label').insertAdjacentHTML('afterend', `
+ <details id="soil-diagnosis" ${/patchy|stand gaps/i.test($('obs').selectedOptions[0]?.textContent||'')?'open':''}>
+ <summary>Soil diagnosis · field and core photos</summary>
+ <p class="subtle">Compare an affected spot with a healthy spot. Photos stay in this browser and are used for visual review. Confirm observations below.</p>
+ <label for="soil-parcel">Parcel context</label>
+ <select id="soil-parcel">${entries.map((r,i)=>'<option value="'+i+'">'+esc(r.parcel_id)+'</option>').join('')}</select>
+ <p id="soil-record"></p>
+ <div class="soil-grid">
+ <label>Field photo · include the affected patch<input id="soil-field" type="file" accept="image/*"><img id="soil-field-preview" alt="Uploaded field photo" hidden></label>
+ <label>Core photo · include a ruler and mark the top<input id="soil-core" type="file" accept="image/*"><img id="soil-core-preview" alt="Uploaded soil core photo" hidden></label>
+ <label>Core depth (cm)<input id="soil-depth" type="number" min="0" step="any" placeholder="Optional"></label>
+ <label>Lab-measured pH<input id="soil-ph" type="number" min="0" max="14" step="any" placeholder="Optional"></label>
+ </div><p id="soil-photo-status" role="status"></p>
+ <div class="soil-check">${soilChecks.map(([key,label])=>'<label><input type="checkbox" data-soil="'+key+'">'+label+'</label>').join('')}</div>
+ <div class="action" id="soil-result" aria-live="polite"></div></details>`);
+ const show=()=>{
+  const r=entries[state.parcel], findings=soilPossibilities(state.flags,state.ph);
+  $('soil-record').textContent='Apetit challenge · synthetic 2027 '+(crop===2?'turnip rape proxy for the winter rapeseed case':'planned crop')+' · Mapped: '+r.soil_class_soilmap+', '+r.clay_pct_soilmap+'% clay, '+r.slope_pct+'% slope · Drainage record: '+r.drainage+' · Soil P test: '+(r.p_test_mgl_latest?r.p_test_mgl_latest+' mg/L':'not recorded');
+  $('soil-result').innerHTML=findings.length?findings.map(([,title,next])=>'<p><b>'+esc(title)+'</b><br>'+esc(next)+'</p>').join(''):'<p><b>No cause identified yet.</b> Compare a poor and a healthy patch and select the observations you can confirm.</p>';
+ };
+ $('soil-parcel').value=state.parcel;
+ $('soil-parcel').onchange=e=>{Object.values(state.photos).forEach(url=>URL.revokeObjectURL(url)); Object.assign(state,{parcel:+e.target.value,photos:{},flags:{},ph:'',depth:''}); render(); $('soil-diagnosis').open=true; $('soil-parcel').focus()};
+ for(const key of ['field','core']){
+  const input=$('soil-'+key), preview=$('soil-'+key+'-preview');
+  if(state.photos[key]){preview.src=state.photos[key];preview.hidden=false;}
+  input.onchange=()=>{
+   const file=input.files[0]; if(!file)return;
+   if(!file.type.startsWith('image/')){$('soil-photo-status').textContent='Choose an image file.';return}
+   if(state.photos[key])URL.revokeObjectURL(state.photos[key]);
+   preview.onerror=()=>{$('soil-photo-status').textContent='This image could not be opened. Try JPEG or PNG.';preview.hidden=true};
+   preview.onload=()=>{$('soil-photo-status').textContent='Photo ready. Check for blur, smearing or poor light before confirming observations.'};
+   preview.src=state.photos[key]=URL.createObjectURL(file);preview.hidden=false;
+  };
+ }
+ for(const key of ['ph','depth']){
+  const input=$('soil-'+key);input.value=state[key];
+  input.oninput=()=>{if(input.checkValidity()){state[key]=input.value;show()}};
+ }
+ $('soil-diagnosis').querySelectorAll('[data-soil]').forEach(input=>{
+  const key=input.dataset.soil;input.checked=!!state.flags[key];
+  input.onchange=()=>{state.flags[key]=input.checked;show()};
+ });
+ show();
+}
+const renderWithoutSoil=render;
+render=function(){renderWithoutSoil();if(tab===0)soilPanel()};
+
+render();
+
+</script></html>
