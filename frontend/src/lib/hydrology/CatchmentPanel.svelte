@@ -8,7 +8,7 @@
  function pickBasin(id:number){selected=id;api?.select(id);enabled=true;toggle();onFocus();api?.focus();}
  function toggle(){api?.setEnabled(enabled);if(enabled&&flow)onPlay();}
 </script>
-<details class="catchment"><summary>Catchments & downstream rivers</summary>
+<details class="catchment"><summary>Rivers &amp; catchments <small style="font-weight:400;color:var(--text-faint,#889);font-size:10px">real HydroSHEDS network</small></summary>
 <label>Catchment layer<input type="checkbox" bind:checked={enabled} onchange={toggle}/></label>
 {#if error}<p role="alert">{error}</p>{:else if data}
 <p>{data.basins.length} real basin polygons · {data.rivers.length.toLocaleString()} larger river reaches in the Nordic domain.</p>
@@ -24,7 +24,7 @@
 <p>{regional?.catchments?.method}<br>{regional?.catchments?.notice}</p>
 <p>Last routing balance residual: {regional?.catchments?.budget?.residual_m3?.toExponential(2)??'Waiting'} m³.</p>
 <p>White particles follow verified downstream reach connections. Velocity = long-term discharge / assumed cross-sectional area, limited to 0.1–3 m/s, displayed at the simulation speed. These are illustrative trajectories, not live gauged river velocities; tracers reseed at exits. Basin routing uses evolving modeled runoff/drainage with a 6-hour storage timescale.</p>
-<p>{data.notice}</p><p>{data.source}</p><a href="/data/hydrology/HydroSHEDS_TechDoc_v1_4.pdf" target="_blank" rel="noreferrer">Source documentation & licence ↗</a>
+<p>{data.notice}</p><p>{data.source}</p><a href="https://data.hydrosheds.org/file/technical-documentation/HydroSHEDS_TechDoc_v1_4.pdf" target="_blank" rel="noreferrer">Source documentation & licence ↗</a>
 {:else}<p>Loading real river topology…</p>{/if}
 </details>
-<style>.catchment{border:1px solid #385e69;border-radius:5px;padding:10px;margin:12px 0}summary{font-size:12px;color:#8ee4f1;cursor:pointer}p{font-size:10px;color:#abc0c5;line-height:1.6}label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;margin:12px 0}select{max-width:145px;background:#17333c;color:#e3eee8;border:1px solid #426772;padding:5px}.places{display:flex;gap:6px;margin:10px 0}.places button{font-size:10px}button{width:100%;padding:8px;background:#a4e8ed;border:0;border-radius:4px;cursor:pointer}a{font-size:10px;color:#8ee4f1}</style>
+<style>.catchment{margin:10px 0;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}.catchment[open]{padding-bottom:12px}summary{padding:11px 0;font-size:12px;font-weight:600;color:var(--text,#eef1f6);cursor:pointer}p{font-size:10px;color:#abc0c5;line-height:1.6}label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;margin:12px 0}select{max-width:145px;background:#17333c;color:#e3eee8;border:1px solid #426772;padding:5px}.places{display:flex;gap:6px;margin:10px 0}.places button{font-size:10px}button{width:100%;padding:7px;background:#16303a;color:#cfe3e6;border:1px solid #2f5560;border-radius:7px;cursor:pointer;font-size:11px}a{font-size:10px;color:#8ee4f1}</style>

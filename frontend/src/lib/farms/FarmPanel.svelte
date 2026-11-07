@@ -19,7 +19,9 @@
 	$effect(() => { const g = globe; const a = untrack(() => attachFarms(g, s => (status = s))); api = a; return () => { a.destroy(); api = undefined; }; });
 	$effect(() => { const f = regional; untrack(() => api?.updateLive(f)); });
 
-	const layers: [FarmLayer, string][] = [['off', 'Off'], ['crop', 'Crops 2026 (synthetic)'], ['soil', 'Soil class'], ['peat', 'Peat'], ['bio', 'Microbiome proxy'], ['stress_live', 'Timeline stress'], ['stress_replay', 'Season replay']];
+	// Season replay first: the most telling view. The microbiome proxy stays in farms.ts (and the evidence
+	// catalogue for reports) but is off the screen: it has no measured microbial data behind it.
+	const layers: [FarmLayer, string][] = [['off', 'Off'], ['stress_replay', 'Season replay'], ['crop', 'Crops 2026'], ['soil', 'Soil class'], ['peat', 'Peat'], ['stress_live', 'Live crop stress']];
 	function chooseLayer(l: FarmLayer) { layer = l; if (l === 'stress_replay') api?.playSeason('2018'); else api?.setLayer(l); }
 	function applyFilter() {
 		api?.setFilter({ crops: new Set(Object.keys(crops).filter(k => crops[k])), regions: new Set(Object.keys(regions).filter(k => regions[k])), peatOnly });
@@ -32,7 +34,7 @@
 </script>
 
 <div class="farms">
-	<strong>APETIT SYNTHETIC FIELDS · {status.total ? status.total.toLocaleString() : '…'} PARCELS</strong>
+	<div class="head"><strong>Apetit fields</strong><span>{status.total ? status.total.toLocaleString() : '…'} parcels · synthetic</span></div>
 	{#if status.error}<p class="error">{status.error}</p>{/if}
 	<p class="note proxy">Synthetic challenge parcels and weather—not real grower locations or measured impacts. Parcel dots represent centroids, not field boundaries.</p>
 	<div class="chips">
@@ -99,11 +101,13 @@
 </div>
 
 <style>
-	.farms { margin-top: 12px; padding: 10px; background: #12262e; border: 1px solid #37534c; border-radius: 5px; font-size: 10px; }
-	.farms > strong { font-size: 9px; letter-spacing: 1px; color: #cfeb9b; }
+	.farms { font-size: 11px; }
+	.head { display: flex; align-items: baseline; justify-content: space-between; }
+	.head strong { font-size: 13px; font-weight: 600; color: var(--text, #eef1f6); }
+	.head span { font-size: 10px; color: var(--text-faint, #889); }
 	.chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; }
-	.chips button, .mode-tabs button { flex: 0 0 auto; background: #18313b; color: #a3b6b8; border: 1px solid #385158; border-radius: 4px; padding: 5px 7px; font-size: 10px; cursor: pointer; }
-	.chips button.chosen, .mode-tabs button.chosen { background: #cfeb9b; color: #14251a; }
+	.chips button, .mode-tabs button { flex: 0 0 auto; background: #16303a; color: #cfe3e6; border: 1px solid #2f5560; border-radius: 7px; padding: 6px 9px; font-size: 11px; cursor: pointer; }
+	.chips button.chosen, .mode-tabs button.chosen { background: #8ee4f1; border-color: #8ee4f1; color: #0c2229; font-weight: 600; }
 	.chips button:disabled { opacity: 0.4; cursor: wait; }
 	.mode-tabs { display: flex; gap: 5px; margin: 10px 0; }
 	.buttons { display: flex; gap: 6px; margin: 8px 0; }
