@@ -6,6 +6,7 @@
 	import { panelOpen } from '../ui/panel.ts';
 	import { attachLensLayer, SOIL_COLOR, STATUS_COLOR, type LensLayer } from './layer.ts';
 	import { terraNow, type TerraNow } from './terraNow.ts';
+	import { openSbtnReview } from './sbtn.ts';
 	import {
 		DECADES,
 		SCENARIOS,
@@ -24,6 +25,7 @@
 	let scenario = $state<Scenario>('ssp245');
 	let decade = $state<Decade>('2050s');
 	let now = $state<TerraNow | null | 'loading'>(null);
+	let sbtnBlocked = $state(false);
 
 	$effect(() => {
 		const target = globe;
@@ -306,7 +308,11 @@
 
 		<section class="review">
 			<h3><span>6</span> Expert review</h3>
-			<p class="sub">Status: <b>Draft</b>. Approval flow not built yet: this report is computed, not reviewed.</p>
+			<p class="sub">Status: <b>Draft</b>. This report is computed, not reviewed. Screen the {fmt(report.area.parcels)} parcels in this area against SBTN steps 1–2 and export the review as a PDF.</p>
+			<div class="buttons">
+				<button onclick={() => (sbtnBlocked = !openSbtnReview($selectedShape!))}>Open SBTN screening review ↗</button>
+			</div>
+			{#if sbtnBlocked}<p class="error">The browser blocked the new tab. Allow pop-ups for this site and try again.</p>{/if}
 		</section>
 	{/if}
 </div>

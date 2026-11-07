@@ -22,10 +22,13 @@ interface Parcels {
 	area: number[];
 	soil: string[];
 	distWater: number[];
+	drainage: string[];
 	catchment: string[];
 	pTest: (number | null)[];
 	buffer: boolean[];
 	crop: string[];
+	/** Planned crop in the SBTN review year (build_data.py PLAN_YEAR). */
+	planCrop: string[];
 	catchCrop: boolean[];
 	contract: boolean[];
 	cell: string[];
@@ -58,7 +61,22 @@ interface Lever {
 interface Data {
 	parcels: Parcels;
 	farms: Record<string, Farm>;
-	catchments: { features: { properties: { id: string; water: string; status: string; pSensitivity: number; contractHa: number; monitored: boolean; load?: { year: number; pKg: number; nKg: number } } }[] };
+	catchments: {
+		features: {
+			geometry: Polygon;
+			properties: {
+				id: string;
+				region: string;
+				water: string;
+				status: string;
+				areaKm2: number;
+				pSensitivity: number;
+				contractHa: number;
+				monitored: boolean;
+				load?: { year: number; pKg: number; nKg: number };
+			};
+		}[];
+	};
 	climate: { indicators: Record<string, CellIndicators> };
 	levers: { levers: Lever[]; prices: { year: number; items: Record<string, { eurPerT: number; replacementPremium: number }> } };
 	meta: {
@@ -138,14 +156,9 @@ function blend(cells: Record<string, CellIndicators>, weights: Map<string, numbe
 	return out;
 }
 
-/** Report on the contract parcels whose centroid lies inside any of the polygons. */
-export async function lensReport(polygons: Polygon[], fetcher: typeof fetch): Promise<LensResult> {
-	const loaded = await loadLensData(fetcher);
-	if (!loaded) return { available: false, reason: 'Climate Lens data not built. Run: python3 lens/build_data.py' };
-	const { data } = loaded;
-	const P = data.parcels;
+/** Indices of the parcels whose centroid lies inside any of the polygons. */
+export function parcelsInside(P: Parcels, polygons: Polygon[]): number[] {
 	const boxes = polygons.map((g) => bbox(g));
-
 	const idx: number[] = [];
 	for (let i = 0; i < P.id.length; i++) {
 		const x = P.lon[i], y = P.lat[i];
@@ -157,6 +170,16 @@ export async function lensReport(polygons: Polygon[], fetcher: typeof fetch): Pr
 			}
 		}
 	}
+	return idx;
+}
+
+/** Report on the contract parcels whose centroid lies inside any of the polygons. */
+export async function lensReport(polygons: Polygon[], fetcher: typeof fetch): Promise<LensResult> {
+	const loaded = await loadLensData(fetcher);
+	if (!loaded) return { available: false, reason: 'Climate Lens data not built. Run: python3 lens/build_data.py' };
+	const { data } = loaded;
+	const P = data.parcels;
+	const idx = parcelsInside(P, polygons);
 
 	const cropHa: Record<string, number> = {};
 	const soilHa: Record<string, number> = {};

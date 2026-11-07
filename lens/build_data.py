@@ -31,6 +31,7 @@ DEFAULT_PACKAGE = Path.home() / 'Downloads/Apetit_SinceAI2026 _1_/Apetit_SinceAI
 DEFAULT_OUT = REPO / 'frontend/static/data/lens'
 
 REPORT_YEAR = 2025  # latest complete inventory year in the package
+PLAN_YEAR = 2027  # planned crop shown in the SBTN screening review
 
 # docs/METHODOLOGY.md §5 (Finnish GHG inventory; IPCC Wetlands Supplement), AR6 GWP100.
 ORGANIC_CO2_T_HA = {'annual': 29.0, 'grass': 20.9}
@@ -97,7 +98,8 @@ def build_parcels(pkg: Path, cells: pd.DataFrame):
     farms = pd.read_csv(pkg / SOURCE_FILES['farms'])
     hist = pd.read_csv(pkg / SOURCE_FILES['crop_history'])
     h = hist[hist.year == REPORT_YEAR][['parcel_id', 'crop', 'catch_crop']]
-    p = p.merge(h, on='parcel_id', how='left').merge(farms[['farm_id', 'country', 'region']], on='farm_id')
+    plan = hist[hist.year == PLAN_YEAR][['parcel_id', 'crop']].rename(columns={'crop': 'plan_crop'})
+    p = p.merge(h, on='parcel_id', how='left').merge(plan, on='parcel_id', how='left').merge(farms[['farm_id', 'country', 'region']], on='farm_id')
     p['cell_id'] = nearest_cells(p.lat.to_numpy(), p.lon.to_numpy(), cells)
 
     organic = p.soil_class_soilmap.eq('organic')
@@ -121,6 +123,7 @@ def build_parcels(pkg: Path, cells: pd.DataFrame):
         'pTest': [r(v, 1) for v in p.p_test_mgl_latest],
         'buffer': p.buffer_strip.astype(bool).tolist(),
         'crop': p.crop.fillna('').tolist(),
+        'planCrop': p.plan_crop.fillna('').tolist(),
         'catchCrop': p.catch_crop.fillna(False).astype(bool).tolist(),
         'contract': p.contract_crop.tolist(),
         'cell': p.cell_id.tolist(),
