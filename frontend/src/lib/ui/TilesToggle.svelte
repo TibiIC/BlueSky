@@ -6,7 +6,7 @@
 
 	const layers = $derived(
 		[
-			$imageryState.world === 'ion' ? 'Cesium ion imagery' : $imageryState.world === 'keyless' ? 'Keyless imagery' : null,
+			$imageryState.world === 'ion' ? 'Cesium ion imagery' : $imageryState.world === 'esri' ? 'Esri world imagery' : $imageryState.world === 'keyless' ? 'Natural Earth fallback' : null,
 			$imageryState.finlandOrthophoto ? 'NLS orthophoto' : null,
 			$tilesState.status === 'ready' ? 'Google 3D Tiles' : null
 		].filter(Boolean)

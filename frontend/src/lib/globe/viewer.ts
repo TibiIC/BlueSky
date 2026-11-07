@@ -39,9 +39,14 @@ export async function createGlobe(
 		selectionIndicator: false,
 		vrButton: false,
 		creditContainer,
-		// Render at device pixel ratio for sharp imagery on HiDPI screens.
-		useBrowserRecommendedResolution: false,
-		msaaSamples: 4
+		// Performance: CSS-pixel resolution (halves the work on HiDPI screens) and no MSAA;
+		// cheap FXAA smooths edges instead. Integrated GPUs were dropping to single-digit fps.
+		useBrowserRecommendedResolution: true,
+		msaaSamples: 1,
+		// Render only when something changes (camera, tiles, data, explicit requestRender),
+		// instead of 60 times a second while idle.
+		requestRenderMode: true,
+		maximumRenderTimeChange: Infinity
 	});
 	const { scene, camera } = viewer;
 
@@ -54,6 +59,14 @@ export async function createGlobe(
 	scene.fog.enabled = true;
 	scene.globe.depthTestAgainstTerrain = false;
 	if (scene.skyBox) scene.skyBox.show = true;
+	scene.postProcessStages.fxaa.enabled = true;
+
+	// In request-render mode, pointer and wheel input must trigger a frame so live drawing
+	// previews (CallbackProperty) and hover feedback update.
+	const kick = () => scene.requestRender();
+	for (const ev of ['pointermove', 'pointerdown', 'pointerup', 'wheel'] as const)
+		scene.canvas.addEventListener(ev, kick, { passive: true });
+	window.addEventListener('keydown', kick);
 
 	// The viewer's default double-click zooms to entities; we use double-click to close polygons.
 	viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(C.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
@@ -71,6 +84,7 @@ export async function createGlobe(
 		// Google tiles cover the whole planet; Cesium recommends no globe underneath them.
 		scene.globe.show = !on;
 		tilesState.set({ status: 'ready', enabled: on });
+		scene.requestRender();
 	};
 
 	let flying = false;
@@ -80,27 +94,15 @@ export async function createGlobe(
 		isFlying: () => flying
 	});
 
-	// Start with the whole Earth, then ease to Finland and Sweden.
+	// Start on the whole Earth. Weather panel provides an explicit Nordic flight.
 	camera.setView({ destination: C.Cartesian3.fromDegrees(NORDIC_CENTER.lon, 25, 24_000_000) });
-	const fly = () => {
-		flying = true;
-		camera.flyToBoundingSphere(
-			new C.BoundingSphere(C.Cartesian3.fromDegrees(NORDIC_CENTER.lon, NORDIC_CENTER.lat), 0),
-			{
-				offset: new C.HeadingPitchRange(0, C.Math.toRadians(-72), 3_300_000),
-				duration: 4.5,
-				easingFunction: C.EasingFunction.CUBIC_IN_OUT,
-				complete: () => (flying = false),
-				cancel: () => (flying = false)
-			}
-		);
-	};
-	const introTimer = setTimeout(fly, 1600);
 
 	addGoogleTiles(C, viewer, keys).then((ts) => {
 		if (viewer.isDestroyed()) return;
 		tileset = ts;
-		if (ts) setTilesEnabled(true);
+		// Off by default: Google 3D tiles were the main source of main-thread stalls (~280 ms/s).
+		// The "3D cities" toggle turns them on for close-up views.
+		if (ts) setTilesEnabled(false);
 	});
 
 	return {
@@ -109,8 +111,8 @@ export async function createGlobe(
 		tilesEnabled: () => !!tileset?.show,
 		setTilesEnabled,
 		destroy: () => {
-			clearTimeout(introTimer);
 			removeClamp();
+			window.removeEventListener('keydown', kick);
 			if (!viewer.isDestroyed()) viewer.destroy();
 		}
 	};

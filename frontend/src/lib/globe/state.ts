@@ -10,7 +10,7 @@ export interface TilesState {
 export const tilesState = writable<TilesState>({ status: 'loading', enabled: false });
 
 export interface ImageryState {
-	world: 'ion' | 'keyless' | null;
+	world: 'ion' | 'keyless' | 'esri' | null;
 	finlandOrthophoto: boolean;
 }
 

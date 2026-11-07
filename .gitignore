@@ -1,8 +1,22 @@
-# macOS
+**/node_modules/
+**/.svelte-kit/
+**/__pycache__/
+*.pyc
+**/.env
+**/.env.*
+!**/.env.example
 .DS_Store
+.cache/
 
 # Apetit x SinceAI challenge materials (brief + dataset zip)
 /Apetit_SinceAI2026/
 
 # Selections exported from the drawing tool
 selection-*.geojson
+
+# Internal planning docs (keep off GitHub)
+CLIMATE_LENS_PLAN.md
+Climate Lens reporting plan.pdf
+
+# Climate Lens data is derived from the team-only Apetit package: rebuild with lens/build_data.py
+frontend/static/data/lens/

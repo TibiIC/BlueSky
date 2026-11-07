@@ -1,13 +1,15 @@
 import { json } from '@sveltejs/kit';
-import { analyseSelection, selectionInput } from '#lib/geo/selection.ts';
+import { analyseSelection, selectionInput, selectionPolygons } from '#lib/geo/selection.ts';
+import { lensReport } from '#lib/lens/report.server.ts';
 import type { RequestHandler } from './$types';
 
 /**
  * Receives a drawn area (GeoJSON Feature or FeatureCollection of Polygons) and
  * replies with { id, bbox, areaKm2, centroid, countries }.
- * Later this is where climate data for the area will be fetched.
+ * `lens` adds the Climate Lens report: contract parcels, peat, catchments, climate
+ * indicators by scenario and actions, computed from the Apetit package data.
  */
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, fetch }) => {
 	let body: unknown;
 	try {
 		body = await request.json();
@@ -26,5 +28,5 @@ export const POST: RequestHandler = async ({ request }) => {
 		);
 	}
 
-	return json(analyseSelection(parsed.data));
+	return json({ ...analyseSelection(parsed.data), lens: await lensReport(selectionPolygons(parsed.data), fetch) });
 };

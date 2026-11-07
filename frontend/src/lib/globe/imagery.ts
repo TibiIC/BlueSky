@@ -33,6 +33,17 @@ export async function addBaseImagery(C: CesiumModule, viewer: Viewer, keys: Imag
 		);
 	}
 
+ // Public MapServer endpoint supported by Cesium. Keep bundled Natural Earth underneath.
+ // Service availability/terms can change; optional ion imagery remains supported.
+ if (!keys.ionToken) {
+  C.ArcGisMapServerImageryProvider.fromUrl('https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer', { enablePickFeatures: false })
+   .then(provider => {
+    if (viewer.isDestroyed()) return;
+    layers.addImageryProvider(provider, 1);
+    imageryState.update(s => ({...s, world: 'esri'}));
+   }).catch(error => console.warn('[globe] Esri imagery unavailable; retaining Natural Earth', error));
+ }
+
 	if (keys.nlsKey) {
 		// The open NLS WMTS is meant for light use and rejects bursts with 503s:
 		// cap parallel requests, request only inside Finland and only when zoomed in.
@@ -80,10 +91,11 @@ export async function addGoogleTiles(C: CesiumModule, viewer: Viewer, keys: Imag
 			{
 				showCreditsOnScreen: true,
 				enableCollision: true,
-				maximumScreenSpaceError: 12,
+				// 24 instead of 12: about a quarter of the tile requests and decode work, still sharp at city zoom.
+				maximumScreenSpaceError: 24,
 				dynamicScreenSpaceError: true,
 				foveatedScreenSpaceError: true,
-				preloadFlightDestinations: true
+				preloadFlightDestinations: false
 			}
 		);
 		viewer.scene.primitives.add(tileset);

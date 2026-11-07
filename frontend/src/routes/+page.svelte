@@ -10,15 +10,31 @@
 	import TilesToggle from '#lib/ui/TilesToggle.svelte';
 	import SidePanel from '#lib/ui/SidePanel.svelte';
 	import { panelOpen } from '#lib/ui/panel.ts';
+	import WeatherPanel from '#lib/weather/WeatherPanel.svelte';
+	import LensPanel from '#lib/lens/LensPanel.svelte';
 
 	let container: HTMLDivElement;
 	let credits: HTMLDivElement;
-	let globe = $state<Globe | null>(null);
+	let globe = $state.raw<Globe | null>(null);
 	let drawing = $state<DrawingSession | null>(null);
 	let failure = $state<string | null>(null);
 
+	/** Cesium needs WebGL. Some embedded browsers (e.g. VS Code Snap builds) have it disabled. */
+	function hasWebGL(): boolean {
+		try {
+			const c = document.createElement('canvas');
+			return !!(c.getContext('webgl2') ?? c.getContext('webgl'));
+		} catch {
+			return false;
+		}
+	}
+
 	onMount(() => {
 		let disposed = false;
+		if (!hasWebGL()) {
+			failure = `this browser has WebGL turned off. Open ${location.origin} in Chrome, Firefox or Edge.`;
+			return;
+		}
 		createGlobe(container, credits, {
 			ionToken: PUBLIC_CESIUM_ION_TOKEN,
 			googleKey: PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -70,6 +86,7 @@
 			<TilesToggle onToggle={(on) => globe?.setTilesEnabled(on)} />
 		</div>
 		<div class="bottom-left"><Hud /></div>
+		{#if globe}<WeatherPanel {globe} />{/if}
 		<div class="credits" bind:this={credits}></div>
 
 		{#if !globe}
@@ -77,7 +94,7 @@
 		{/if}
 	</main>
 
-	<SidePanel />
+	<SidePanel>{#if globe}<LensPanel {globe} />{/if}</SidePanel>
 </div>
 
 <style>
@@ -177,8 +194,8 @@
 		}
 		.credits {
 			max-width: calc(100% - 24px);
-			bottom: auto;
-			top: 72px;
+			bottom: 8px;
+			top: auto;
 		}
 	}
 </style>
