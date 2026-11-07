@@ -112,16 +112,62 @@ Scored on the organisers' published 2023–2024 answers:
   6 lines in 2025, about 1,600 t (the cheese line above is one: its text says pizza cheese, its
   code points to a low-emission material). This is the trade we chose for simplicity.
 
-## Run it
+## Commands
+
+All commands run from the repository root (`BlueSky/`) unless noted.
+
+**One-time setup**
 
 ```sh
-pip install pandas pyarrow pymongo anthropic
-python3 -m quality.pipeline                          # -> quality/out/ (items, scatter, footprint, 2025 submission files)
-python3 -m unittest discover -s quality/tests -t .   # tests for the method
-python3 -m quality.publish_mongo                     # -> MongoDB Atlas (MONGODB_URI in frontend/.env)
+pip install pandas pyarrow pymongo anthropic      # Python 3.11+
+cd frontend && npm install && cd ..                # the app (Node 22: nvm use 22)
 ```
 
-`--no-decisions` ignores the choices saved in the app; `--no-ai` skips the sentences.
+`frontend/.env` holds the keys (never committed):
+
+```sh
+MONGODB_URI=mongodb+srv://...      # MongoDB Atlas
+MONGODB_DB=bluesky
+ANTHROPIC_API_KEY=sk-ant-...       # optional: the one-sentence explanations
+```
+
+The Apetit package is read from `~/Downloads/Apetit_SinceAI2026 _1_/Apetit_SinceAI2026/APETIT_CLIMATE_NATURE_NAVIGATOR_2026`.
+Elsewhere, pass `--package PATH` or set `APETIT_PACKAGE`.
+
+**Refresh the data (run this after people have made decisions in the Dev tab)**
+
+```sh
+python3 -m quality.pipeline          # predict, compare, fix, explain, footprint, scores -> quality/out/  (~1 min)
+python3 -m quality.publish_mongo     # send the run to MongoDB; the Dev tab shows it on reload
+```
+
+**Start the app**
+
+```sh
+cd frontend && npm run dev -- --port 5199     # then open http://127.0.0.1:5199 and pick the Dev tab
+```
+
+**Check it**
+
+```sh
+python3 -m unittest discover -s quality/tests -t .    # tests for the method
+cd frontend && npm run check                           # type-check the app
+```
+
+**Options for `quality.pipeline`**
+
+| Option | Effect |
+|---|---|
+| `--no-decisions` | ignore the choices saved in the Dev tab (see what the method alone does) |
+| `--no-ai` | skip the one-sentence explanations (no API calls) |
+| `--ai-limit N` | explain only the N items with the most tonnes at stake (default 250) |
+| `--package PATH` | where the Apetit package is |
+| `--out DIR` | where results go (default `quality/out/`) |
+
+**What `quality/out/` contains:** `A1_issues_submission.csv` and `A2_inventory_2025_submission.csv`
+(the hackathon deliverables), `summary.json` (scores, totals, noise per series), `items.json` (every
+flagged number), `points.json` (the scatter plot), `inventory.json`, and `processed/*.parquet` (the
+corrected tables).
 
 MongoDB collections: `dev_runs` (method, noise per series, scores, totals, scatter points),
 `dev_items` (every flagged number with its options and tonnes), `dev_decisions` (people's choices),
