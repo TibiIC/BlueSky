@@ -2,19 +2,14 @@
 
     python3 -m quality.pipeline && python3 -m quality.publish_mongo
 
-Reads exactly what the pipeline wrote, so the database always matches the run that produced the
-scores. MONGODB_URI / MONGODB_DB come from frontend/.env or the environment.
+MONGODB_URI / MONGODB_DB come from frontend/.env or the environment.
 
-  Back office (history kept, one runId per run)
-    dq_runs        run summary: scores on the public answers, counts by level and status, range
-    dq_findings    every finding: evidence levels, competing explanations, impact, status, AI note
-    dq_checked     legitimate look-alikes that were checked and left alone
-    inventory      2023–2025 by scope and category, corrected and uncorrected
-    dq_reviews     expert decisions (written by the app, append-only)
-
-  Processed data (latest run replaces the previous; each row carries its runId)
-    proc_energy, proc_purchases, proc_refrigerants, proc_goo, proc_shipments, proc_waste,
-    proc_travel, proc_farm_footprints, proc_farm_survey
+    dev_runs        one document per run: method, per-series noise and counts, scores, totals, scatter points
+    dev_items       every flagged number: recorded, expected, gap, options with tonnes at stake, status
+    dev_decisions   a person's choices from the app's Dev tab (written by the app, append-only;
+                    the next pipeline run applies them)
+    inventory       2023–2025 by scope and category, curated and raw
+    proc_*          the corrected tables (latest run replaces the previous)
 """
 from __future__ import annotations
 
@@ -69,47 +64,36 @@ def main():
     from pymongo import ASCENDING, DESCENDING, MongoClient
 
     summary = json.loads((OUT / 'summary.json').read_text())
-    findings = json.loads((OUT / 'findings.json').read_text())
-    checked = json.loads((OUT / 'checked.json').read_text())
+    items = json.loads((OUT / 'items.json').read_text())
+    points = json.loads((OUT / 'points.json').read_text())
     inventory = json.loads((OUT / 'inventory.json').read_text())
     run_id = summary['runAt'].replace('-', '').replace(':', '').replace('+0000', 'Z')
     commit = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], cwd=REPO, capture_output=True, text=True).stdout.strip()
 
-    db = MongoClient(uri, appName='bluesky-quality', serverSelectionTimeoutMS=10000)[dbname]
-    if db.dq_runs.find_one({'runId': run_id}):
+    db = MongoClient(uri, appName='bluesky-curation', serverSelectionTimeoutMS=10000)[dbname]
+    if db.dev_runs.find_one({'runId': run_id}):
         raise SystemExit(f'Run {run_id} is already published.')
-    db.dq_runs.insert_one(bson_safe({**{k: summary[k] for k in summary if k not in ('inventory',)}, 'runId': run_id, 'gitCommit': commit,
-                                     'inventoryRange': summary['inventory'].get('range'),
-                                     'method': 'quality/METHOD.md: evidence levels A–G, error-mechanism library, code-tested AI layer'}))
-    for f in findings:
-        f['locator'] = {k: v for k, v in (f.get('locator') or {}).items() if k != 'row'}
-        f['findingKey'] = f"{f['record_key']}|{f['issue_type']}"
-        f['runId'] = run_id
-        for k in ('observed', 'proposed'):
-            if f.get(k) is not None and not isinstance(f[k], (int, float, str, list)):
-                f[k] = str(f[k])
-    db.dq_findings.insert_many([bson_safe(f) for f in findings])
-    db.dq_checked.insert_many([bson_safe({**c, 'runId': run_id}) for c in checked])
+    db.dev_runs.insert_one(bson_safe({**summary, 'runId': run_id, 'gitCommit': commit, 'points': points}))
+    db.dev_items.insert_many([bson_safe({**i, 'itemKey': i['key'], 'runId': run_id}) for i in items])
     db.inventory.insert_many([bson_safe({**r, 'runId': run_id}) for r in inventory])
 
     sizes = {}
     for p in sorted((OUT / 'processed').glob('*.parquet')):
         name = f'proc_{p.stem}'
-        df = pd.read_parquet(p)
+        docs = [bson_safe({**r, 'runId': run_id}) for r in pd.read_parquet(p).to_dict('records')]
         db[name].delete_many({})
-        docs = [bson_safe({**r, 'runId': run_id}) for r in df.to_dict('records')]
         for i in range(0, len(docs), 5000):
             db[name].insert_many(docs[i:i + 5000])
         sizes[name] = len(docs)
 
-    db.dq_findings.create_index([('runId', DESCENDING), ('priority', DESCENDING)])
-    db.dq_findings.create_index([('findingKey', ASCENDING)])
+    db.dev_items.create_index([('runId', DESCENDING), ('at_stake', DESCENDING)])
+    db.dev_items.create_index([('itemKey', ASCENDING)])
+    db.dev_decisions.create_index([('itemKey', ASCENDING), ('at', ASCENDING)])
+    db.dev_runs.create_index([('runAt', DESCENDING)])
     db.inventory.create_index([('runId', DESCENDING), ('year', ASCENDING)])
-    db.dq_reviews.create_index([('findingKey', ASCENDING), ('at', ASCENDING)])
-    db.dq_runs.create_index([('runAt', DESCENDING)])
 
     stats = db.command('dbStats')
-    print(f'Published run {run_id}: {len(findings)} findings, {len(checked)} checked, {len(inventory)} inventory rows')
+    print(f'Published run {run_id}: {len(items)} items, {len(points)} scatter points, {len(inventory)} inventory rows')
     print('Processed tables:', sizes)
     print(f"Database: {stats['dataSize'] / 1e6:.1f} MB of the free tier's 512 MB")
 

@@ -1,54 +1,34 @@
-# Data quality
+# Data curation
 
-Apetit's records contain the usual typing slips: kWh typed where the column says MWh, grams where
-it says kg, Swedish krona booked as euros, invoices posted twice. A few of them inflate the 2025
-footprint about 75 times (Scope 3: 17.5 million t raw, 240,814 t after cleaning). This folder finds
-those slips, fixes them where the evidence allows, and sends the rest to a person.
+> Predict what every number should be, rank the gaps by how many tonnes of CO₂ they would move,
+> and let a person check the top of the list.
 
-**Full explanation, in plain words first: [METHOD.md](METHOD.md).**
+**Method: [METHOD.md](METHOD.md)** (one page).
 
-**How it works, in short:**
+Apetit's raw records put the 2025 footprint at 18.8 million t. After curation it is 228,000 t:
+grams typed as kg, kWh typed as MWh, supplier footprints per tonne instead of per kg.
 
-1. **Look for a second record of the same fact.** Every purchase also appears in the shipment
-   records; certificates appear in the national registry; farm areas appear in the land register.
-   When two records disagree, the independent one decides.
-2. **Name the slip.** A difference of exactly 1,000× is a unit slip; 10× is a decimal point;
-   11.4× is krona booked as euros. If no known slip explains the difference, we don't guess.
-3. **Traffic light.** 🟢 Strong evidence: fixed. 🟡 Good evidence: fixed, a person confirms.
-   🔴 Unclear: a person decides. Soil is the one exception: the footprint uses the soil map as the
-   best estimate, and the farms where map and survey disagree most go to a person.
-4. **Show the effect.** Each finding says how many tonnes of CO₂ it moves, the review list starts
-   with the biggest uncertain ones, and the total comes with a range.
-5. **AI helps the reviewer, never edits the data.** Claude Haiku 5.5 writes a short note per review
-   item (what's wrong, its honest call, what to check). Code tests any suggestion it makes.
+1. **Predict** each number from an independent record: the shipment for a purchase, the same month
+   in other years for a meter, the system's usual top-up for a refrigerant log.
+2. **Compare** on a log scale. Typos land on exact lines (×10, ×1,000, krona as euros). If exactly
+   one typo explains a gap, it is fixed.
+3. **Rank** everything else by tonnes of CO₂ at stake. A person decides in the app's **Dev** tab.
 
-**Results on the organisers' published 2023–2024 answers:**
-
-| | Their example solution | BlueSky |
+| Scored on the published 2023–2024 answers | Organisers' example | BlueSky |
 |---|---|---|
-| Finding the errors | 52.2 | **95.5** |
-| Footprint 2023 | 25.5 | **99.3** |
+| Footprint 2023 | 25.5 | **93.9** |
 | Footprint 2024 | 23.2 | **78.4** |
-
-**Run it:**
+| Errors found | 52.2 | **68.7** |
 
 ```sh
-pip install pandas pyarrow pymongo anthropic
-python3 -m quality.pipeline                          # -> quality/out/ (findings, footprint, range, scores, 2025 submission)
-python3 -m unittest discover -s quality/tests -t .   # tests for the checks and the evidence logic
-python3 -m quality.verify_determinism                # the checks run twice give identical results
-python3 -m quality.publish_mongo                     # -> MongoDB Atlas (MONGODB_URI in frontend/.env)
+pip install pandas pyarrow pymongo
+python3 -m quality.pipeline && python3 -m quality.publish_mongo
+python3 -m unittest discover -s quality/tests -t .
 ```
-
-The AI notes need `ANTHROPIC_API_KEY` in `frontend/.env`; without it everything else runs the same
-(`--no-ai` turns them off explicitly). Answers are cached, so re-runs cost nothing.
 
 | File | What it does |
 |---|---|
-| `rules.py` | The checks: one per kind of slip, each recording the evidence it compared against |
-| `evidence.py` | The trust ladder (A–G), the list of known slips, confidence |
-| `assess.py` | Combines evidence per record, picks the best explanation, sets the traffic light |
-| `impact.py` | How many tonnes of CO₂ each finding moves |
-| `ai.py` | The reviewer's assistant (notes and tested suggestions) |
-| `pipeline.py` | Runs everything and scores it against the published answers |
-| `publish_mongo.py` | Saves the run and the cleaned tables to MongoDB |
+| `gaps.py` | The method: expected values, gaps, typo test, options and tonnes at stake |
+| `impact.py` | Tonnes of CO₂ a change moves, with the package's emission factors |
+| `pipeline.py` | Runs it, applies fixes and people's decisions to a copy, computes the footprint, scores it |
+| `publish_mongo.py` | Saves the run and the corrected tables to MongoDB |
