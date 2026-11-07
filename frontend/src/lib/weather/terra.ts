@@ -1,3 +1,4 @@
+import {sampleGrid,smoothRamp} from './interpolation.mjs';
 import type { PointPrimitive } from 'cesium';
 import { createFieldOverlay } from './overlay.ts';
 import type { Globe } from '../globe/viewer.ts';
@@ -93,8 +94,28 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
    if(kind==='global')ctx.fillRect(i*2,(ny-1-j)*2,2,2);
    else { const x=Math.max(0,i*2-1),y=Math.max(0,(ny-1-j)*2-1);ctx.fillRect(x,y,Math.min(canvas.width,i*2+1)-x,Math.min(canvas.height,(ny-1-j)*2+1)-y); }
   }
+  // Interpolate scalar values before colouring: visual refinement, not extra forecast resolution.
+  if(['rain_bands','precip_mm_h','temp_c','wind','moisture_g_m3'].includes(selected)){
+   const values=Array.from({length:nx*ny},(_,n)=>{
+    let v=selected==='rain_bands'?(kind==='regional'?(f.fields.rain_pattern_mm_h??f.fields.precip_mm_h)?.[n]:f.fields.precip_mm_h?.[n]):selected==='wind'?(comparisonView?f.fields.wind[n]:Math.hypot(f.fields.u_ms[n]??0,f.fields.v_ms[n]??0)):f.fields[selected]?.[n];
+    if(selected==='rain_bands'&&kind==='regional'&&!f.controls.paused&&!comparisonView){const old=previousFrames.regional?.fields.rain_pattern_mm_h?.[n];if(old!=null&&v!=null)v=old+(v-old)*Math.min(1,(performance.now()-arrived.regional)/1000);}
+    return v==null?NaN:v;
+   });
+   canvas.width=kind==='global'?nx*12:(nx-1)*12;canvas.height=(ny-1)*12;
+   const image=ctx.createImageData(canvas.width,canvas.height);
+   for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++){
+    const gx=kind==='global'?(x+.5)/canvas.width*nx:(x+.5)/canvas.width*(nx-1),gy=(1-(y+.5)/canvas.height)*(ny-1);
+    const raw=sampleGrid(values,nx,ny,gx,gy,kind==='global');if(raw==null)continue;
+    const value=(selected==='rain_bands'||selected==='precip_mm_h')?raw*(comparisonView?1:f.controls.rain_scale):raw;
+    const color=comparisonView==='difference'?differenceRgb(value,differenceRanges[selected]??10):rgb(selected,value);
+    let alpha=selected==='rain_bands'?(.55+.3*Math.min(1,value/3))*smoothRamp(.05,.15,value):.63;
+    if(kind==='regional')alpha*=smoothRamp(0,.65,Math.min(gx,nx-1-gx,gy,ny-1-gy));
+    const k=(y*canvas.width+x)*4;image.data[k]=color[0];image.data[k+1]=color[1];image.data[k+2]=color[2];image.data[k+3]=Math.round(alpha*255);
+   }
+   ctx.putImageData(image,0,0);
+  }
   // Global centers begin at -180: split at dateline by circularly shifting half a cell.
-  if(kind==='global') { const image=ctx.getImageData(0,0,canvas.width,canvas.height);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.putImageData(image,-1,0);ctx.putImageData(image,canvas.width-1,0); }
+  if(kind==='global'&&!['rain_bands','precip_mm_h','temp_c','wind','moisture_g_m3'].includes(selected)) { const image=ctx.getImageData(0,0,canvas.width,canvas.height);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.putImageData(image,-1,0);ctx.putImageData(image,canvas.width-1,0); }
   if(!overlays[kind])overlays[kind]=createFieldOverlay(globe,kind,[west,kind==='global'?-90:south,kind==='global'?180:east,kind==='global'?90:north],canvas);
   overlays[kind]!.update(canvas,visible);
  }
@@ -122,8 +143,9 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   points.show=visible&&(selected==='wind'||(selected==='rain_bands'&&windOnRain))&&!scenarioFrame&&!comparisonView;
   if(!points.show)return;
   for(const p of particles){const f=state[p.kind];p.point.show=!!f&&f.ready!==false&&now-timestamps[p.kind]<4000;if(!f||!p.point.show||f.controls.paused||f.at_forecast_end)continue;
-   const grid=f.grid,i=p.kind==='global'?((Math.round((p.lon-grid.west)/360*grid.nx)%grid.nx)+grid.nx)%grid.nx:Math.max(0,Math.min(grid.nx-1,Math.round((p.lon-grid.west)/(grid.east-grid.west)*(grid.nx-1)))),j=Math.max(0,Math.min(grid.ny-1,Math.round((p.lat-grid.south)/(grid.north-grid.south)*(grid.ny-1)))),n=j*grid.nx+i;
-   p.lon+=(f.fields.u_ms[n]??0)*dt*f.controls.speed/(111320*Math.cos(p.lat*Math.PI/180));p.lat+=(f.fields.v_ms[n]??0)*dt*f.controls.speed/111320;
+   const grid=f.grid,gx=p.kind==='global'?(p.lon-grid.west)/360*grid.nx:(p.lon-grid.west)/(grid.east-grid.west)*(grid.nx-1),gy=(p.lat-grid.south)/(grid.north-grid.south)*(grid.ny-1);
+   const u=sampleGrid(f.fields.u_ms,grid.nx,grid.ny,gx,gy,p.kind==='global')??0,v=sampleGrid(f.fields.v_ms,grid.nx,grid.ny,gx,gy,p.kind==='global')??0;
+   p.lon+=u*dt*f.controls.speed/(111320*Math.cos(p.lat*Math.PI/180));p.lat+=v*dt*f.controls.speed/111320;
    if(p.kind==='global'){p.lon=((p.lon+180)%360+360)%360-180;if(Math.abs(p.lat)>85)p.lat=-85+Math.random()*170;}
    else if(p.lon<10||p.lon>33||p.lat<54||p.lat>71){p.lon=10+Math.random()*23;p.lat=54+Math.random()*17;}
    p.point.position=C.Cartesian3.fromDegrees(p.lon,p.lat,18000);
