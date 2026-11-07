@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# Apetit x SinceAI challenge materials (brief + dataset zip)
+/Apetit_SinceAI2026/
+
+# Selections exported from the drawing tool
+selection-*.geojson
