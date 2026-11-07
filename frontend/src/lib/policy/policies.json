@@ -1,0 +1,107 @@
+{
+	"note": "Illustrative weights for a planning aid, not a policy model. World cards move the warming meter by their approximate share of global greenhouse-gas emissions (EDGAR, rounded). 'Here' cards change what the climate does to Apetit's land and costs; they barely move the meter.",
+	"policies": [
+		{
+			"id": "world_china",
+			"group": "world",
+			"title": "China delivers net zero by 2060",
+			"status": "pledged",
+			"meterWeight": 0.3,
+			"summary": "Largest emitter, about 30 % of global emissions. Delivering its pledge is the single biggest lever on the warming Apetit's growers will face.",
+			"source": "EDGAR global GHG emissions; China's 2060 carbon-neutrality pledge"
+		},
+		{
+			"id": "world_us",
+			"group": "world",
+			"title": "United States returns to net zero by 2050",
+			"status": "speculative",
+			"meterWeight": 0.11,
+			"summary": "About 11 % of global emissions. Federal climate policy has been rolled back, so this card is speculative.",
+			"source": "EDGAR global GHG emissions"
+		},
+		{
+			"id": "world_india",
+			"group": "world",
+			"title": "India delivers net zero by 2070",
+			"status": "pledged",
+			"meterWeight": 0.08,
+			"summary": "About 8 % of global emissions and rising fastest of the large economies.",
+			"source": "EDGAR global GHG emissions; India's 2070 net-zero pledge"
+		},
+		{
+			"id": "world_eu",
+			"group": "world",
+			"title": "EU delivers climate neutrality by 2050",
+			"status": "adopted",
+			"meterWeight": 0.06,
+			"summary": "About 6 % of global emissions. Legally binding under the European Climate Law; the 2040 target is being set.",
+			"source": "European Climate Law (EU) 2021/1119; EDGAR"
+		},
+		{
+			"id": "world_rest",
+			"group": "world",
+			"title": "Rest of the world meets its net-zero pledges",
+			"status": "pledged",
+			"meterWeight": 0.45,
+			"summary": "Everyone else, about 45 % of emissions. Without them no single bloc can hold warming down.",
+			"source": "EDGAR global GHG emissions; Climate Action Tracker"
+		},
+		{
+			"id": "fi_climate_act",
+			"group": "here",
+			"title": "Finland: carbon neutral by 2035",
+			"status": "adopted",
+			"meterWeight": 0.001,
+			"summary": "Finland emits about 0.1 % of the world total. Watch the meter: it barely moves. Local policy changes what the climate does to the land, not the climate itself.",
+			"source": "Finnish Climate Act 423/2022"
+		},
+		{
+			"id": "eu_nature_restoration",
+			"group": "here",
+			"title": "Nature Restoration Law: restore drained farmland peat",
+			"status": "adopted",
+			"effects": { "peatRestoredShare": { "2030": 0.3, "2040": 0.4, "2050": 0.5 } },
+			"summary": "Restore 30 % of drained organic soils under agriculture by 2030, 40 % by 2040, 50 % by 2050 (national target; applied here proportionally to contract peat as a simplification).",
+			"lever": "L11",
+			"source": "Regulation (EU) 2024/1991 (Nature Restoration), Article 11"
+		},
+		{
+			"id": "fi_peat_ban",
+			"group": "here",
+			"title": "No annual crops on drained peat from 2030",
+			"status": "speculative",
+			"effects": { "peatRestoredShare": { "2030": 1.0, "2040": 1.0, "2050": 1.0 } },
+			"summary": "A stricter national rule. Removes peat emissions under Apetit crops but takes that area out of production.",
+			"lever": "L11",
+			"source": "Scenario; organic-soil factors from package METHODOLOGY.md §5"
+		},
+		{
+			"id": "cap_catch_crops",
+			"group": "here",
+			"title": "Catch crops required after early harvest",
+			"status": "proposed",
+			"effects": { "catchCropShare": 1.0 },
+			"summary": "Extends Finland's CAP winter-cover eco-scheme into a requirement after pea and spinach. Cuts nitrogen leaching; cost per the lever catalogue.",
+			"lever": "L10",
+			"source": "Finland CAP Strategic Plan 2023–2027 (eco-schemes); package lever L10"
+		},
+		{
+			"id": "eu_ets2",
+			"group": "costs",
+			"title": "EU ETS2: carbon price on fuels from 2028",
+			"status": "adopted",
+			"effects": { "dieselCarbonPrice": true },
+			"summary": "Puts a carbon price on farm and transport diesel. Price path follows the world scenario.",
+			"source": "Directive (EU) 2023/959; package transition_scenarios.csv"
+		},
+		{
+			"id": "eu_cbam_fertiliser",
+			"group": "costs",
+			"title": "CBAM on imported fertiliser",
+			"status": "adopted",
+			"effects": { "fertiliserCarbonPrice": true },
+			"summary": "Imported nitrogen fertiliser pays the EU carbon price on its production emissions, levelling with EU-made fertiliser. Raises growers' input costs as the carbon price rises.",
+			"source": "Regulation (EU) 2023/956 (CBAM); AN footprint 3.7 kg CO₂e/kg N from package METHODOLOGY.md §5"
+		}
+	]
+}

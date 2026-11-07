@@ -11,7 +11,7 @@
 	import SidePanel from '#lib/ui/SidePanel.svelte';
 	import { panelOpen } from '#lib/ui/panel.ts';
 	import WeatherPanel from '#lib/weather/WeatherPanel.svelte';
-	import LensPanel from '#lib/lens/LensPanel.svelte';
+	import RightPanel from '#lib/ui/RightPanel.svelte';
 
 	let container: HTMLDivElement;
 	let credits: HTMLDivElement;
@@ -94,7 +94,7 @@
 		{/if}
 	</main>
 
-	<SidePanel>{#if globe}<LensPanel {globe} />{/if}</SidePanel>
+	<SidePanel>{#if globe}<RightPanel {globe} />{/if}</SidePanel>
 </div>
 
 <style>
