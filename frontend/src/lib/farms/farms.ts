@@ -136,10 +136,13 @@ export function attachFarms(globe: Globe, onStatus: (s: FarmStatus) => void) {
 		return Object.fromEntries(Object.entries(acc).map(([k, r]) => [k, { activeHa: r.ha, stressedPct: r.ha ? 100 * r.stressedHa / r.ha : 0, meanStress: r.ha ? r.sum / r.ha : 0 }]));
 	}
 
+	/** Hidden while another right-panel tab is open, without losing the chosen layer. */
+	let hidden = false;
+
 	function paint() {
 		if (!data) return;
 		const p = data.parcels; let shown = 0;
-		collection.show = layer !== 'off';
+		collection.show = layer !== 'off' && !hidden;
 		for (let i = 0; i < points.length; i++) {
 			const pt = points[i]; const ok = layer !== 'off' && passes(i);
 			pt.show = ok; if (!ok) continue; shown++;
@@ -218,6 +221,7 @@ export function attachFarms(globe: Globe, onStatus: (s: FarmStatus) => void) {
 	return {
 		setLayer(l: FarmLayer) { seasonRequest++;status.error=undefined;layer = l; status.layer = l; if (l !== 'stress_replay') { playing = false; status.replay = undefined; } if (l !== 'stress_live') status.live = undefined; paint(); },
 		setFilter(f: FarmFilter) { filter = f; paint(); },
+		setVisible(show: boolean) { hidden = !show; collection.show = layer !== 'off' && !hidden; viewer.scene.requestRender(); },
 		/** Feed each live TERRA regional frame; parcels resample crop_stress immediately. */
 		updateLive(frame: Frame | undefined) { if (!frame) return; liveFrame = frame; if (layer === 'stress_live') paint(); },
 		async playSeason(key: string) {

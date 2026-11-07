@@ -19,6 +19,7 @@
 	import { areaFacts, areaRisk, loadPolicyData, type PolicyData } from './data.ts';
 	import { attachRiskLayer } from './riskLayer.ts';
 	import { policyState } from './state.ts';
+	import { activeTab } from '../ui/panel.ts';
 
 	let { globe }: { globe: Globe } = $props();
 
@@ -55,7 +56,8 @@
 	const range = $derived(d ? { lo: warmingAt(1, st.year, d.warming), mid: warmingAt(0.5, st.year, d.warming), hi: warmingAt(0, st.year, d.warming) } : null);
 
 	$effect(() => {
-		const visible = st.showMap, r = st.risk, g = gwl;
+		// Risk squares only while the Scenario tab is open.
+		const visible = st.showMap && $activeTab === 'scenario', r = st.risk, g = gwl;
 		if (!layer || g === null) return;
 		layer.setVisible(visible);
 		if (visible) layer.update(r, g);

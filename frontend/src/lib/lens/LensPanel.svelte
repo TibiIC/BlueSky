@@ -3,7 +3,7 @@
 	import type { Globe } from '../globe/viewer.ts';
 	import { analyses, selectedShape } from '../drawing/store.ts';
 	import { centroidOf } from '../geo/turf.ts';
-	import { panelOpen } from '../ui/panel.ts';
+	import { panelOpen, activeTab } from '../ui/panel.ts';
 	import { attachLensLayer, SOIL_COLOR, STATUS_COLOR, type LensLayer } from './layer.ts';
 	import { terraNow, type TerraNow } from './terraNow.ts';
 	import { openSbtnReview } from './sbtn.ts';
@@ -41,6 +41,13 @@
 	const lens = $derived(analysis?.status === 'done' ? analysis.result.lens : undefined);
 	const report = $derived(lens?.available ? (lens as LensReport) : null);
 	const hasParcels = $derived(!!report && report.area.parcels > 0);
+
+	// Parcels and synthetic catchments step aside on the Weather tab, which has its own field and river layers.
+	$effect(() => {
+		const onWeather = $activeTab === 'weather';
+		layer?.setCatchmentsVisible(showCatchments && !onWeather);
+		layer?.setParcelsVisible(showParcels && !onWeather);
+	});
 
 	// Highlight the selected area's parcels and open the panel when a report arrives.
 	$effect(() => {

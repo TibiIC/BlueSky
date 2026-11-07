@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import type { Globe } from '../globe/viewer.ts';
 	import type { Frame } from '../weather/terra.ts';
+	import { activeTab } from '../ui/panel.ts';
 	import {
 		attachFarms, APETIT_CROPS, CROP_COLORS, CROP_LABELS, REGION_LABELS, SEASONS, SOIL_COLORS, bioRgb, stressRgb,
 		type FarmLayer, type FarmStatus
@@ -18,6 +19,8 @@
 
 	$effect(() => { const g = globe; const a = untrack(() => attachFarms(g, s => (status = s))); api = a; return () => { a.destroy(); api = undefined; }; });
 	$effect(() => { const f = regional; untrack(() => api?.updateLive(f)); });
+	// Field dots belong to the Weather tab; other tabs draw their own parcel layers.
+	$effect(() => { const show = $activeTab === 'weather'; untrack(() => api?.setVisible(show)); });
 
 	// Season replay first: the most telling view. The microbiome proxy stays in farms.ts (and the evidence
 	// catalogue for reports) but is off the screen: it has no measured microbial data behind it.
