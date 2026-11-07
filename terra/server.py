@@ -119,7 +119,7 @@ class Engine:
                     else: self.error='New forecast does not cover simulation clock; reset to now to adopt it.'
             except Exception as exc:
                 with self.lock: self.error=f'{type(exc).__name__}: {exc}'
-            if self.stop.wait(900): break
+            if self.stop.wait(3600): break
     def refresh_global(self):
         while not self.stop.is_set():
             self.global_attempt=time.time()
@@ -137,7 +137,7 @@ class Engine:
                     else: self.global_error="New forecast does not cover clock; reset to now."
             except Exception as exc:
                 with self.lock: self.global_error=f"{type(exc).__name__}: {exc}"
-            if self.stop.wait(900): break
+            if self.stop.wait(3600): break
     def control(self,body):
         allowed={'speed','paused','rain_scale','capacity_mm','reset'}
         if not isinstance(body,dict) or set(body)-allowed: raise ValueError('Unknown control')

@@ -1,0 +1,1417 @@
+{
+  "schema": "terra.measured-finland-biology.v1",
+  "title": "Karstula forest soil biology · Finland",
+  "source_url": "https://zenodo.org/records/13837158",
+  "doi": "10.5281/zenodo.13837158",
+  "license": "CC BY 4.0",
+  "citation": "Adamczyk B, Adamczyk S, Tupek B, Li Q, Martinovic T, Richy E, Lehtonen A, Baldrian P, Mäkipää R (2025). Soil chemistry, organic carbon pool, microbial biomass and necromass, enzymes activity and greenhouse gas fluxes after a long-term N fertilization of a Scots pine forest in Finland. Zenodo. https://doi.org/10.5281/zenodo.13837158",
+  "retrieved_at": "2026-11-07T14:58:31.420442+00:00",
+  "sources": [
+    {
+      "url": "https://zenodo.org/api/records/13837158/files/Karstula_SOM.csv/content",
+      "sha256": "4e6d38b02da0aae8b01b46200d3a09749d17f65a0d93e0bce7e13899472342dd"
+    },
+    {
+      "url": "https://zenodo.org/api/records/13837158/files/Karstula_Enzyme_activity.csv/content",
+      "sha256": "172441fe58c45a535255a5f8056b1324fb4247fdc27c89f199b4c364b8709df4"
+    }
+  ],
+  "samples": [
+    {
+      "id": "4N1_H",
+      "plot": "4",
+      "block": "75",
+      "replicate": "1",
+      "layer": "Organic layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 41.838798,
+      "fungal_necromass_mg_g_dw": 60.301,
+      "ph": 4.471,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 112263.1102,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 186046.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 58141.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 19383.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 50313.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 103413.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "4N2_H",
+      "plot": "4",
+      "block": "75",
+      "replicate": "2",
+      "layer": "Organic layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 22.93737634,
+      "fungal_necromass_mg_g_dw": 31.659,
+      "ph": 4.324,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 95738.6143,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 160740.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 54089.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 16768.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 47965.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 91926.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "4N3_H",
+      "plot": "4",
+      "block": "75",
+      "replicate": "3",
+      "layer": "Organic layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 35.68249443,
+      "fungal_necromass_mg_g_dw": 48.251,
+      "ph": 4.299,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 101063.4625,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 179950.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 55488.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 18060.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 49092.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 97609.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "8N1_H",
+      "plot": "8",
+      "block": "76",
+      "replicate": "1",
+      "layer": "Organic layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 26.12621313,
+      "fungal_necromass_mg_g_dw": 38.123,
+      "ph": 4.321,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 171361.9942,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 141212.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 50979.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 25742.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 58142.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 24147.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "8N2_H",
+      "plot": "8",
+      "block": "76",
+      "replicate": "2",
+      "layer": "Organic layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 25.25639806,
+      "fungal_necromass_mg_g_dw": 35.128,
+      "ph": 4.455,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 165656.8718,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 133326.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 53361.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 27634.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 67212.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 22887.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "8N3_H",
+      "plot": "8",
+      "block": "76",
+      "replicate": "3",
+      "layer": "Organic layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 23.90185695,
+      "fungal_necromass_mg_g_dw": 34.931,
+      "ph": 4.612,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 160335.4379,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 137326.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 53983.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 29163.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 59941.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 21025.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "7C1_H",
+      "plot": "7",
+      "block": "75",
+      "replicate": "1",
+      "layer": "Organic layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 26.21063302,
+      "fungal_necromass_mg_g_dw": 31.477,
+      "ph": 4.453,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 55579.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 102520.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 46693.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 13381.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 39364.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 120.5437995,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 15379.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "7C2_H",
+      "plot": "7",
+      "block": "75",
+      "replicate": "2",
+      "layer": "Organic layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 20.61122288,
+      "fungal_necromass_mg_g_dw": 32.666,
+      "ph": 4.409,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 50772.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 90535.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 43743.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 12440.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 37992.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 13219.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 1.506931887,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "7C3_H",
+      "plot": "7",
+      "block": "75",
+      "replicate": "3",
+      "layer": "Organic layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 15.05443733,
+      "fungal_necromass_mg_g_dw": 23.823,
+      "ph": 4.39,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 46220.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 87417.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 42543.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 11334.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 36666.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 6.860216234,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 10819.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 2.938517179,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "1C1_H",
+      "plot": "1",
+      "block": "76",
+      "replicate": "1",
+      "layer": "Organic layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 22.33677198,
+      "fungal_necromass_mg_g_dw": 28.605,
+      "ph": 4.882,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 39006.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 45259.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 19142.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 18568.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 23226.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 18013.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "1C2_H",
+      "plot": "1",
+      "block": "76",
+      "replicate": "2",
+      "layer": "Organic layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 16.05254906,
+      "fungal_necromass_mg_g_dw": 28.556,
+      "ph": 4.762,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 33627.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 42680.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 18664.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 17718.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 21962.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 15406.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "1C3_H",
+      "plot": "1",
+      "block": "76",
+      "replicate": "3",
+      "layer": "Organic layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 24.20863367,
+      "fungal_necromass_mg_g_dw": 36.157,
+      "ph": 4.321,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 38733.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 39500.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 18313.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 17427.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 21324.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 17965.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 1.130198915,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "4N1_M",
+      "plot": "4",
+      "block": "75",
+      "replicate": "1",
+      "layer": "Mineral layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 0.736766674,
+      "fungal_necromass_mg_g_dw": 2.816,
+      "ph": 3.854,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 164466.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 88959.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 41284.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 7924.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 46875.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 35413.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.158227848,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "4N2_M",
+      "plot": "4",
+      "block": "75",
+      "replicate": "2",
+      "layer": "Mineral layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 1.466733317,
+      "fungal_necromass_mg_g_dw": 5.606,
+      "ph": 3.954,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 202146.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 113179.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 44220.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 8724.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 48147.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 40820.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "4N3_M",
+      "plot": "4",
+      "block": "75",
+      "replicate": "3",
+      "layer": "Mineral layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 1.770081001,
+      "fungal_necromass_mg_g_dw": 6.765,
+      "ph": 3.901,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 231793.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 132286.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 46647.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 9957.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 50186.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 46525.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "8N1_M",
+      "plot": "8",
+      "block": "76",
+      "replicate": "1",
+      "layer": "Mineral layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 0.578814829,
+      "fungal_necromass_mg_g_dw": 9.754,
+      "ph": 3.525,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 46460.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 28052.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 11406.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 12083.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 27673.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 27020.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "8N2_M",
+      "plot": "8",
+      "block": "76",
+      "replicate": "2",
+      "layer": "Mineral layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 0.700610416,
+      "fungal_necromass_mg_g_dw": 8.234,
+      "ph": 3.456,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 52100.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 30745.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 12093.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 13019.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 28986.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 29406.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "8N3_M",
+      "plot": "8",
+      "block": "76",
+      "replicate": "3",
+      "layer": "Mineral layer",
+      "treatment": "N fertilization",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 1.001387357,
+      "fungal_necromass_mg_g_dw": 11.132,
+      "ph": 3.566,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 56859.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 33353.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 13344.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 14046.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 30073.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 25233.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "7C1_M",
+      "plot": "7",
+      "block": "75",
+      "replicate": "1",
+      "layer": "Mineral layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 0.795479129,
+      "fungal_necromass_mg_g_dw": 0.234,
+      "ph": 3.606,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 200712.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 27630.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 13326.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 7231.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 21853.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 20586.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "7C2_M",
+      "plot": "7",
+      "block": "75",
+      "replicate": "2",
+      "layer": "Mineral layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 1.125322051,
+      "fungal_necromass_mg_g_dw": 0.132,
+      "ph": 3.69,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 220177.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 29960.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 16020.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 8479.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 23139.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 22525.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 1.506931887,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "7C3_M",
+      "plot": "7",
+      "block": "75",
+      "replicate": "3",
+      "layer": "Mineral layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 0.451994682,
+      "fungal_necromass_mg_g_dw": 0.111,
+      "ph": 3.521,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 176620.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 24392.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 12094.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 6553.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 20359.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 18346.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 2.938517179,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "1C1_M",
+      "plot": "1",
+      "block": "76",
+      "replicate": "1",
+      "layer": "Mineral layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 1.232409671,
+      "fungal_necromass_mg_g_dw": 0.341,
+      "ph": 3.845,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 120100.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 78478.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 41342.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 5367.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 41299.2,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 120.5437995,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 28820.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "1C2_M",
+      "plot": "1",
+      "block": "76",
+      "replicate": "2",
+      "layer": "Mineral layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 1.224793223,
+      "fungal_necromass_mg_g_dw": 0.256,
+      "ph": 3.799,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 137613.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 99334.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 50340.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 6327.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 43647.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 30626.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 0.0,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    },
+    {
+      "id": "1C3_M",
+      "plot": "1",
+      "block": "76",
+      "replicate": "3",
+      "layer": "Mineral layer",
+      "treatment": "Control",
+      "date": "2021-09",
+      "date_precision": "month",
+      "lat": 62.91203972222222,
+      "lon": 24.571116944444444,
+      "coordinate_scope": "Study-level coordinate; plot coordinates not supplied",
+      "fungal_biomass_mg_g_dw": 0.822098759,
+      "fungal_necromass_mg_g_dw": 0.123,
+      "ph": 3.771,
+      "enzymes": [
+        {
+          "enzyme": "N-acetylglucosaminidase",
+          "value": 115926.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-glucosidase",
+          "value": 79018.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Cellobiosidase",
+          "value": 39999.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phosphatase",
+          "value": 5592.6,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Beta-xylosidase",
+          "value": 42506.4,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Leucine-aminopeptidase",
+          "value": 6.860216234,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Peroxidase",
+          "value": 27652.8,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        },
+        {
+          "enzyme": "Phenol oxidase",
+          "value": 1.130198915,
+          "unit": "nmol h⁻¹ g⁻¹ dry weight"
+        }
+      ]
+    }
+  ],
+  "sample_count": 24,
+  "enzyme_record_count": 192,
+  "notice": "Historical forest soil measurements from September 2021. Fungal biomass/necromass are source-reported biomarker-based estimates, not DNA richness, organism counts or a microbiome diversity index. Treatments and soil layers are separate; values are not directly comparable to Swedish ASV/Shannon data. No link to Apetit farms. One study-level coordinate; individual plot positions and spatial uncertainty are not supplied.",
+  "methods": "Organic and upper mineral soil (0–20 cm) sampled in September 2021. Dataset reports fungal biomass based on ergosterol and necromass markers based on glucosamine. Source file units are retained: mg/g dry weight. Enzyme activities retain nmol/h/g dry weight. Sampling depth is layer-dependent; no exact depth is invented for the organic layer."
+}

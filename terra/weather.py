@@ -10,7 +10,9 @@ import urllib.request
 from model import LATS,LONS,iso
 from agriculture import enrich,THRESHOLDS
 
-ANCHORS=[(lat,lon) for lat in (55.,58.5,62.,65.5,70.) for lon in (11.,16.25,21.5,26.75,32.)]
+ANCHOR_LATS=[54+i*17/14 for i in range(15)]
+ANCHOR_LONS=[10+i*23/12 for i in range(13)]
+ANCHORS=[(lat,lon) for lat in ANCHOR_LATS for lon in ANCHOR_LONS]
 LAND_VARIABLES='soil_moisture_0_to_7cm,soil_moisture_7_to_28cm,soil_moisture_28_to_100cm,soil_temperature_0_to_7cm,snow_depth'
 VARIABLES='temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m,et0_fao_evapotranspiration'
 # Optional transport-level winds. Served by the forecast API; the ERA5 archive
@@ -26,7 +28,7 @@ class Forecast:
     variables=VARIABLES+','+LAND_VARIABLES
     lats=LATS
     lons=LONS
-    spatial_method="inverse-distance weighted, 25 samples; not native grid resolution"
+    spatial_method="bilinear interpolation, 195 regular Nordic samples (~100–135 km spacing); not native model resolution"
     def __init__(self,start=None,records=None,fetched=None):
         self.start=start if start is not None else time.time()
         self.records=records; self.fetched=fetched
@@ -35,12 +37,23 @@ class Forecast:
         self.weights=[]
         for y in self.lats:
             for x in self.lons:
-                distances=[((x-lon)*math.cos(math.radians(y)))**2+(y-lat)**2 for lat,lon in self.anchors]
-                w=[1/max(d,.001) for d in distances]; total=sum(w)
-                self.weights.append([v/total for v in w])
+                if self.anchors is ANCHORS:
+                    yi=max(0,min(13,bisect.bisect_right(ANCHOR_LATS,y)-1));xi=max(0,min(11,bisect.bisect_right(ANCHOR_LONS,x)-1))
+                    fy=max(0,min(1,(y-ANCHOR_LATS[yi])/(ANCHOR_LATS[yi+1]-ANCHOR_LATS[yi])));fx=max(0,min(1,(x-ANCHOR_LONS[xi])/(ANCHOR_LONS[xi+1]-ANCHOR_LONS[xi])))
+                    w=[0.]*len(ANCHORS)
+                    for j,i,v in [(yi,xi,(1-fy)*(1-fx)),(yi,xi+1,(1-fy)*fx),(yi+1,xi,fy*(1-fx)),(yi+1,xi+1,fy*fx)]:w[j*13+i]=v
+                    self.weights.append(w)
+                else:
+                    distances=[((x-lon)*math.cos(math.radians(y)))**2+(y-lat)**2 for lat,lon in self.anchors]
+                    w=[1/max(d,.001) for d in distances]; total=sum(w)
+                    self.weights.append([v/total for v in w])
+    def sparse_weights(self):
+        if getattr(self,'_weights_ref',None) is not self.weights:
+            self._weights_ref=self.weights;self._sparse_weights=[[(i,w) for i,w in enumerate(row) if w>0] for row in self.weights]
+        return self._sparse_weights
     @classmethod
     def fetch(cls):
-        params=dict(latitude=','.join(str(a[0]) for a in cls.anchors),longitude=','.join(str(a[1]) for a in cls.anchors),hourly=cls.variables+','+TRANSPORT_VARIABLES,wind_speed_unit='ms',timeformat='unixtime',timezone='GMT',forecast_days=7,cell_selection='nearest')
+        params=dict(latitude=','.join(f'{a[0]:.4f}' for a in cls.anchors),longitude=','.join(f'{a[1]:.4f}' for a in cls.anchors),hourly=cls.variables+','+TRANSPORT_VARIABLES,wind_speed_unit='ms',timeformat='unixtime',timezone='GMT',forecast_days=7,cell_selection='nearest')
         req=urllib.request.Request('https://api.open-meteo.com/v1/forecast?'+urllib.parse.urlencode(params),headers={'User-Agent':'TERRA-hackathon-prototype/1.0'})
         with urllib.request.urlopen(req,timeout=20) as response: records=json.load(response)
         cls.validate(records)
@@ -70,7 +83,7 @@ class Forecast:
     def fetch_history(cls,start_date,end_date):
         start,end=cls.history_dates(start_date,end_date)
         # Extra endpoint day supplies the midnight closing the final hourly interval.
-        params=dict(latitude=','.join(str(a[0]) for a in cls.anchors),longitude=','.join(str(a[1]) for a in cls.anchors),hourly=cls.variables,wind_speed_unit='ms',timeformat='unixtime',timezone='GMT',models='era5_seamless',start_date=start.isoformat(),end_date=(end+timedelta(days=1)).isoformat(),cell_selection='nearest')
+        params=dict(latitude=','.join(f'{a[0]:.4f}' for a in cls.anchors),longitude=','.join(f'{a[1]:.4f}' for a in cls.anchors),hourly=cls.variables,wind_speed_unit='ms',timeformat='unixtime',timezone='GMT',models='era5_seamless',start_date=start.isoformat(),end_date=(end+timedelta(days=1)).isoformat(),cell_selection='nearest')
         recent=end>datetime.now(timezone.utc).date()-timedelta(days=7)
         if recent:
             params.pop('models')
@@ -84,7 +97,7 @@ class Forecast:
         f=cls(start=beginning,records=records,fetched=time.time());f.end=ending;f.product='recent-history' if recent else 'reanalysis';f.history_range=[start.isoformat(),end.isoformat()]
         return f
     def initial_land(self,t):
-        """IDW land initialization; renormalize around sea/missing soil samples."""
+        """Regional bilinear / global IDW initialization; renormalize valid soil corners."""
         output={k:[] for k in LAND_VARIABLES.split(',')}
         if not self.records:return output
         anchor_values=[]
@@ -121,8 +134,8 @@ class Forecast:
                 rate_index=max(0,min(len(ts)-1,bisect.bisect_left(ts,t)))
                 temp=lerp('temperature_2m'); rh=lerp('relative_humidity_2m')
                 values.append((temp,u0*(1-a)+u1*a,v0*(1-a)+v1*a,h['precipitation'][rate_index],h['et0_fao_evapotranspiration'][rate_index],vapor(temp,rh),tu,tv))
-            for weights in self.weights:
-                for idx,key in enumerate(out): out[key].append(sum(w*v[idx] for w,v in zip(weights,values)))
+            for weights in self.sparse_weights():
+                for idx,key in enumerate(out): out[key].append(sum(w*values[i][idx] for i,w in weights))
             self.transport_wind='850hPa' if levels=={'850hPa'} else '10m' if levels=={'10m'} else 'mixed 850hPa/10m'
         else:
             hour=(t-self.start)/3600

@@ -2,7 +2,7 @@ import type { PointPrimitive } from 'cesium';
 import { createFieldOverlay } from './overlay.ts';
 import type { Globe } from '../globe/viewer.ts';
 
-export type Field = 'moisture_g_m3' | 'precip_mm_h' | 'soil_fraction' | 'temp_c' | 'snow_water_mm' | 'crop_stress' | 'wind' | 'rain_day_mm' | 'frost_pct' | 'heat_pct' | 'wind_risk_pct' | 'heavy_rain_pct';
+export type Field = 'rain_bands' | 'moisture_g_m3' | 'precip_mm_h' | 'soil_fraction' | 'temp_c' | 'snow_water_mm' | 'crop_stress' | 'wind' | 'rain_day_mm' | 'frost_pct' | 'heat_pct' | 'wind_risk_pct' | 'heavy_rain_pct';
 export interface Timeline {
  mode:'live'|'historical';loading:boolean;error:string|null;request_id:number;max_history_date:string;reanalysis_through:string;range:[string,string]|null;position_seconds:number;start_time:string|null;end_time:string;
  summary?:{precipitation_total_mm:number;min_mean_temperature_c:number;max_mean_temperature_c:number;peak_mean_wind_ms:number;series:{time:string;temperature_c:number;precip_mm_h:number;wind_ms:number}[]}|null;
@@ -33,12 +33,13 @@ export function differenceRgb(value:number,limit:number):[number,number,number]{
 }
 export interface Status {scenarioActive?:boolean;comparison?:WeatherComparison;comparisonView?:ComparisonView|null; regional?: Frame; global?: Frame; regionalConnected: boolean; globalConnected: boolean; error?: string }
 export const ranges: Record<Field, [number, number, string]> = {
+ rain_bands:[0,3,'mm/h'],
  rain_day_mm:[0,30,'mm/day'],frost_pct:[0,100,'%'],heat_pct:[0,100,'%'],wind_risk_pct:[0,100,'%'],heavy_rain_pct:[0,100,'%'],
  snow_water_mm: [0,150,'mm'], crop_stress: [0,1,'1 − Ks'], moisture_g_m3: [0, 12, 'g/m³'], precip_mm_h: [0, 3, 'mm/h'], soil_fraction: [0, 1, 'fraction'], temp_c: [-15, 30, '°C'], wind: [0, 20, 'm/s']
 };
 export function rgb(field: Field, value: number): [number, number, number] {
  const [lo, hi] = ranges[field], t = Math.max(0, Math.min(1, (value-lo)/(hi-lo)));
- const a = riskFields.has(field)?[235,239,231]:field === 'soil_fraction' ? [164, 95, 52] : [22, 62, 114], b = riskFields.has(field)?[226,103,67]:[210,242,145];
+ const a = field==='rain_bands'?[70,155,255]:riskFields.has(field)?[235,239,231]:field === 'soil_fraction' ? [164, 95, 52] : [22, 62, 114], b = field==='rain_bands'?[211,95,245]:riskFields.has(field)?[226,103,67]:[210,242,145];
  return a.map((v,i) => Math.round(v+(b[i]-v)*t)) as [number, number, number];
 }
 export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
@@ -79,15 +80,17 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   canvas.height = kind === 'global' ? ny*2 : (ny-1)*2;
   const ctx=canvas.getContext('2d')!;
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++) {
-   const n=j*nx+i, raw=selected==='wind'?(comparisonView?f.fields.wind[n]:Math.hypot(f.fields.u_ms[n] ?? 0,f.fields.v_ms[n] ?? 0)):f.fields[selected]?.[n];
+   const n=j*nx+i, raw=selected==='rain_bands'?f.fields.precip_mm_h?.[n]:selected==='wind'?(comparisonView?f.fields.wind[n]:Math.hypot(f.fields.u_ms[n] ?? 0,f.fields.v_ms[n] ?? 0)):f.fields[selected]?.[n];
    if(raw===null||raw===undefined)continue;
    if(riskFields.has(selected)&&f.grid.land_mask?.[n]!==true)continue;
    if((selected==='rain_day_mm'||selected==='heavy_rain_pct')&&(f.fields.rain_day_coverage_h?.[n]??0)<24)continue;
-   const value=selected==='precip_mm_h'?raw*(comparisonView?1:f.controls.rain_scale):raw;
-   const col=comparisonView==='difference'?differenceRgb(value,differenceRanges[selected]??10):rgb(selected,value);const alpha=riskFields.has(selected)?(Math.abs(value)>0?.75:0):.63;ctx.fillStyle=`rgba(${col.join(',')},${alpha})`;
+   const value=(selected==='precip_mm_h'||selected==='rain_bands')?raw*(comparisonView?1:f.controls.rain_scale):raw;
+   if(selected==='rain_bands'&&value<.1)continue;
+   const col=comparisonView==='difference'?differenceRgb(value,differenceRanges[selected]??10):rgb(selected,value);const alpha=selected==='rain_bands'?.55+.3*Math.min(1,value/3):riskFields.has(selected)?(Math.abs(value)>0?.75:0):.63;ctx.fillStyle=`rgba(${col.join(',')},${alpha})`;
    if(kind==='global')ctx.fillRect(i*2,(ny-1-j)*2,2,2);
    else { const x=Math.max(0,i*2-1),y=Math.max(0,(ny-1-j)*2-1);ctx.fillRect(x,y,Math.min(canvas.width,i*2+1)-x,Math.min(canvas.height,(ny-1-j)*2+1)-y); }
   }
+  if(selected==='rain_bands'){ctx.save();ctx.globalCompositeOperation='source-atop';ctx.strokeStyle='rgba(225,245,255,.7)';ctx.lineWidth=.5;const phase=(performance.now()/500)%6;for(let x=-canvas.height;x<canvas.width+canvas.height;x+=6){ctx.beginPath();ctx.moveTo(x+phase,0);ctx.lineTo(x+phase-canvas.height*.3,canvas.height);ctx.stroke();}ctx.restore();}
   // Global centers begin at -180: split at dateline by circularly shifting half a cell.
   if(kind==='global') { const image=ctx.getImageData(0,0,canvas.width,canvas.height);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.putImageData(image,-1,0);ctx.putImageData(image,canvas.width-1,0); }
   if(!overlays[kind])overlays[kind]=createFieldOverlay(globe,kind,[west,kind==='global'?-90:south,kind==='global'?180:east,kind==='global'?90:north],canvas);
@@ -135,6 +138,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   catch(e){if(!disposed){state.error=String(e);onStatus({...state});}}
   finally{comparisonBusy=false;}
  }
+ const rainAnimation=setInterval(()=>{if(selected==='rain_bands'&&visible){queuePaint('global');queuePaint('regional');}},200);
  const comparisonTimer=setInterval(refreshComparison,3000);
  const stale=setInterval(()=>{
   for(const kind of ['regional','global'] as const) {
@@ -161,6 +165,6 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   setLayer(field:Field){scenarioFrame=null;state.scenarioActive=false;onStatus({...state});selected=field;queuePaint('global');queuePaint('regional');},
   async timeline(body:Record<string,string>){const r=await fetch('/terra/api/timeline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());accept('regional',await r.json());},
   async control(body:Record<string,number|boolean>){const r=await fetch('/terra/api/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());accept('regional',await r.json());},
-  destroy(){disposed=true;cancelAnimationFrame(paintRequest);clearInterval(comparisonTimer);clearInterval(stale);feeds.forEach(es=>es.close());removeTick();viewer.creditDisplay.removeStaticCredit(credit);focusEntities.forEach(e=>viewer.entities.remove(e));for(const overlay of Object.values(overlays))overlay?.destroy();viewer.scene.primitives.remove(points);}
+  destroy(){disposed=true;cancelAnimationFrame(paintRequest);clearInterval(rainAnimation);clearInterval(comparisonTimer);clearInterval(stale);feeds.forEach(es=>es.close());removeTick();viewer.creditDisplay.removeStaticCredit(credit);focusEntities.forEach(e=>viewer.entities.remove(e));for(const overlay of Object.values(overlays))overlay?.destroy();viewer.scene.primitives.remove(points);}
  };
 }

@@ -4,9 +4,9 @@
 
 ## State and forcing
 
-Prognostic regional state: atmospheric effective-layer moisture concentration q [g/m³], soil water S [mm over 1 m], snow water N [mm water equivalent], and a lumped soil-temperature state Ts [°C]. Prescribed forcing: 10 m east/north winds [m/s], 2 m air temperature/RH, precipitation [mm/h] and ET₀ [mm/h]. Wind is meteorological direction-from, converted to signed components before interpolation.
+Prognostic regional state: atmospheric effective-layer moisture concentration q [g/m³], soil water S [mm over 1 m], snow water N [mm water equivalent], and a lumped soil-temperature state Ts [°C]. Prescribed forcing: 850 hPa transport winds when available, with explicit 10 m fallback, plus separate surface east/north winds [m/s], 2 m air temperature/RH, precipitation [mm/h] and ET₀ [mm/h]. Wind is meteorological direction-from, converted to signed components before interpolation.
 
-Initial soil storage is `S = 70 θ(0–7cm) + 210 θ(7–28cm) + 720 θ(28–100cm)` in mm. The forecast soil layers are volumetric m³/m³. Values above scenario capacity clip **at initialization**, with clipped cell counts recorded; that adjustment is not a runtime water flux. Snow initializes as API depth [m] × assumed density [200 kg/m³], giving kg/m² = mm water. Soil initialization is IDW across valid land samples, renormalizing weights around missing values. Nearest hourly soil/snow state is used at initialization.
+Initial soil storage is `S = 70 θ(0–7cm) + 210 θ(7–28cm) + 720 θ(28–100cm)` in mm. The forecast soil layers are volumetric m³/m³. Values above scenario capacity clip **at initialization**, with clipped cell counts recorded; that adjustment is not a runtime water flux. Snow initializes as API depth [m] × assumed density [200 kg/m³], giving kg/m² = mm water. Regional soil initialization is bilinear across valid regular-grid corner samples, renormalizing weights around missing values. Nearest hourly soil/snow state is used at initialization.
 
 Absolute vapor concentration comes from Tetens saturation pressure and ideal-gas conversion: `e_s=6.112 exp(17.67 T/(T+243.5))` hPa; `q=216.7 (RH/100) e_s/(T+273.15)` g/m³. It is assumed uniform through an effective 1,000 m layer. This assumption does not turn near-surface vapor into a measured atmospheric column.
 

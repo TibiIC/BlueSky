@@ -30,3 +30,7 @@ Local preview services were stopped after QA. Follow README.md to restart; defau
 ## Added FAO-56 / Apetit integration
 
 46 Python tests and 7 Node tests pass. Checks cover wilting-point extraction limits, seasonal Kc, 850 hPa/fallback component selection, water-balance closure, generated parcel column lengths, complete 183-day season arrays and dimension rejection. Svelte check and build pass. An actual Open-Meteo request returned valid 850 hPa winds for 25 Nordic anchors and the model published 500 land stress cells. These remain numerical/integration checks, not field, microbiome or yield validation. Synthetic data attribution and limitations are bundled alongside the derived rendering files.
+
+## Finland biology / denser rain fields / decision evidence
+
+55 Python tests pass; seven Node rendering/data tests pass. Added checks cover Finland's 24 Soil rows (Root excluded), 192 enzyme records, date precision, nonfinite measurement rejection, exact bilinear reproduction of linear fields using at most four corners, bounded interpolation, bias/RMSE arithmetic and 183-day 2018 benchmark coverage. Actual API fetch returned 195 regional locations with 850 hPa winds and initialized all 500 regional land cells. Svelte check and build pass. The ERA5-Land mismatch remains visible: it is not independent observation validation. Climate results are two model members at two locations with illustrative ten-year windows; supplier/cost data remain explicitly synthetic assumptions.
