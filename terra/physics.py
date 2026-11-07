@@ -69,16 +69,46 @@ class Transport:
         after=sum(a*b for a,b in zip(current,self.area))
         return current,dict(before_g_m=before,after_g_m=after,boundary_exchange_g_m=boundary_exchange,residual_g_m=after-before-boundary_exchange,cfl_substeps=steps)
 
-def land_step(soil,snow,precip_mm_h,et0_mm_h,temp_c,soil_temp_c,dt,capacity,field_capacity_fraction=.7):
+# FAO-56 defaults for a generic Nordic mineral soil over a 1 m root zone.
+# Storage S is total water [mm] in the column; capacity is saturation.
+FIELD_CAPACITY_FRACTION=.7   # theta_FC = 0.315 at capacity 450 mm
+WILTING_FRACTION=.27         # theta_WP ~ 0.12 at capacity 450 mm
+DEPLETION_P=.5               # FAO-56 Table 22, typical field crops
+
+def crop_coefficient(day_of_year,lat=60.):
+    """Generic Nordic spring-crop Kc curve (FAO-56 four-stage shape).
+
+    Sowing ~DOY 130 at 60N, shifted 3 days later per degree north. Kc_ini 0.4,
+    Kc_mid 1.1, Kc_end 0.6; 0.4 outside the season (stubble/bare soil).
+    A placeholder until Apetit crop calendars replace it.
+    """
+    sow=130+3*(lat-60);dev=sow+30;mid=dev+30;late=mid+45;harvest=late+25
+    d=day_of_year
+    if d<sow or d>harvest:return .4
+    if d<dev:return .4
+    if d<mid:return .4+(1.1-.4)*(d-dev)/(mid-dev)
+    if d<late:return 1.1
+    return 1.1+(.6-1.1)*(d-late)/(harvest-late)
+
+def water_stress(soil,capacity,field_capacity_fraction=FIELD_CAPACITY_FRACTION,wilting_fraction=WILTING_FRACTION,p=DEPLETION_P):
+    """FAO-56 Ks in [0,1]: 1 until depletion exceeds RAW=p*TAW, 0 at wilting point."""
+    if not (capacity>0 and 0<=wilting_fraction<field_capacity_fraction<=1 and 0<p<1):raise ValueError('Invalid soil-water parameters')
+    fc=field_capacity_fraction*capacity;wp=wilting_fraction*capacity;taw=fc-wp
+    depletion=max(0.,fc-soil)
+    return max(0.,min(1.,(taw-depletion)/((1-p)*taw)))
+
+def land_step(soil,snow,precip_mm_h,et0_mm_h,temp_c,soil_temp_c,dt,capacity,field_capacity_fraction=FIELD_CAPACITY_FRACTION,kc=1.,wilting_fraction=WILTING_FRACTION,p=DEPLETION_P):
     """All water stores/fluxes in mm water equivalent; dt seconds.
 
     Linear rain/snow transition -1..+1 C; degree-day melt 3 mm/(C day).
     Frozen-soil infiltration is reduced, not a heat/ice phase-change solution.
+    Actual ET follows FAO-56: ET_a = Ks * Kc * ET0, so water below the
+    wilting point is unavailable to transpiration.
     """
-    if dt<0 or capacity<=0 or min(soil,snow,precip_mm_h,et0_mm_h)<0:raise ValueError('Invalid land input')
-    p=precip_mm_h*dt/3600
+    if dt<0 or capacity<=0 or kc<0 or min(soil,snow,precip_mm_h,et0_mm_h)<0:raise ValueError('Invalid land input')
+    p_mm=precip_mm_h*dt/3600
     rain_fraction=max(0,min(1,(temp_c+1)/2))
-    rain=p*rain_fraction;snowfall=p-rain
+    rain=p_mm*rain_fraction;snowfall=p_mm-rain
     snow_available=snow+snowfall
     melt=min(snow_available,3*max(0,temp_c)*dt/86400)
     snow_new=snow_available-melt
@@ -88,11 +118,12 @@ def land_step(soil,snow,precip_mm_h,et0_mm_h,temp_c,soil_temp_c,dt,capacity,fiel
     runoff=liquid-infiltration
     wet=soil+infiltration
     runoff+=max(0,wet-capacity);wet=min(capacity,wet)
-    stress=max(0,min(1,wet/(field_capacity_fraction*capacity)))
-    et=min(wet,et0_mm_h*dt/3600*stress*(1 if soil_temp_c>0 else .1))
+    ks=water_stress(wet,capacity,field_capacity_fraction,wilting_fraction,p)
+    et=min(max(0.,wet-wilting_fraction*capacity),et0_mm_h*dt/3600*kc*ks*(1 if soil_temp_c>0 else .1))
     wet-=et
     drainage=min(wet,max(0,wet-field_capacity_fraction*capacity)*(1-math.exp(-dt/86400)))
     new=wet-drainage
-    ledger=dict(precip_mm=p,rain_mm=rain,snowfall_mm=snowfall,melt_mm=melt,infiltration_mm=infiltration,et_mm=et,runoff_mm=runoff,drainage_mm=drainage,storage_change_mm=new-soil,snow_storage_change_mm=snow_new-snow)
-    ledger['residual_mm']=p-et-runoff-drainage-(new-soil)-(snow_new-snow)
+    ledger=dict(precip_mm=p_mm,rain_mm=rain,snowfall_mm=snowfall,melt_mm=melt,infiltration_mm=infiltration,et_mm=et,runoff_mm=runoff,drainage_mm=drainage,storage_change_mm=new-soil,snow_storage_change_mm=snow_new-snow)
+    ledger['residual_mm']=p_mm-et-runoff-drainage-(new-soil)-(snow_new-snow)
+    ledger['ks']=ks
     return new,snow_new,ledger

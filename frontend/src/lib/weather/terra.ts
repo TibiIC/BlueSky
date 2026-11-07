@@ -2,13 +2,13 @@ import type { PointPrimitive } from 'cesium';
 import { createFieldOverlay } from './overlay.ts';
 import type { Globe } from '../globe/viewer.ts';
 
-export type Field = 'moisture_g_m3' | 'precip_mm_h' | 'soil_fraction' | 'temp_c' | 'snow_water_mm' | 'wind' | 'rain_day_mm' | 'frost_pct' | 'heat_pct' | 'wind_risk_pct' | 'heavy_rain_pct';
+export type Field = 'moisture_g_m3' | 'precip_mm_h' | 'soil_fraction' | 'temp_c' | 'snow_water_mm' | 'crop_stress' | 'wind' | 'rain_day_mm' | 'frost_pct' | 'heat_pct' | 'wind_risk_pct' | 'heavy_rain_pct';
 export interface Timeline {
  mode:'live'|'historical';loading:boolean;error:string|null;request_id:number;max_history_date:string;reanalysis_through:string;range:[string,string]|null;position_seconds:number;start_time:string|null;end_time:string;
  summary?:{precipitation_total_mm:number;min_mean_temperature_c:number;max_mean_temperature_c:number;peak_mean_wind_ms:number;series:{time:string;temperature_c:number;precip_mm_h:number;wind_ms:number}[]}|null;
 }
 export interface Frame {
- timeline?:Timeline;
+ physics?:{transport_wind?:string};timeline?:Timeline;
  initialization?: {kind:string;soil_seeded_cells?:number;land_cells?:number}; atmosphere_budget_kg?: {relative_residual:number}; ready?: boolean; engine_version?: string; schema: string; sim_time: string; published_at: string;
  source: { notice?:string;forcing_kind?:string; mode: string; fetched_at: string | null; last_error: string | null; forecast_id: string; valid_end: string };
  grid: { nx: number; ny: number; west: number; east: number; south: number; north: number;land_mask?:boolean[];periodic_longitude?:boolean };
@@ -24,7 +24,7 @@ export interface WeatherComparison {
  grid?:Frame['grid'];live?:Record<string,number[]>;historical?:Record<string,number[]>;difference?:Record<string,number[]>;
  summary?:Record<string,{live:number;historical:number;difference:number}>;
 }
-export const riskFields=new Set<Field>(['frost_pct','heat_pct','wind_risk_pct','heavy_rain_pct']);
+export const riskFields=new Set<Field>(['frost_pct','heat_pct','wind_risk_pct','heavy_rain_pct','crop_stress']);
 export const comparableFields=new Set<Field>(['temp_c','precip_mm_h','wind','rain_day_mm','frost_pct','heat_pct','wind_risk_pct','heavy_rain_pct']);
 export const differenceRanges:Record<string,number>={rain_day_mm:20,frost_pct:100,heat_pct:100,wind_risk_pct:100,heavy_rain_pct:100,temp_c:10,precip_mm_h:3,wind:10};
 export function differenceRgb(value:number,limit:number):[number,number,number]{
@@ -34,7 +34,7 @@ export function differenceRgb(value:number,limit:number):[number,number,number]{
 export interface Status {scenarioActive?:boolean;comparison?:WeatherComparison;comparisonView?:ComparisonView|null; regional?: Frame; global?: Frame; regionalConnected: boolean; globalConnected: boolean; error?: string }
 export const ranges: Record<Field, [number, number, string]> = {
  rain_day_mm:[0,30,'mm/day'],frost_pct:[0,100,'%'],heat_pct:[0,100,'%'],wind_risk_pct:[0,100,'%'],heavy_rain_pct:[0,100,'%'],
- snow_water_mm: [0,150,'mm'], moisture_g_m3: [0, 12, 'g/m³'], precip_mm_h: [0, 3, 'mm/h'], soil_fraction: [0, 1, 'fraction'], temp_c: [-15, 30, '°C'], wind: [0, 20, 'm/s']
+ snow_water_mm: [0,150,'mm'], crop_stress: [0,1,'1 − Ks'], moisture_g_m3: [0, 12, 'g/m³'], precip_mm_h: [0, 3, 'mm/h'], soil_fraction: [0, 1, 'fraction'], temp_c: [-15, 30, '°C'], wind: [0, 20, 'm/s']
 };
 export function rgb(field: Field, value: number): [number, number, number] {
  const [lo, hi] = ranges[field], t = Math.max(0, Math.min(1, (value-lo)/(hi-lo)));
@@ -70,7 +70,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
    f={...f,grid:compare.grid,fields:compare[comparisonView]!,ready:true};
   }
   if(f.ready===false){overlays[kind]?.setVisible(false);return;}
-  if ((selected === 'soil_fraction'||selected === 'snow_water_mm') && kind === 'global') { overlays.global?.setVisible(false); return; }
+  if ((selected === 'soil_fraction'||selected === 'snow_water_mm'||selected === 'crop_stress') && kind === 'global') { overlays.global?.setVisible(false); return; }
   const { nx,ny,west,east,south,north }=f.grid;
   bufferIndex[kind]=1-bufferIndex[kind];
   const canvas=buffers[kind][bufferIndex[kind]];

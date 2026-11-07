@@ -1,5 +1,6 @@
 <script lang="ts">
  import ScenarioPanel from './ScenarioPanel.svelte';
+ import FarmPanel from '../farms/FarmPanel.svelte';
  import { untrack } from 'svelte';
  import type { Globe } from '../globe/viewer.ts';
  import { attachTerra, ranges, rgb, differenceRanges, differenceRgb, comparableFields, riskFields, type ComparisonView, type Field, type Status } from './terra.ts';
@@ -7,6 +8,7 @@
  let status=$state<Status>({regionalConnected:false,globalConnected:false});
  let field=$state<Field>('moisture_g_m3');
  let error=$state('');
+ let rotateEarth=$state(false);
  let visible=$state(true);let focusMarkers=$state(true);
  let compareDate=$state('');let comparing=$state(false);let compareView=$state<ComparisonView>('difference');
  const comparison=$derived(status.comparison);
@@ -26,8 +28,9 @@
  const rainPoints=(series:{precip_mm_h:number}[])=>{const max=Math.max(.1,...series.map(s=>s.precip_mm_h));return series.map((s,i)=>`${i*240/Math.max(1,series.length-1)},${50-s.precip_mm_h/max*45}`).join(' ');};
  let expanded=$state(typeof window !== 'undefined' && window.innerWidth > 900);
  let api:ReturnType<typeof attachTerra>|undefined;
- const options: [Field,string][]=[['temp_c','Temperature · global'],['precip_mm_h','Hourly rain · global'],['rain_day_mm','UTC-day rain · global'],['wind','Wind · global'],['moisture_g_m3','Moisture · global'],['frost_pct','Air frost ≤0°C · crop screen'],['heat_pct','Heat ≥28°C · crop screen'],['heavy_rain_pct','Wet day ≥20mm · crop screen'],['wind_risk_pct','Wind ≥12m/s · crop screen'],['soil_fraction','Soil water · Nordic model'],['snow_water_mm','Snow water · Nordic model']];
+ const options: [Field,string][]=[['temp_c','Temperature · global'],['precip_mm_h','Hourly rain · global'],['rain_day_mm','UTC-day rain · global'],['wind','Wind · global'],['moisture_g_m3','Moisture · global'],['frost_pct','Air frost ≤0°C · crop screen'],['heat_pct','Heat ≥28°C · crop screen'],['heavy_rain_pct','Wet day ≥20mm · crop screen'],['wind_risk_pct','Wind ≥12m/s · crop screen'],['soil_fraction','Soil water · Nordic model'],['snow_water_mm','Snow water · Nordic model'],['crop_stress','Crop water stress (FAO-56) · Nordic model']];
 
+ $effect(()=>{const g=globe;let last=performance.now();return g.viewer.clock.onTick.addEventListener(()=>{const now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;if(rotateEarth){g.viewer.camera.rotate(g.C.Cartesian3.UNIT_Z,.025*dt);g.viewer.scene.requestRender();}});});
  $effect(()=>{const target=globe;const connection=untrack(()=>attachTerra(target,s=>status=s));api=connection;return()=>{connection.destroy();api=undefined;};});
  async function control(body:Record<string,number|boolean>){try{await api?.control(body);error='';}catch(e){error=String(e);}}
  const utc=(t:string|null|undefined)=>t?t.slice(0,19).replace('T',' ')+' UTC':'Never / synthetic';
@@ -37,11 +40,14 @@
  <div class="mode-label">{status.scenarioActive?'HYPOTHETICAL SCENARIO · FINAL SOIL STATE':comparing?compareView==='difference'?'LIVE − HISTORICAL DIFFERENCE':compareView==='historical'?'HISTORICAL WEATHER COMPARISON':'LIVE WEATHER COMPARISON':timeline?.mode==='historical'?'HISTORICAL DATA + SIMULATION':'LIVE FORECAST + SIMULATION'}</div>
  <label class="climate-toggle"><span>Weather layers <small>Global coverage · finer Nordic detail</small></span><input aria-label="Weather layers" type="checkbox" bind:checked={visible} onchange={()=>api?.setVisible(visible)} /></label>
  {#if expanded}
- <div class="apetit-focus"><strong>APETIT / CROP WEATHER</strong><p>Global: 10° grid · Nordic detail: ~35–68 km.<br>Peas, vegetables and oilseed growing conditions.</p><div class="buttons"><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)})}>Whole world</button><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(19,59.5,1800000)})}>Apetit focus</button></div><label><span>Focus markers</span><input type="checkbox" bind:checked={focusMarkers} onchange={()=>api?.setFocusMarkers(focusMarkers)} /></label></div>
+ <label><span>Rotate Earth <small>presentation motion</small></span><input type="checkbox" bind:checked={rotateEarth}/></label>
+ <div class="apetit-focus"><strong>APETIT / CROP WEATHER</strong><p>Global display: 10°. Nordic display cells: ~35–68 km; forcing uses 25 sparse locations (~250–500 km spacing).<br>Peas, vegetables and oilseed growing conditions.</p><div class="buttons"><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)});}}>Whole world</button><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(19,59.5,1800000)});}}>Apetit focus</button></div><label><span>Focus markers</span><input type="checkbox" bind:checked={focusMarkers} onchange={()=>api?.setFocusMarkers(focusMarkers)} /></label></div>
+ <FarmPanel {globe} regional={status.regional} />
  <label>Field <select bind:value={field} onchange={()=>api?.setLayer(field)}>{#each options.filter(([k])=>!comparing||comparableFields.has(k)) as [key,title]}<option value={key}>{title}</option>{/each}</select></label>
  <div class="ramp" style={`background:linear-gradient(90deg,rgb(${legendColor(Number(legend[0])).join(',')}),rgb(${legendColor((Number(legend[0])+Number(legend[1]))/2).join(',')}),rgb(${legendColor(Number(legend[1])).join(',')}))`}></div><div class="range"><span>{legend[0]}</span><span>{legend[1]} {legend[2]}</span></div>
- {#if riskFields.has(field)}<p class="note">Colored land cells exceed the displayed, illustrative threshold. This is weather screening—not a calibrated crop-damage or yield forecast.</p>{/if}
- {#if field==='soil_fraction'||field==='snow_water_mm'}<p class="note">Nordic model only; no global soil/snow simulation is being implied.</p>{/if}
+ {#if riskFields.has(field)&&field!=='crop_stress'}<p class="note">Colored land cells exceed the displayed, illustrative threshold. This is weather screening—not a calibrated crop-damage or yield forecast.</p>{/if}
+ {#if field==='crop_stress'}<p class="note">FAO-56 water limitation: 0 = no limitation, 1 = wilting-point limit. Generic soil and crop-calendar assumptions; not measured crop damage.</p>{/if}
+ {#if field==='soil_fraction'||field==='snow_water_mm'||field==='crop_stress'}<p class="note">Nordic model only; no global soil/snow simulation is being implied.</p>{/if}
  <ScenarioPanel active={!!status.scenarioActive} onMap={frame=>{if(frame){closeComparison();field='soil_fraction';api?.setLayer(field);}api?.setScenario(frame);}} />
  <details><summary>Live / historical comparison</summary>
  <div class="compare-box">
@@ -81,10 +87,10 @@
  </details>
  <details><summary>Physics & data provenance</summary>
  <p>Whole Earth · coarse weather<br><b>Finland + Sweden · finer regional model</b></p>
- <div class="buttons"><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)})}>Whole Earth</button><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(21.5,63,2600000)})}>Nordics</button></div>
+ <div class="buttons"><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)});}}>Whole Earth</button><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(21.5,63,2600000)});}}>Nordics</button></div>
 
 
- <dl><dt>PHYSICS ENGINE</dt><dd>Regional v{status.regional?.engine_version??'—'} / finite-volume transport</dd><dt>SOIL INITIALIZATION</dt><dd>{status.regional?.initialization?.kind??'Waiting'} · {status.regional?.initialization?.soil_seeded_cells??0} cells</dd><dt>NORDIC FORCING</dt><dd>{status.regional?.source.mode??'Waiting'}</dd><dt>GLOBAL FORCING</dt><dd>{status.global?.source.mode??'Waiting'}</dd><dt>SIMULATION CLOCK</dt><dd>{utc(status.regional?.sim_time)}</dd><dt>LAST NORDIC / GLOBAL FETCH</dt><dd>{utc(status.regional?.source.fetched_at)}<br>{utc(status.global?.source.fetched_at)}</dd></dl>
+ <dl><dt>PHYSICS ENGINE</dt><dd>Regional v{status.regional?.engine_version??'—'} / finite-volume transport</dd><dt>SOIL INITIALIZATION</dt><dd>{status.regional?.initialization?.kind??'Waiting'} · {status.regional?.initialization?.soil_seeded_cells??0} cells</dd><dt>TRANSPORT WINDS</dt><dd>{status.regional?.physics?.transport_wind??'Waiting'}</dd><dt>NORDIC FORCING</dt><dd>{status.regional?.source.mode??'Waiting'}</dd><dt>GLOBAL FORCING</dt><dd>{status.global?.source.mode??'Waiting'}</dd><dt>SIMULATION CLOCK</dt><dd>{utc(status.regional?.sim_time)}</dd><dt>LAST NORDIC / GLOBAL FETCH</dt><dd>{utc(status.regional?.source.fetched_at)}<br>{utc(status.global?.source.fetched_at)}</dd></dl>
  {#if !comparing}<label>Speed <select value={String(status.regional?.controls.speed??1)} onchange={e=>control({speed:+e.currentTarget.value})}><option value="1">1× wall time</option><option value="60">60×</option><option value="600">600× demo</option><option value="3600">3600×</option></select></label>
  <label>Nordic precipitation <select value={String(status.regional?.controls.rain_scale??1)} onchange={e=>control({rain_scale:+e.currentTarget.value})}><option value="0">0× dry scenario</option><option value="1">1× forecast</option><option value="2">2× wet scenario</option><option value="4">4× extreme scenario</option></select></label>
  <div class="buttons"><button onclick={()=>control({paused:!status.regional?.controls.paused})}>{status.regional?.controls.paused?'Resume':'Pause'}</button><button onclick={()=>control({reset:true})}>{timeline?.mode==='historical'?'Restart period':'Reset to now'}</button></div>
@@ -96,7 +102,7 @@
 <p class="note">Säkylä/Bjuv markers are approximate town centers; actual contract-farm data has not been supplied. <a href="https://apetit.fi/en/sustainability/cultivation-and-experimental-work/" target="_blank" rel="noreferrer">Apetit context ↗</a></p>
  <a href="http://127.0.0.1:8765" target="_blank" rel="noreferrer">Open physics dashboard ↗</a>
  </details>
-{:else}<p>{timeline?.mode==='historical'?timeline.range?.join(' → '):'Global atmosphere + finer Nordic weather'}</p><div class="buttons"><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)})}>Whole Earth</button><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(21.5,63,2600000)})}>Nordics</button></div>{/if}
+{:else}<p>{timeline?.mode==='historical'?timeline.range?.join(' → '):'Global atmosphere + finer Nordic weather'}</p><div class="buttons"><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)});}}>Whole Earth</button><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(21.5,63,2600000)});}}>Nordics</button></div>{/if}
 </section>
 <style>
 .weather.collapsed{width:44px;padding:10px 4px}.weather.collapsed> :not(header){display:none}.weather.collapsed header strong,.weather.collapsed header span{display:none}.weather.collapsed header{justify-content:center}.weather.collapsed header .expand{padding:8px}details{border-top:1px solid #385158;padding:12px 0}summary{cursor:pointer;color:#cfeb9b;font-size:12px}

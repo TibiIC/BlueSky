@@ -1,7 +1,9 @@
 """Paired regional land-water stress experiment, not a climate projection."""
 import math
 from model import Model, MASK, LONS, LATS, LAND, inside, iso
-from physics import land_step
+from physics import land_step,crop_coefficient,water_stress
+from datetime import datetime,timezone
+from model import NX
 
 def run(forecast, start, body):
     limits={'warming_c':(-3,8,2.),'rain_factor':(0,3,.8),'et_factor':(.5,2,1.1),'hours':(1,168,48)}
@@ -23,15 +25,16 @@ def run(forecast, start, body):
     def mean(a,indices):return sum(a[i]*weights[i] for i in indices)/sum(weights[i] for i in indices)
     series=[];totals=[{'et_mm':0.,'runoff_mm':0.,'drainage_mm':0.} for _ in states];max_residual=0.
     def record(t):
-        return dict(time=iso(t),regions={name:{label:dict(soil_mm=mean(s['soil'],idx),snow_mm=mean(s['snow'],idx),dry_area_pct=100*sum(weights[i] for i in idx if s['soil'][i]/initial.capacity<.3)/sum(weights[i] for i in idx)) for label,s in zip(('baseline','scenario'),states)} for name,idx in groups.items()})
+        return dict(time=iso(t),regions={name:{label:dict(soil_mm=mean(s['soil'],idx),snow_mm=mean(s['snow'],idx),dry_area_pct=100*sum(weights[i] for i in idx if s['soil'][i]/initial.capacity<.3)/sum(weights[i] for i in idx),mean_ks=mean([water_stress(x,initial.capacity) for x in s['soil']],idx),stressed_area_pct=100*sum(weights[i] for i in idx if water_stress(s['soil'][i],initial.capacity)<1)/sum(weights[i] for i in idx)) for label,s in zip(('baseline','scenario'),states)} for name,idx in groups.items()})
     series.append(record(start));elapsed=0
     while elapsed<duration:
         dt=min(900,duration-elapsed);forcing=forecast.at(start+elapsed+dt/2)
+        doy=datetime.fromtimestamp(start+elapsed,timezone.utc).timetuple().tm_yday
         for n,s in enumerate(states):
             for i in groups['Nordic land']:
                 temp=forcing['temp_c'][i]+(params['warming_c'] if n else 0)
                 s['temp'][i]+=(temp-s['temp'][i])*(1-math.exp(-dt/43200))
-                soil,snow,ledger=land_step(s['soil'][i],s['snow'][i],forcing['precip_mm_h'][i]*(params['rain_factor'] if n else 1),forcing['et0_mm_h'][i]*(params['et_factor'] if n else 1),temp,s['temp'][i],dt,initial.capacity)
+                soil,snow,ledger=land_step(s['soil'][i],s['snow'][i],forcing['precip_mm_h'][i]*(params['rain_factor'] if n else 1),forcing['et0_mm_h'][i]*(params['et_factor'] if n else 1),temp,s['temp'][i],dt,initial.capacity,kc=crop_coefficient(doy,LATS[i//NX]))
                 s['soil'][i]=soil;s['snow'][i]=snow
                 max_residual=max(max_residual,abs(ledger['residual_mm']))
                 for k in totals[n]:totals[n][k]+=ledger[k]*weights[i]/land_area
@@ -41,4 +44,6 @@ def run(forecast, start, body):
     frame['sim_time']=iso(start+duration)
     frame['fields']['soil_fraction']=[s/initial.capacity if m else None for s,m in zip(states[1]['soil'],MASK)]
     frame['fields']['snow_water_mm']=[s if m else None for s,m in zip(states[1]['snow'],MASK)]
-    return dict(kind='paired-land-water-sensitivity',notice='Hypothetical regional stress test of the selected weather period. Not CMIP6, an SSP projection, a yield forecast or a policy recommendation. Wind and atmospheric moisture are unchanged. ET change is an independent prescribed assumption, not a temperature feedback.',parameters=params,start=iso(start),end=iso(start+duration),actual_hours=duration/3600,source=forecast.meta(None,None),initialization=initial.initialization,series=series,water_totals=totals,max_water_residual_mm=max_residual,frame=frame,geography='Approximate country masks; area-weighted grid cells, not farm boundaries',dry_threshold='soil / capacity < 0.30; illustrative screening threshold')
+    frame['fields']['water_stress_ks']=[water_stress(s,initial.capacity) if m else None for s,m in zip(states[1]['soil'],MASK)]
+    frame['fields']['crop_stress']=[1-water_stress(s,initial.capacity) if m else None for s,m in zip(states[1]['soil'],MASK)]
+    return dict(kind='paired-land-water-sensitivity',notice='Hypothetical regional stress test of the selected weather period. Not CMIP6, an SSP projection, a yield forecast or a policy recommendation. Wind and atmospheric moisture are unchanged. ET change is an independent prescribed assumption, not a temperature feedback.',parameters=params,start=iso(start),end=iso(start+duration),actual_hours=duration/3600,source=forecast.meta(None,None),initialization=initial.initialization,series=series,water_totals=totals,max_water_residual_mm=max_residual,frame=frame,geography='Approximate country masks; area-weighted grid cells, not farm boundaries',dry_threshold='soil / capacity < 0.30; illustrative screening threshold',stress_definition='FAO-56 Ks<1 (depletion beyond RAW=0.5*TAW); TAW from theta_FC=0.7*capacity, theta_WP=0.27*capacity')

@@ -13,6 +13,9 @@ from agriculture import enrich,THRESHOLDS
 ANCHORS=[(lat,lon) for lat in (55.,58.5,62.,65.5,70.) for lon in (11.,16.25,21.5,26.75,32.)]
 LAND_VARIABLES='soil_moisture_0_to_7cm,soil_moisture_7_to_28cm,soil_moisture_28_to_100cm,soil_temperature_0_to_7cm,snow_depth'
 VARIABLES='temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m,et0_fao_evapotranspiration'
+# Optional transport-level winds. Served by the forecast API; the ERA5 archive
+# endpoint returns nulls, so history falls back to 10 m winds (recorded in frames).
+TRANSPORT_VARIABLES='wind_speed_850hPa,wind_direction_850hPa'
 
 def vapor(t,rh):
     # Absolute vapor concentration from Tetens saturation pressure, near-surface proxy.
@@ -37,7 +40,7 @@ class Forecast:
                 self.weights.append([v/total for v in w])
     @classmethod
     def fetch(cls):
-        params=dict(latitude=','.join(str(a[0]) for a in cls.anchors),longitude=','.join(str(a[1]) for a in cls.anchors),hourly=cls.variables,wind_speed_unit='ms',timeformat='unixtime',timezone='GMT',forecast_days=7,cell_selection='nearest')
+        params=dict(latitude=','.join(str(a[0]) for a in cls.anchors),longitude=','.join(str(a[1]) for a in cls.anchors),hourly=cls.variables+','+TRANSPORT_VARIABLES,wind_speed_unit='ms',timeformat='unixtime',timezone='GMT',forecast_days=7,cell_selection='nearest')
         req=urllib.request.Request('https://api.open-meteo.com/v1/forecast?'+urllib.parse.urlencode(params),headers={'User-Agent':'TERRA-hackathon-prototype/1.0'})
         with urllib.request.urlopen(req,timeout=20) as response: records=json.load(response)
         cls.validate(records)
@@ -94,9 +97,9 @@ class Forecast:
                 output[key].append(sum(w*v for w,v in pairs)/sum(w for w,v in pairs) if pairs else None)
         return output
     def at(self,t):
-        out={k:[] for k in ('temp_c','u_ms','v_ms','precip_mm_h','et0_mm_h','vapor_g_m3')}
+        out={k:[] for k in ('temp_c','u_ms','v_ms','precip_mm_h','et0_mm_h','vapor_g_m3','u_transport_ms','v_transport_ms')}
         if self.records:
-            values=[]
+            values=[];levels=set()
             for r in self.records:
                 h=r['hourly']; ts=h['time']; hi=max(1,min(len(ts)-1,bisect.bisect_right(ts,t))); lo=hi-1
                 a=max(0,min(1,(t-ts[lo])/3600))
@@ -105,19 +108,30 @@ class Forecast:
                     rad=math.radians(h['wind_direction_10m'][i]); s=h['wind_speed_10m'][i]
                     return -s*math.sin(rad),-s*math.cos(rad)
                 u0,v0=uv(lo); u1,v1=uv(hi)
+                def uv850(i):
+                    sp=h.get('wind_speed_850hPa');di=h.get('wind_direction_850hPa')
+                    if not (isinstance(sp,list) and isinstance(di,list) and len(sp)==len(ts)==len(di)):return None
+                    s_,d_=sp[i],di[i]
+                    if not all(isinstance(x,(int,float)) and math.isfinite(x) for x in (s_,d_)):return None
+                    rad=math.radians(d_);return -s_*math.sin(rad),-s_*math.cos(rad)
+                t0,t1=uv850(lo),uv850(hi)
+                if t0 and t1:levels.add('850hPa');tu,tv=t0[0]*(1-a)+t1[0]*a,t0[1]*(1-a)+t1[1]*a
+                else:levels.add('10m');tu,tv=u0*(1-a)+u1*a,v0*(1-a)+v1*a
                 # Interval accumulation is held over (time[k-1],time[k]], not linearly blended.
                 rate_index=max(0,min(len(ts)-1,bisect.bisect_left(ts,t)))
                 temp=lerp('temperature_2m'); rh=lerp('relative_humidity_2m')
-                values.append((temp,u0*(1-a)+u1*a,v0*(1-a)+v1*a,h['precipitation'][rate_index],h['et0_fao_evapotranspiration'][rate_index],vapor(temp,rh)))
+                values.append((temp,u0*(1-a)+u1*a,v0*(1-a)+v1*a,h['precipitation'][rate_index],h['et0_fao_evapotranspiration'][rate_index],vapor(temp,rh),tu,tv))
             for weights in self.weights:
                 for idx,key in enumerate(out): out[key].append(sum(w*v[idx] for w,v in zip(weights,values)))
+            self.transport_wind='850hPa' if levels=={'850hPa'} else '10m' if levels=={'10m'} else 'mixed 850hPa/10m'
         else:
             hour=(t-self.start)/3600
             for y in self.lats:
                 for x in self.lons:
                     front=math.exp(-((x-(16+hour*.22))**2/14+(y-63)**2/35))
                     temp=8-(y-55)*.7+2*math.sin(hour*.26+x*.2)
-                    for key,value in zip(out,(temp,5+2*math.sin(y*.4+hour*.1),2+2*math.cos(x*.3),front*2.2,max(0,.07*math.sin(hour*.26)),vapor(temp,60+35*front))): out[key].append(value)
+                    uu,vv=5+2*math.sin(y*.4+hour*.1),2+2*math.cos(x*.3)
+                    for key,value in zip(out,(temp,uu,vv,front*2.2,max(0,.07*math.sin(hour*.26)),vapor(temp,60+35*front),uu,vv)): out[key].append(value)
         return enrich(self,out,t)
     def meta(self,error=None,attempt=None):
         historical=getattr(self,'product',None) in ('reanalysis','recent-history')

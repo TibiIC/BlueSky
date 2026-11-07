@@ -26,3 +26,7 @@ Local preview services were stopped after QA. Follow README.md to restart; defau
 - 38 Python tests pass, including crop thresholds, daily-interval completeness and 648-cell global/725-cell regional comparison coverage. TypeScript/Svelte check and build pass.
 - Actual API comparison returned both grids, their land masks and all four crop-weather screens. Natural Earth land data is bundled, with source attribution. Crop thresholds are illustrative; no Apetit grower polygons or calibrated crop model were supplied.
 - The parent GitHub URL was supplied after this prototype was created. GitHub authorization completed as AndrewBulata. Pull and push permissions were verified. Integration starts from actual parent main commit a23fc36 on branch codex/terra-apetit-weather. Credentials and API keys are excluded from Git.
+
+## Added FAO-56 / Apetit integration
+
+46 Python tests and 7 Node tests pass. Checks cover wilting-point extraction limits, seasonal Kc, 850 hPa/fallback component selection, water-balance closure, generated parcel column lengths, complete 183-day season arrays and dimension rejection. Svelte check and build pass. An actual Open-Meteo request returned valid 850 hPa winds for 25 Nordic anchors and the model published 500 land stress cells. These remain numerical/integration checks, not field, microbiome or yield validation. Synthetic data attribution and limitations are bundled alongside the derived rendering files.
