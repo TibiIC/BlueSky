@@ -7,12 +7,13 @@
  import { untrack } from 'svelte';
  import type { Globe } from '../globe/viewer.ts';
  import { attachTerra, ranges, rgb, differenceRanges, differenceRgb, comparableFields, riskFields, type ComparisonView, type Field, type Status } from './terra.ts';
- let { globe }: {globe:Globe} = $props();
+ /** embedded: rendered inside the right panel's Weather tab (full width, always expanded). */
+ let { globe, embedded = false }: {globe:Globe; embedded?: boolean} = $props();
  let status=$state<Status>({regionalConnected:false,globalConnected:false});
  let field=$state<Field>('moisture_g_m3');
  let error=$state('');
  let rotateEarth=$state(false);let weatherMotion=$state(true);let windOnRain=$state(true);
- let visible=$state(true);let focusMarkers=$state(true);
+ let visible=$state(false);let focusMarkers=$state(false); // off by default: performance and a clear globe
  let compareDate=$state('');let comparing=$state(false);let compareView=$state<ComparisonView>('difference');
  const comparison=$derived(status.comparison);
  const legend=$derived(comparing&&compareView==='difference'?[-(differenceRanges[field]??10),differenceRanges[field]??10,riskFields.has(field)?'pp':ranges[field][2]]:ranges[field]);
@@ -29,7 +30,7 @@
  $effect(()=>{if(!compareDate&&timeline?.max_history_date)compareDate=timeline.max_history_date;if(!startDate&&timeline?.max_history_date){startDate=timeline.range?.[0]??timeline.max_history_date;endDate=timeline.range?.[1]??timeline.max_history_date;}});
  async function changeTimeline(body:Record<string,string>){try{api?.setScenario(null);await api?.timeline(body);error='';if(body.mode==='live')historyOpen=false;}catch(e){error=String(e);}}
  const rainPoints=(series:{precip_mm_h:number}[])=>{const max=Math.max(.1,...series.map(s=>s.precip_mm_h));return series.map((s,i)=>`${i*240/Math.max(1,series.length-1)},${50-s.precip_mm_h/max*45}`).join(' ');};
- let expanded=$state(typeof window !== 'undefined' && window.innerWidth > 900);
+ let expanded=$state(untrack(()=>embedded)); // collapsed by default when floating, so the globe stays clear
  let api:ReturnType<typeof attachTerra>|undefined;
  const options: [Field,string][]=[['rain_bands','Animated rain bands · forecast'],['temp_c','Temperature · global'],['precip_mm_h','Hourly rain · global'],['rain_day_mm','UTC-day rain · global'],['wind','Wind · global'],['moisture_g_m3','Moisture · global'],['frost_pct','Air frost ≤0°C · crop screen'],['heat_pct','Heat ≥28°C · crop screen'],['heavy_rain_pct','Wet day ≥20mm · crop screen'],['wind_risk_pct','Wind ≥12m/s · crop screen'],['soil_fraction','Soil water · Nordic model'],['snow_water_mm','Snow water · Nordic model'],['crop_stress','Crop water stress (FAO-56) · Nordic model']];
 
@@ -39,7 +40,7 @@
  function chooseField(){api?.setLayer(field);if(!comparing&&weatherMotion&&(field==='wind'||field==='rain_bands'))control({speed:600,paused:false,...(status.regional?.at_forecast_end?{reset:true}:{})});}
  const utc=(t:string|null|undefined)=>t?t.slice(0,19).replace('T',' ')+' UTC':'Never / synthetic';
 </script>
-<section class="weather" class:collapsed={!expanded} aria-label="TERRA weather controls">
+<section class="weather" class:collapsed={!expanded} class:embedded aria-label="TERRA weather controls">
  <header><button class="expand" aria-label={expanded?'Collapse data sidebar':'Open data sidebar'} aria-expanded={expanded} onclick={()=>expanded=!expanded}>{expanded?'−':'+'}</button><strong>EARTH / DATA</strong><span class:live={status.regionalConnected&&status.globalConnected}>{status.regionalConnected&&status.globalConnected?'● CONNECTED':'○ RECONNECTING'}</span></header>
  <div class="mode-label">{status.scenarioActive?'HYPOTHETICAL SCENARIO · FINAL SOIL STATE':comparing?compareView==='difference'?'LIVE − HISTORICAL DIFFERENCE':compareView==='historical'?'HISTORICAL WEATHER COMPARISON':'LIVE WEATHER COMPARISON':timeline?.mode==='historical'?'HISTORICAL DATA + SIMULATION':'LIVE FORECAST + SIMULATION'}</div>
  <label class="climate-toggle"><span>Weather layers <small>Global coverage · finer Nordic detail</small></span><input aria-label="Weather layers" type="checkbox" bind:checked={visible} onchange={()=>api?.setVisible(visible)} /></label>
@@ -128,4 +129,5 @@
 .mode-tabs{display:flex;gap:6px;margin:14px 0}.mode-tabs button{background:#18313b;color:#a3b6b8;border:1px solid #385158;font-size:10px}.mode-tabs button.chosen{background:#cfeb9b;color:#14251a}.mode-label{font-size:9px;color:#cfeb9b;letter-spacing:.8px;margin:12px 0}.history-controls{padding:10px;background:#0e222b;border-radius:5px}.history-controls label{font-size:10px}.history-controls input{width:140px;background:#18313b;color:#e3eee8;border:1px solid #385158;border-radius:4px;padding:4px;font-size:10px}.history-controls>button{width:100%;font-size:10px}.history-controls button:disabled{opacity:.5;cursor:wait}.history-summary{border-top:1px solid #385158;padding-top:10px;font-size:10px}.history-summary svg{width:100%;height:55px}.history-summary small{font-size:8px;color:#a3b6b8}
 
 .weather{position:relative;flex:0 0 auto;box-sizing:border-box;width:330px;height:100%;overflow:auto;padding:18px;background:rgba(8,23,30,.94);border:1px solid #385158;border-radius:10px;color:#e3eee8;font:11px system-ui;backdrop-filter:blur(12px)}header{display:flex;justify-content:space-between;gap:8px;font-size:9px;letter-spacing:.8px}header .expand{flex:0;padding:0 5px;background:transparent;color:#cfeb9b;font-size:16px}header span{font-size:8px;color:#e3bc80}header .live{color:#cfea9b}p{line-height:1.6;color:#a3b6b8}b{color:#d3ebba;font-weight:500}label{display:flex;align-items:center;justify-content:space-between;margin:14px 0;gap:12px}select{max-width:180px;color:#e3eee8;background:#152f38;border:1px solid #3a555d;border-radius:4px;font:11px system-ui;padding:5px}.ramp{height:5px;background:linear-gradient(90deg,#163e72,#d2f291);margin-top:16px}.range{display:flex;justify-content:space-between;margin-top:5px;color:#a3b6b8;font-size:9px}dt{font-size:8px;letter-spacing:.8px;color:#a3b6b8;margin-top:12px}dd{margin:4px 0;font:10px monospace;line-height:1.6}.buttons{display:flex;gap:8px}button{flex:1;background:#cfeb9b;border:0;border-radius:4px;padding:7px;color:#14251a;cursor:pointer}.note{font-size:9px}.error{color:#edbb88}a{color:#cfeb9b;font-size:10px}@media(max-width:650px){.weather{width:min(245px,65vw);padding:12px}}
+.weather.embedded{width:auto;height:auto;border:0;border-radius:0;background:transparent;backdrop-filter:none;overflow:visible}.weather.embedded header .expand{display:none}
 </style>

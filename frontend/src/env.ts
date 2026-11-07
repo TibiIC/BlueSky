@@ -16,5 +16,10 @@ export const variables = defineEnvVars({
 	),
 	PUBLIC_NLS_API_KEY: optionalKey(
 		'National Land Survey of Finland (Maanmittauslaitos) API key. Adds the Finnish orthophoto layer.'
-	)
+	),
+	PUBLIC_SBTN_URL: {
+		public: true,
+		description: 'Where the SBTN screening review (sbtn/run.sh) is served. The Lens panel opens it with the selected parcels.',
+		schema: (value: string | undefined) => value?.trim() || 'http://localhost:8300'
+	}
 });

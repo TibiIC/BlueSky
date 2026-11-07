@@ -9,7 +9,8 @@
 	import Hud from '#lib/ui/Hud.svelte';
 	import TilesToggle from '#lib/ui/TilesToggle.svelte';
 	import { panelOpen } from '#lib/ui/panel.ts';
-	import WeatherPanel from '#lib/weather/WeatherPanel.svelte';
+	import SidePanel from '#lib/ui/SidePanel.svelte';
+	import RightPanel from '#lib/ui/RightPanel.svelte';
 
 	let container: HTMLDivElement;
 	let credits: HTMLDivElement;
@@ -17,8 +18,22 @@
 	let drawing = $state<DrawingSession | null>(null);
 	let failure = $state<string | null>(null);
 
+	/** Cesium needs WebGL. Some embedded browsers (e.g. VS Code Snap builds) have it disabled. */
+	function hasWebGL(): boolean {
+		try {
+			const c = document.createElement('canvas');
+			return !!(c.getContext('webgl2') ?? c.getContext('webgl'));
+		} catch {
+			return false;
+		}
+	}
+
 	onMount(() => {
 		let disposed = false;
+		if (!hasWebGL()) {
+			failure = `this browser has WebGL turned off. Open ${location.origin} in Chrome, Firefox or Edge.`;
+			return;
+		}
 		createGlobe(container, credits, {
 			ionToken: PUBLIC_CESIUM_ION_TOKEN,
 			googleKey: PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -77,7 +92,7 @@
 		{/if}
 	</main>
 
-	{#if globe}<WeatherPanel {globe} />{/if}
+	<SidePanel>{#if globe}<RightPanel {globe} />{/if}</SidePanel>
 </div>
 
 <style>

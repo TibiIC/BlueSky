@@ -1,0 +1,39 @@
+# Commits changes made to the Field studio notebook in Colab, so every edit is in git history.
+# Runs every 30 minutes, or on demand from the Actions tab ("Run workflow").
+name: Sync Field studio from Colab
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-colab-studio
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pull notebook and export page
+        run: python backend/scripts/export_studio.py --pull
+
+      - name: Commit if the notebook changed
+        run: |
+          git add backend/notebooks/Field_Studio.ipynb backend/climate_lens/static/field-studio.html
+          if git diff --cached --quiet; then
+            echo "No changes in Colab."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Sync Field studio notebook from Colab"
+          git push

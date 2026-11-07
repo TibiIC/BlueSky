@@ -1,0 +1,3 @@
+# The notebook and its page embed parcel records from the team-only Apetit package.
+*.ipynb
+site/

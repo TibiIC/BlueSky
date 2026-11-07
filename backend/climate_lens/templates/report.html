@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ r.title }} · {{ r.case.label }}</title>
+<style>
+  :root { --ink: #173b30; --muted: #376353; --link: #24584a; --panel: #edf5ef; --line: #dbe8df; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f7faf8; color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { background: var(--ink); color: #fff; padding: 18px 20px; border-radius: 14px; }
+  header h1 { margin: 0; font-size: 22px; }
+  header p { margin: 4px 0 0; opacity: .85; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 14px 2px; font-size: 13px; color: var(--muted); }
+  section { background: var(--panel); border-radius: 16px; padding: 18px 20px; margin: 14px 0; break-inside: avoid; }
+  section > h2 { margin: 0 0 4px; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  h3 { margin: 6px 0 10px; font-size: 21px; }
+  h4 { margin: 16px 0 8px; }
+  p { margin: 8px 0; }
+  a { color: var(--link); }
+  .cards { display: flex; flex-wrap: wrap; gap: 12px; }
+  .card { flex: 1; min-width: 180px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .card .label { color: var(--muted); font-weight: 600; }
+  .card .value { font-size: 21px; margin: 6px 0; }
+  .card .note { font-size: 13px; }
+  ul.checks { list-style: none; padding: 0; margin: 8px 0; }
+  ul.checks li::before { content: "☐ "; }
+  ul.checks li.on::before { content: "☑ "; }
+  table { border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  td { padding: 2px 14px 2px 0; }
+  .ai { white-space: pre-wrap; }
+  .disclaimer { font-size: 13px; color: var(--muted); }
+  .actions { text-align: right; margin-top: 10px; }
+  button { font: inherit; background: var(--ink); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+  @media print { body { background: #fff; } .actions { display: none; } main { padding: 0; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>{{ r.title }}</h1>
+    <p>Field decisions · evidence · impact</p>
+  </header>
+
+  <div class="meta">
+    <span><b>Case:</b> {{ r.case.label }}</span>
+    <span><b>Stage:</b> {{ r.stage }}</span>
+    <span><b>Observation:</b> {{ r.observation }}</span>
+    <span><b>Generated:</b> {{ r.generated_at }}</span>
+  </div>
+
+  <section>
+    <h2>1 · Field action & IPM · {{ r.case.field_case }}</h2>
+    <h3>{{ r.field_action.action }}</h3>
+    <p><b>How:</b> {{ r.field_action.how }}</p>
+    <p><b>Check next:</b> {{ r.field_action.check_next }}</p>
+    <p><b>Biology:</b> {{ r.field_action.biology }}</p>
+    <p>{% for s in r.field_action.sources %}<a href="{{ s.url }}" target="_blank" rel="noopener">{{ s.label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+
+    <h4>Chemical escalation check · non-chemical first</h4>
+    {% if r.escalation.in_scope %}
+    <ul class="checks">
+      <li class="{{ 'on' if r.escalation.checks.monitoring }}">Current field monitoring recorded</li>
+      <li class="{{ 'on' if r.escalation.checks.threshold_met }}">Local action threshold confirmed and met</li>
+      <li class="{{ 'on' if r.escalation.checks.alternatives_insufficient }}">Feasible non-chemical options assessed and insufficient</li>
+    </ul>
+    {% endif %}
+    <p><b>{{ r.escalation.status }}</b></p>
+    <p>{{ r.escalation.guidance }} <a href="{{ r.escalation.source.url }}" target="_blank" rel="noopener">{{ r.escalation.source.label }}</a></p>
+  </section>
+
+  {% if r.ai %}
+  <section>
+    <h2>Gemini explanation · {{ r.ai.model }}</h2>
+    {% if r.ai.question %}<p><b>Question:</b> {{ r.ai.question }}</p>{% endif %}
+    <p class="ai">{{ r.ai.text }}</p>
+    <p class="disclaimer">Generated from the playbook above. Check it against the sources.</p>
+  </section>
+  {% endif %}
+
+  <section>
+    <h2>2 · Cultivation plan</h2>
+    <p>{{ r.cultivation_plan.plan }}</p>
+    <p><b>Measure:</b> {{ r.cultivation_plan.measure }}</p>
+  </section>
+
+  <section>
+    <h2>3 · Cost & carbon</h2>
+    <p>{{ r.impact.context }}</p>
+    {% if r.impact.scenario %}
+    <p><b>{{ r.impact.scenario.name }}</b> — {{ r.impact.scenario.hazard }}</p>
+    {% endif %}
+    {% for sec in r.impact.sections %}
+    <h4>{{ sec.title }}</h4>
+    <div class="cards">
+      {% for c in sec.cards %}
+      <div class="card"><div class="label">{{ c.label }}</div><div class="value">{{ c.value }}</div><div class="note">{{ c.note }}</div></div>
+      {% endfor %}
+    </div>
+    <p>{{ sec.note }}</p>
+    {% endfor %}
+    {% if r.impact.inputs %}
+    <h4>Inputs used</h4>
+    <table>
+      {% for k, v in r.impact.inputs.items() %}<tr><td>{{ k }}</td><td>{{ 'Unknown' if v is none else v }}</td></tr>{% endfor %}
+    </table>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>4 · Breeding & varieties</h2>
+    <p>{{ r.breeding.traits }}</p>
+    <p>{{ r.breeding.verification }}</p>
+  </section>
+
+  <section>
+    <h2>5 · Biotech research (optional)</h2>
+    <p><b>Crop:</b> <i>{{ r.biotech.species }}</i></p>
+    <p>{{ r.biotech.guidance }}</p>
+    <p>{{ r.biotech.status }}</p>
+  </section>
+
+  <p class="disclaimer">Illustrative demo. Figures and effects are not verified. This report never authorizes a treatment or supplies a dose.</p>
+  <div class="actions"><button onclick="window.print()">Print / save as PDF</button></div>
+</main>
+</body>
+</html>

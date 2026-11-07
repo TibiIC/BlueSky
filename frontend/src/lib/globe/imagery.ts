@@ -91,10 +91,11 @@ export async function addGoogleTiles(C: CesiumModule, viewer: Viewer, keys: Imag
 			{
 				showCreditsOnScreen: true,
 				enableCollision: true,
-				maximumScreenSpaceError: 12,
+				// 24 instead of 12: about a quarter of the tile requests and decode work, still sharp at city zoom.
+				maximumScreenSpaceError: 24,
 				dynamicScreenSpaceError: true,
 				foveatedScreenSpaceError: true,
-				preloadFlightDestinations: true
+				preloadFlightDestinations: false
 			}
 		);
 		viewer.scene.primitives.add(tileset);

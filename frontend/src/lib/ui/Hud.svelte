@@ -30,29 +30,11 @@
 			<dt>Centroid</dt>
 			<dd>{fmtCoord(local.centroid)}</dd>
 		</dl>
-		<div class="server">
-			{#if !server || server.status === 'pending'}
-				<span class="muted">Sending to /api/selection…</span>
-			{:else if server.status === 'error'}
-				<span class="error">Server error: {server.message}</span>
-			{:else}
-				<div class="server-title">Server reply</div>
-				<dl>
-					<dt>Area</dt>
-					<dd>{fmtArea(server.result.areaKm2)} km²</dd>
-					<dt>Centroid</dt>
-					<dd>{fmtCoord(server.result.centroid)}</dd>
-					<dt>Countries</dt>
-					<dd>
-						{#each server.result.countries as c (c)}<span class="chip">{c}</span>{:else}<span class="muted"
-								>Outside Finland and Sweden</span
-							>{/each}
-					</dd>
-					<dt>BBox</dt>
-					<dd class="mono">{server.result.bbox.map((v) => v.toFixed(3)).join(', ')}</dd>
-				</dl>
-			{/if}
-		</div>
+		{#if server?.status === 'pending'}
+			<p class="muted small">Building the area report…</p>
+		{:else if server?.status === 'error'}
+			<p class="error small">Server error: {server.message}</p>
+		{/if}
 		<footer>{$shapes.features.length} shape{$shapes.features.length === 1 ? '' : 's'} · Delete removes selection</footer>
 	{:else}
 		<p class="muted">
@@ -110,29 +92,9 @@
 		margin: 0;
 		font-variant-numeric: tabular-nums;
 	}
-	.server {
-		margin-top: 10px;
-		padding-top: 10px;
-		border-top: 1px solid var(--panel-border);
-	}
-	.server-title {
-		font-size: 11px;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: #81c784;
-		margin-bottom: 6px;
-	}
-	.chip {
-		display: inline-block;
-		padding: 1px 8px;
-		margin-right: 4px;
-		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.1);
+	.small {
+		margin: 8px 0 0;
 		font-size: 12px;
-	}
-	.mono {
-		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-		font-size: 11px;
 	}
 	.muted {
 		color: var(--text-dim);

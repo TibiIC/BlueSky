@@ -1,4 +1,4 @@
 import { writable } from 'svelte/store';
 
-/** Right-hand panel (future "Problems / Effects / Solutions / Impact"). Hidden by default. */
-export const panelOpen = writable(false);
+/** Right-hand panel (Scenario + Area report). Open by default: it is the main control surface. */
+export const panelOpen = writable(true);
