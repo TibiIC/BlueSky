@@ -4,6 +4,7 @@
 	import { analyses, selectedShape } from '../drawing/store.ts';
 	import { centroidOf } from '../geo/turf.ts';
 	import { panelOpen, activeTab } from '../ui/panel.ts';
+	import ReviewPanel from '../review/ReviewPanel.svelte';
 	import { attachLensLayer, SOIL_COLOR, STATUS_COLOR, type LensLayer } from './layer.ts';
 	import { terraNow, type TerraNow } from './terraNow.ts';
 	import { openSbtnReview } from './sbtn.ts';
@@ -315,7 +316,8 @@
 
 		<section class="review">
 			<h3><span>6</span> Expert review</h3>
-			<p class="sub">Status: <b>Draft</b>. This report is computed, not reviewed. Screen the {fmt(report.area.parcels)} parcels in this area against SBTN steps 1–2 and export the review as a PDF.</p>
+			<ReviewPanel {report} shape={$selectedShape!} />
+			<p class="sub">Screen the {fmt(report.area.parcels)} parcels in this area against SBTN steps 1–2 and export the review as a PDF.</p>
 			<div class="buttons">
 				<button onclick={() => (sbtnBlocked = !openSbtnReview($selectedShape!))}>Open SBTN screening review ↗</button>
 			</div>
