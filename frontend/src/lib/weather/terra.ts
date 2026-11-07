@@ -47,6 +47,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
  const state: Status = { regionalConnected: false, globalConnected: false };
  let comparisonView:ComparisonView|null=null;let comparisonEnabled=false;let comparisonBusy=false;
  let scenarioFrame:Frame|null=null;
+ let windOnRain=true;
  let selected: Field = 'moisture_g_m3', visible = true, disposed = false, previous = performance.now();
  const overlays: Partial<Record<'regional'|'global',ReturnType<typeof createFieldOverlay>>> = {};
  const buffers={regional:[document.createElement('canvas'),document.createElement('canvas')],global:[document.createElement('canvas'),document.createElement('canvas')]};
@@ -118,7 +119,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
  for(let i=0;i<500;i++){const lon=-180+Math.random()*360,lat=-85+Math.random()*170;particles.push({kind:'global',lon,lat,point:points.add({position:C.Cartesian3.fromDegrees(lon,lat,18000),pixelSize:3,color:C.Color.fromCssColorString('#e4ffd0')})});}
  const removeTick=viewer.scene.preRender.addEventListener(()=>{
   const now=performance.now(),dt=Math.min(.05,(now-previous)/1000);previous=now;
-  points.show=visible&&selected==='wind'&&!scenarioFrame&&!comparisonView;
+  points.show=visible&&(selected==='wind'||(selected==='rain_bands'&&windOnRain))&&!scenarioFrame&&!comparisonView;
   if(!points.show)return;
   for(const p of particles){const f=state[p.kind];p.point.show=!!f&&f.ready!==false&&now-timestamps[p.kind]<4000;if(!f||!p.point.show||f.controls.paused||f.at_forecast_end)continue;
    const grid=f.grid,i=p.kind==='global'?((Math.round((p.lon-grid.west)/360*grid.nx)%grid.nx)+grid.nx)%grid.nx:Math.max(0,Math.min(grid.nx-1,Math.round((p.lon-grid.west)/(grid.east-grid.west)*(grid.nx-1)))),j=Math.max(0,Math.min(grid.ny-1,Math.round((p.lat-grid.south)/(grid.north-grid.south)*(grid.ny-1)))),n=j*grid.nx+i;
@@ -163,6 +164,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
    if(!r.ok)throw Error(await r.text());comparisonEnabled=true;state.comparison=await r.json();onStatus({...state});await refreshComparison();
   },
   setComparisonView(view:ComparisonView|null){scenarioFrame=null;state.scenarioActive=false;comparisonView=view;comparisonEnabled=view!==null;state.comparisonView=view;queuePaint('global');queuePaint('regional');onStatus({...state});},
+  setWindOnRain(show:boolean){windOnRain=show;},
   setFocusMarkers(show:boolean){focusEntities.forEach(e=>e.show=show);},
   setVisible(show:boolean){visible=show;queuePaint('global');queuePaint('regional');},
   setLayer(field:Field){scenarioFrame=null;state.scenarioActive=false;onStatus({...state});selected=field;queuePaint('global');queuePaint('regional');},

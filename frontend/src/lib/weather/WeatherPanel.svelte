@@ -11,7 +11,7 @@
  let status=$state<Status>({regionalConnected:false,globalConnected:false});
  let field=$state<Field>('moisture_g_m3');
  let error=$state('');
- let rotateEarth=$state(false);let weatherMotion=$state(true);
+ let rotateEarth=$state(false);let weatherMotion=$state(true);let windOnRain=$state(true);
  let visible=$state(true);let focusMarkers=$state(true);
  let compareDate=$state('');let comparing=$state(false);let compareView=$state<ComparisonView>('difference');
  const comparison=$derived(status.comparison);
@@ -43,7 +43,7 @@
  <header><button class="expand" aria-label={expanded?'Collapse data sidebar':'Open data sidebar'} aria-expanded={expanded} onclick={()=>expanded=!expanded}>{expanded?'−':'+'}</button><strong>EARTH / DATA</strong><span class:live={status.regionalConnected&&status.globalConnected}>{status.regionalConnected&&status.globalConnected?'● CONNECTED':'○ RECONNECTING'}</span></header>
  <div class="mode-label">{status.scenarioActive?'HYPOTHETICAL SCENARIO · FINAL SOIL STATE':comparing?compareView==='difference'?'LIVE − HISTORICAL DIFFERENCE':compareView==='historical'?'HISTORICAL WEATHER COMPARISON':'LIVE WEATHER COMPARISON':timeline?.mode==='historical'?'HISTORICAL DATA + SIMULATION':'LIVE FORECAST + SIMULATION'}</div>
  <label class="climate-toggle"><span>Weather layers <small>Global coverage · finer Nordic detail</small></span><input aria-label="Weather layers" type="checkbox" bind:checked={visible} onchange={()=>api?.setVisible(visible)} /></label>
- {#if expanded}
+ <div hidden={!expanded}>
  <label><span>Rotate Earth <small>presentation motion</small></span><input type="checkbox" bind:checked={rotateEarth}/></label>
  <div class="apetit-focus"><strong>APETIT / CROP WEATHER</strong><p>Global display: 10°. Nordic display cells: ~35–68 km; forcing uses 195 bilinear samples (~100–135 km spacing).<br>Peas, vegetables and oilseed growing conditions.</p><div class="buttons"><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)});}}>Whole world</button><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(19,59.5,1800000)});}}>Apetit focus</button></div><label><span>Focus markers</span><input type="checkbox" bind:checked={focusMarkers} onchange={()=>api?.setFocusMarkers(focusMarkers)} /></label></div>
  <FarmPanel {globe} regional={status.regional} />
@@ -58,6 +58,7 @@
  {#if field==='rain_bands'}<p class="note">Forecast rain ≥0.1 mm/h. Nordic rain intensity is advected with transport-level winds and relaxed toward hourly forecasts (30 min). This is an evolving forecast-driven proxy, not radar or diagnosed meteorological fronts. Land-water budgets still use forecast rain. Global rain remains coarse forecast forcing.</p>{/if}
  {#if field==='crop_stress'}<p class="note">FAO-56 water limitation: 0 = no limitation, 1 = wilting-point limit. Generic soil and crop-calendar assumptions; not measured crop damage.</p>{/if}
  {#if field==='soil_fraction'||field==='snow_water_mm'||field==='crop_stress'}<p class="note">Nordic model only; no global soil/snow simulation is being implied.</p>{/if}
+ {#if field==='rain_bands'&&!comparing}<label>Wind tracers over rain<input type="checkbox" bind:checked={windOnRain} onchange={()=>api?.setWindOnRain(windOnRain)}/></label><p class="note">Wind tracers follow 10 m forecast winds; rain transport uses transport-level winds. Both follow the shared simulation clock.</p>{/if}
  <CatchmentPanel {globe} regional={status.regional} onPlay={()=>{weatherMotion=true;control({speed:600,paused:false});}} onFocus={()=>rotateEarth=false} onPause={()=>control({paused:!status.regional?.controls.paused})}/>
  <MeasuredBiology {globe} onFocus={()=>{rotateEarth=false;}} />
  <DecisionEvidence />
@@ -115,7 +116,7 @@
 <p class="note">Säkylä/Bjuv markers are approximate town centers; actual contract-farm data has not been supplied. <a href="https://apetit.fi/en/sustainability/cultivation-and-experimental-work/" target="_blank" rel="noreferrer">Apetit context ↗</a></p>
  <a href="http://127.0.0.1:8765" target="_blank" rel="noreferrer">Open physics dashboard ↗</a>
  </details>
-{:else}<p>{timeline?.mode==='historical'?timeline.range?.join(' → '):'Global atmosphere + finer Nordic weather'}</p><div class="buttons"><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)});}}>Whole Earth</button><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(21.5,63,2600000)});}}>Nordics</button></div>{/if}
+</div>{#if !expanded}<p>{timeline?.mode==='historical'?timeline.range?.join(' → '):'Global atmosphere + finer Nordic weather'}</p><div class="buttons"><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)});}}>Whole Earth</button><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(21.5,63,2600000)});}}>Nordics</button></div>{/if}
 </section>
 <style>
 .weather.collapsed{width:44px;padding:10px 4px}.weather.collapsed> :not(header){display:none}.weather.collapsed header strong,.weather.collapsed header span{display:none}.weather.collapsed header{justify-content:center}.weather.collapsed header .expand{padding:8px}details{border-top:1px solid #385158;padding:12px 0}summary{cursor:pointer;color:#cfeb9b;font-size:12px}
