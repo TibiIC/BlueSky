@@ -27,11 +27,23 @@ whenever it changes), loads `.env` and starts uvicorn with auto-reload.
 
 `/studio` serves `climate_lens/static/field-studio.html`, a self-contained page
 (inline CSS and JS, no network calls) exported from `notebooks/Field_Studio.ipynb`.
-After editing the notebook, regenerate the page:
 
-```sh
-.venv/bin/python scripts/export_studio.py
-```
+The notebook is edited in
+[Colab](https://colab.research.google.com/drive/1A0LzF05A8uSyTlaT8ecrI10--2yZG157),
+which is the source of truth. The repo copy is synced from it:
+
+- **Automatically:** the `Sync Field studio from Colab` GitHub Action checks every
+  30 minutes and commits any change to the notebook and page. Run it right away
+  from the repo's Actions tab with "Run workflow".
+- **Locally:** pull the latest version and regenerate the page:
+
+  ```sh
+  .venv/bin/python scripts/export_studio.py --pull
+  ```
+
+The Colab link must stay shared as "Anyone with the link can view". Outputs are
+cleared on sync so diffs show only code changes. Edit the notebook in Colab, not
+in the repo: the next sync overwrites the repo copy.
 
 The script reads the `DEMO_HTML` string from the last cell that defines it,
 without running the notebook. The server picks up the new file immediately.
