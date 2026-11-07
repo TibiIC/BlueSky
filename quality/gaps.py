@@ -148,14 +148,18 @@ def s_goods_amount(raw):
 
 
 def s_spend(raw):
-    """Spend-based lines (services, capex) vs the supplier's typical invoice."""
+    """Spend-based lines (services, capex) vs the supplier's typical invoice. Amounts are compared in
+    euros, so a supplier that bills in more than one currency is not mistaken for a typo; the
+    prediction is then converted back into the line's own currency."""
     e = _erp(raw)
     g = e[(e.uom == 'EUR') & (e.movement_type == 101) & (e.net_amount > 0)].copy()
-    n = g.groupby('supplier_id').net_amount.transform('size')
+    g['rate'] = g.currency.map(_fx(raw)).fillna(1.0)
+    g['eur'] = g.net_amount / g.rate
+    n = g.groupby('supplier_id').eur.transform('size')
     g = g[n >= 5]
-    med = g.groupby('supplier_id').net_amount.transform('median')
+    med_eur = g.groupby('supplier_id').eur.transform('median')
     return pd.DataFrame({'index': g.index, 'record_key': g.key, 'year': g.year, 'recorded': g.net_amount,
-                         'expected': med, 'unit': g.currency, 'context': g.material_text})
+                         'expected': med_eur * g.rate, 'unit': g.currency, 'context': g.material_text})
 
 
 def s_energy(raw):

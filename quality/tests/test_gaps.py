@@ -72,5 +72,44 @@ class Choice(unittest.TestCase):
         self.assertEqual(gaps.choice(it, {'k|f': 'not-an-option'}), 'div1000')
 
 
+
+class Units(unittest.TestCase):
+    """A value in a different unit or currency is not a typo when the record says so."""
+
+    def setUp(self):
+        import pandas as pd
+        self.pd = pd
+        self._fx = gaps._fx
+        gaps._fx = lambda raw: {'EUR': 1.0, 'SEK': 11.4, 'USD': 1.08}
+
+    def tearDown(self):
+        gaps._fx = self._fx
+
+    def erp(self, rows):
+        cols = ['doc_no', 'line_no', 'posting_date', 'uom', 'movement_type', 'quantity', 'net_amount', 'currency', 'material_text', 'supplier_id', 'material_id']
+        return self.pd.DataFrame(rows, columns=cols)
+
+    def test_tonnes_lines_compared_in_tonnes(self):
+        raw = {'erp': self.erp([[1, 10, '2025-01-01', 'KG', 101, 39616.0, 1.0, 'EUR', 'x', 'S', 'M'],
+                                [2, 10, '2025-01-01', 'TO', 101, 39.616, 1.0, 'EUR', 'x', 'S', 'M']]),
+               'shipments': self.pd.DataFrame({'direction': ['inbound'] * 2, 'ref_doc': ['1', '2'], 't': [39.616, 39.616]})}
+        d = gaps.s_purchases(raw)
+        self.assertTrue(np.allclose(d.recorded.values, d.expected.values))  # 39,616 kg and 39.616 t both match
+
+    def test_fuel_units_never_mixed(self):
+        f = self.pd.DataFrame({'delivery_id': range(8), 'site_id': 'A', 'year': 2025,
+                               'carrier': ['diesel'] * 4 + ['lng'] * 4, 'unit': ['l'] * 4 + ['t'] * 4,
+                               'quantity': [10000, 11000, 9000, 10500, 20, 22, 18, 21]})
+        d = gaps.s_fuel({'fuel_deliveries': f})
+        self.assertTrue((np.abs(np.log10(d.recorded / d.expected)) < 0.1).all())
+
+    def test_supplier_billing_in_two_currencies(self):
+        rows = [[i, 10, '2025-01-01', 'EUR', 101, 0, 1000.0, 'EUR', 'x', 'S', 'M'] for i in range(5)]
+        rows += [[9, 10, '2025-01-01', 'EUR', 101, 0, 11400.0, 'SEK', 'x', 'S', 'M']]  # the same 1,000 EUR, billed in krona
+        d = gaps.s_spend({'erp': self.erp(rows)})
+        sek = d[d.unit == 'SEK'].iloc[0]
+        self.assertAlmostEqual(sek.recorded / sek.expected, 1.0)
+
+
 if __name__ == '__main__':
     unittest.main()

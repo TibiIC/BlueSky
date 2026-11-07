@@ -56,6 +56,12 @@ diagonal:
 | ×10, ×100 | ±1.00, ±2.00 | a misplaced decimal point |
 | krona as euros | +1.06 | a Swedish invoice booked in euros (×11.4) |
 
+**Units and currencies are respected.** A prediction is always converted into the record's own
+unit or currency before comparing: a purchase line in tonnes (whole ship loads, 150 lines) is
+compared with the shipment in tonnes, an invoice in krona with the supplier's typical invoice in
+krona, and litres are only ever compared with litres. A big number in a bigger unit is therefore
+never mistaken for a typo. The 150 tonne lines all match their shipments exactly and none is flagged.
+
 Each kind of record is tested only for the typos that really happen to it: grams/kg for
 refrigerants, kWh/MWh for meters, a misplaced decimal point for farm answers, krona for invoices.
 
