@@ -67,6 +67,9 @@ export async function createGlobe(
 	for (const ev of ['pointermove', 'pointerdown', 'pointerup', 'wheel'] as const)
 		scene.canvas.addEventListener(ev, kick, { passive: true });
 	window.addEventListener('keydown', kick);
+	// ...and so do loading tiles and new imagery layers, otherwise the first view can stay black.
+	scene.globe.tileLoadProgressEvent.addEventListener(kick);
+	scene.imageryLayers.layerAdded.addEventListener(kick);
 
 	// The viewer's default double-click zooms to entities; we use double-click to close polygons.
 	viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(C.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
@@ -105,6 +108,7 @@ export async function createGlobe(
 		if (ts) setTilesEnabled(false);
 	});
 
+	scene.requestRender();
 	return {
 		C,
 		viewer,

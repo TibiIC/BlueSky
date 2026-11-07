@@ -251,6 +251,71 @@ def build_climate(pkg: Path, cells: pd.DataFrame):
     return {'cells': grid, 'indicators': out}
 
 
+# Global warming levels (°C above 1850–1900), IPCC AR6 WG1 SPM Table SPM.1 best estimates for
+# 2021–2040 / 2041–2060 / 2081–2100, linearly interpolated to the decade centres used here.
+# 1991–2020 is taken as 0.9 °C (AR6: 0.85 °C for 1995–2014).
+GWL_BASELINE = 0.9
+GWL_AR6 = {'ssp126': (1.5, 1.7, 1.8), 'ssp245': (1.5, 2.0, 2.7), 'ssp585': (1.6, 2.4, 4.4)}
+GWL_CENTRES = (2030.5, 2050.5, 2090.5)
+DECADE_CENTRES = {'2030s': 2035.5, '2040s': 2045.5, '2050s': 2055.5}
+FIT_INDICATORS = ['hotDaysJJ', 'pHeatSeason', 'waterBalanceMJJA', 'heavyRainDaysJAS', 'frostDaysMay', 'gdd5', 'tmeanMJJA']
+
+
+def gwl_at(scen: str, year: float) -> float:
+    xs = (2005.5,) + GWL_CENTRES
+    ys = (GWL_BASELINE,) + GWL_AR6[scen]
+    return float(np.interp(year, xs, ys))
+
+
+def build_warming(climate: dict) -> dict:
+    """Per cell and indicator: slope of the indicator against global warming level.
+
+    Ten points per fit (1991–2020 baseline + 3 SSPs × 3 decades). Using warming level
+    instead of scenario labels smooths the single-realisation noise in each SSP run and
+    lets the UI slide continuously between scenarios. The UI shows
+    baseline + slope × (GWL − baseline GWL).
+    """
+    gwl = {s: {d: round(gwl_at(s, c), 3) for d, c in DECADE_CENTRES.items()} for s in SCENARIOS}
+    cells = {}
+    r2s = []
+    for cid, cell in climate['indicators'].items():
+        out = {}
+        for k in FIT_INDICATORS:
+            xs = [GWL_BASELINE] + [gwl[s][d] for s in SCENARIOS for d in DECADE_CENTRES]
+            ys = [cell['periods']['baseline'][k]] + [cell['periods'][d][s][k] for s in SCENARIOS for d in DECADE_CENTRES]
+            x, y = np.array(xs) - GWL_BASELINE, np.array(ys, dtype=float)
+            slope, icpt = np.polyfit(x, y, 1)
+            resid = y - (icpt + slope * x)
+            ss = ((y - y.mean()) ** 2).sum()
+            r2 = float(1 - (resid ** 2).sum() / ss) if ss > 0 else 1.0
+            r2s.append(r2)
+            out[k] = {'base': r(cell['periods']['baseline'][k], 3), 'slope': r(slope, 4), 'r2': r(r2, 2)}
+        cells[cid] = out
+    return {
+        'baselineGwl': GWL_BASELINE,
+        'gwl': gwl,
+        'ar6': {'periods': ['2021-2040', '2041-2060', '2081-2100'], 'bestEstimate': GWL_AR6},
+        'method': 'Linear fit of each indicator against global warming level across baseline + 9 SSP-decade points; '
+                  'GWL from IPCC AR6 WG1 Table SPM.1 interpolated to decade centres.',
+        'medianR2': r(float(np.median(r2s)), 2),
+        'cells': cells,
+    }
+
+
+def build_transition(pkg: Path) -> dict:
+    t = pd.read_csv(pkg / 'data/05_scenarios/transition_scenarios.csv')
+    keep = ['current_policies', 'ndcs', 'below_2c', 'net_zero_2050']
+    cols = {'carbon_price_eur_t': 'carbonPrice', 'eu_ets2_fuel_price_eur_t': 'ets2Price', 'n_fertiliser_price_index': 'nFertiliserIndex',
+            'diesel_price_index': 'dieselIndex', 'electricity_price_eur_mwh': 'electricityPrice', 'frozen_veg_import_premium_pct': 'importPremiumPct'}
+    out = {}
+    for sc in keep:
+        g = t[t.scenario == sc].sort_values('year')
+        out[sc] = {'ssp': g.physical_pathway_proxy.iloc[0], 'years': g.year.astype(int).tolist(),
+                   **{v: [r(x, 3) for x in g[k]] for k, v in cols.items()}}
+    return {'scenarios': out, 'notice': 'Illustrative values in NGFS Phase V ranges (package transition_scenarios.csv).',
+            'source': 'data/05_scenarios/transition_scenarios.csv'}
+
+
 def build_levers(pkg: Path):
     lv = pd.read_csv(pkg / SOURCE_FILES['levers'])
     keep = lv[lv.lever_id.isin(['L08', 'L09', 'L10', 'L11', 'L12', 'L24'])]
@@ -321,7 +386,10 @@ def main() -> None:
     write(args.out, 'parcels.json', parcel_cols)
     write(args.out, 'farms.json', build_farms(pkg, parcels, farms))
     write(args.out, 'catchments.geojson', build_catchments(pkg, parcels))
-    write(args.out, 'climate.json', build_climate(pkg, cells))
+    climate = build_climate(pkg, cells)
+    write(args.out, 'climate.json', climate)
+    write(args.out, 'warming.json', build_warming(climate))
+    write(args.out, 'transition.json', build_transition(pkg))
     write(args.out, 'levers.json', build_levers(pkg))
     write(args.out, 'meta.json', build_meta(pkg))
 
