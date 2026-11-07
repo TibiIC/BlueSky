@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Climate Lens reports</title>
+<style>
+  body { margin: 0; background: #f7faf8; color: #173b30; font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px; }
+  a { color: #24584a; }
+  li { margin: 6px 0; }
+  code { background: #edf5ef; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Climate Lens reports</h1>
+  <p><a href="/studio"><b>Field studio</b></a>: the interactive field operations console.</p>
+  <p>Sample reports, using each case's default stage, observation and inputs:</p>
+  <ul>
+    {% for c in cases %}
+    <li><a href="/reports/view?case={{ c.id }}">{{ c.label }}</a> <small>· {{ c.field_case }}</small></li>
+    {% endfor %}
+  </ul>
+  <p>Pick a stage and observation with <code>/reports/view?case=…&amp;stage=…&amp;observation=…</code>,
+     or use <a href="/docs">the API docs</a> to try <code>POST /reports</code> with custom inputs.</p>
+</main>
+</body>
+</html>
