@@ -60,3 +60,17 @@ python3 -m venv .venv-apetit
 .venv-apetit/bin/pip install duckdb
 .venv-apetit/bin/python terra/apetit/build_farm_layers.py /path/to/APETIT_CLIMATE_NATURE_NAVIGATOR_2026.zip
 ```
+
+## Measured soil biology pilot
+
+Open **Measured soil biology · Sweden** in the sidebar. The independent cyan marker represents the single published Kungsängen meadow location. Select among 20 samples collected on **7 June 2016** to see derived fungal ASV richness, a natural-log Shannon index based on published sequence-read counts, sequencing depth and measured gravimetric water content. The archive publishes fungal records; it is not bacterial or whole-microbiome coverage. No farm interpolation, Finland coverage, current sensor readings or soil-health ranking is implied. The synthetic management proxy remains separately labeled.
+
+Source: Rosling A, Eshghi Sahraei S, Furneaux B, Kluting K, Zakieh M (2026), *Kungsängen soil microbial communities*, version 1.9, Biology Section, Uppsala University / SBDI / GBIF, https://doi.org/10.15468/upxbwy, CC0 1.0. The derived file records the pinned archive URL, SHA-256, retrieval time, sampling protocol, dates and limitations. All 20 events share coordinates and have unspecified coordinate uncertainty. Sequence reads are not organism abundances; raw ASV richness is sequencing-depth dependent, and these derived metrics are not rarefied. Gravimetric g/g water content cannot be directly compared to the model's volumetric moisture.
+
+Rebuild with standard-library Python:
+
+```sh
+python3 terra/biology/build_measured.py
+```
+
+Measured snapshots stay fixed while live weather animates. European LUCAS bacterial/fungal DNA data is a candidate for wider coverage, but its metadata requires ESDAC registration and is not included here.

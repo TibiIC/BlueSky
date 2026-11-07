@@ -1,4 +1,5 @@
 <script lang="ts">
+ import MeasuredBiology from './MeasuredBiology.svelte';
  import ScenarioPanel from './ScenarioPanel.svelte';
  import FarmPanel from '../farms/FarmPanel.svelte';
  import { untrack } from 'svelte';
@@ -48,6 +49,7 @@
  {#if riskFields.has(field)&&field!=='crop_stress'}<p class="note">Colored land cells exceed the displayed, illustrative threshold. This is weather screening—not a calibrated crop-damage or yield forecast.</p>{/if}
  {#if field==='crop_stress'}<p class="note">FAO-56 water limitation: 0 = no limitation, 1 = wilting-point limit. Generic soil and crop-calendar assumptions; not measured crop damage.</p>{/if}
  {#if field==='soil_fraction'||field==='snow_water_mm'||field==='crop_stress'}<p class="note">Nordic model only; no global soil/snow simulation is being implied.</p>{/if}
+ <MeasuredBiology {globe} onFocus={()=>{rotateEarth=false;}} />
  <ScenarioPanel active={!!status.scenarioActive} onMap={frame=>{if(frame){closeComparison();field='soil_fraction';api?.setLayer(field);}api?.setScenario(frame);}} />
  <details><summary>Live / historical comparison</summary>
  <div class="compare-box">
