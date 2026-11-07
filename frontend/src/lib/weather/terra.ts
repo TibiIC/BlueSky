@@ -45,11 +45,13 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
  const { C, viewer } = globe;
  const state: Status = { regionalConnected: false, globalConnected: false };
  let comparisonView:ComparisonView|null=null;let comparisonEnabled=false;let comparisonBusy=false;
- let selected: Field = 'moisture_g_m3', visible = true, disposed = false, previous = performance.now();
+ // Weather overlay starts hidden ("Climate view" off): it tinted the whole map and cost a repaint every second.
+ let selected: Field = 'moisture_g_m3', visible = false, disposed = false, previous = performance.now();
  const overlays: Partial<Record<'regional'|'global',ReturnType<typeof createFieldOverlay>>> = {};
  const buffers={regional:[document.createElement('canvas'),document.createElement('canvas')],global:[document.createElement('canvas'),document.createElement('canvas')]};
  const bufferIndex={regional:0,global:0};
  const latestPublished={regional:0,global:0};
+ const shown={regional:false,global:false};
  const pendingPaint=new Set<'regional'|'global'>();let paintRequest=0;
  function queuePaint(kind:'regional'|'global'){
   pendingPaint.add(kind);if(paintRequest||disposed)return;
@@ -63,6 +65,8 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
  viewer.creditDisplay.addStaticCredit(credit);
  function paint(kind: 'regional'|'global') {
   let f = state[kind]; if (!f || disposed) return;
+  if(!visible){if(shown[kind]){shown[kind]=false;overlays[kind]?.setVisible(false);viewer.scene.requestRender();}return;} // no canvas work or frames while hidden
+  shown[kind]=true;
   const compare=kind==='global'?state.comparison?.global:state.comparison;
   if(comparisonView){
    if(!compare?.ready||!compare.grid||!compare[comparisonView]){overlays[kind]?.setVisible(false);return;}
@@ -125,6 +129,12 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   viewer.entities.add({name:'Nordic higher-detail weather domain',rectangle:{coordinates:C.Rectangle.fromDegrees(10,54,33,71),height:15000,fill:false,outline:true,outlineColor:C.Color.fromCssColorString('#d3ef9c')}}),
   ...[{name:'Säkylä region · Apetit',lon:22.33333,lat:61.03333},{name:'Bjuv region · Apetit',lon:12.91914,lat:56.08372}].map(place=>viewer.entities.add({name:place.name,description:'Approximate town center, not a contract farm boundary or exact facility position.',position:C.Cartesian3.fromDegrees(place.lon,place.lat,20000),point:{pixelSize:7,color:C.Color.fromCssColorString('#ffcf80'),outlineWidth:1,outlineColor:C.Color.BLACK},label:{text:place.name,font:'12px sans-serif',pixelOffset:new C.Cartesian2(0,-18),fillColor:C.Color.fromCssColorString('#ffdf9c'),showBackground:true,backgroundColor:C.Color.fromCssColorString('#10212c'),distanceDisplayCondition:new C.DistanceDisplayCondition(0,7000000)}}))
  ];
+ // Markers and domain outline start hidden; the Climate Lens layer shows the real parcels instead.
+ focusEntities.forEach(e=>e.show=false);
+ // Request-render mode: keep frames coming only while wind particles are visible and animating.
+ let pump=0;
+ const animate=()=>{if(disposed)return;const f=state.regional;if(visible&&!comparisonView&&f&&f.ready!==false&&!f.controls.paused&&!f.at_forecast_end&&performance.now()-timestamps.regional<4000)viewer.scene.requestRender();pump=requestAnimationFrame(animate);};
+ pump=requestAnimationFrame(animate);
  const feeds=[connect('regional','/terra/events'),connect('global','/terra/global-events')];
  const recovering = new Set<string>();
  async function refreshComparison(){
@@ -154,11 +164,11 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
    if(!r.ok)throw Error(await r.text());comparisonEnabled=true;state.comparison=await r.json();onStatus({...state});await refreshComparison();
   },
   setComparisonView(view:ComparisonView|null){comparisonView=view;comparisonEnabled=view!==null;state.comparisonView=view;queuePaint('global');queuePaint('regional');onStatus({...state});},
-  setFocusMarkers(show:boolean){focusEntities.forEach(e=>e.show=show);},
+  setFocusMarkers(show:boolean){focusEntities.forEach(e=>e.show=show);viewer.scene.requestRender();},
   setVisible(show:boolean){visible=show;queuePaint('global');queuePaint('regional');},
   setLayer(field:Field){selected=field;queuePaint('global');queuePaint('regional');},
   async timeline(body:Record<string,string>){const r=await fetch('/terra/api/timeline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());accept('regional',await r.json());},
   async control(body:Record<string,number|boolean>){const r=await fetch('/terra/api/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());accept('regional',await r.json());},
-  destroy(){disposed=true;cancelAnimationFrame(paintRequest);clearInterval(comparisonTimer);clearInterval(stale);feeds.forEach(es=>es.close());removeTick();viewer.creditDisplay.removeStaticCredit(credit);focusEntities.forEach(e=>viewer.entities.remove(e));for(const overlay of Object.values(overlays))overlay?.destroy();viewer.scene.primitives.remove(points);}
+  destroy(){disposed=true;cancelAnimationFrame(paintRequest);cancelAnimationFrame(pump);clearInterval(comparisonTimer);clearInterval(stale);feeds.forEach(es=>es.close());removeTick();viewer.creditDisplay.removeStaticCredit(credit);focusEntities.forEach(e=>viewer.entities.remove(e));for(const overlay of Object.values(overlays))overlay?.destroy();viewer.scene.primitives.remove(points);}
  };
 }

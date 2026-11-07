@@ -64,6 +64,7 @@ export function installZoomClamp(C: CesiumModule, viewer: Viewer, opts: ZoomClam
 		// Close ~95% of the gap per half second, independent of frame rate.
 		const step = gap * (1 - Math.exp(-6 * dt));
 		camera.move(up, Math.max(step, Math.min(gap, 2)));
+		scene.requestRender(); // keep easing in request-render mode
 	};
 
 	scene.preUpdate.addEventListener(onPreUpdate);

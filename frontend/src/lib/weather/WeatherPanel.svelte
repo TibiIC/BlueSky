@@ -6,7 +6,7 @@
  let status=$state<Status>({regionalConnected:false,globalConnected:false});
  let field=$state<Field>('moisture_g_m3');
  let error=$state('');
- let visible=$state(true);let focusMarkers=$state(true);
+ let visible=$state(false);let focusMarkers=$state(false);
  let compareDate=$state('');let comparing=$state(false);let compareView=$state<ComparisonView>('difference');
  const comparison=$derived(status.comparison);
  const legend=$derived(comparing&&compareView==='difference'?[-(differenceRanges[field]??10),differenceRanges[field]??10,riskFields.has(field)?'pp':ranges[field][2]]:ranges[field]);
@@ -23,7 +23,7 @@
  $effect(()=>{if(!compareDate&&timeline?.max_history_date)compareDate=timeline.max_history_date;if(!startDate&&timeline?.max_history_date){startDate=timeline.range?.[0]??timeline.max_history_date;endDate=timeline.range?.[1]??timeline.max_history_date;}});
  async function changeTimeline(body:Record<string,string>){try{await api?.timeline(body);error='';if(body.mode==='live')historyOpen=false;}catch(e){error=String(e);}}
  const rainPoints=(series:{precip_mm_h:number}[])=>{const max=Math.max(.1,...series.map(s=>s.precip_mm_h));return series.map((s,i)=>`${i*240/Math.max(1,series.length-1)},${50-s.precip_mm_h/max*45}`).join(' ');};
- let expanded=$state(typeof window !== 'undefined' && window.innerWidth > 900);
+ let expanded=$state(false); // collapsed by default so the globe stays clear
  let api:ReturnType<typeof attachTerra>|undefined;
  const options: [Field,string][]=[['temp_c','Temperature · global'],['precip_mm_h','Hourly rain · global'],['rain_day_mm','UTC-day rain · global'],['wind','Wind · global'],['moisture_g_m3','Moisture · global'],['frost_pct','Air frost ≤0°C · crop screen'],['heat_pct','Heat ≥28°C · crop screen'],['heavy_rain_pct','Wet day ≥20mm · crop screen'],['wind_risk_pct','Wind ≥12m/s · crop screen'],['soil_fraction','Soil water · Nordic model'],['snow_water_mm','Snow water · Nordic model']];
 

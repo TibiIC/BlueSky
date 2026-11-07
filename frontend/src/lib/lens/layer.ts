@@ -58,12 +58,17 @@ export function attachLensLayer(globe: Globe): LensLayer {
 			for (const f of (cg as FeatureCollection<Polygon, { id: string; status: string }>).features) {
 				const color = C.Color.fromCssColorString(STATUS_COLOR[f.properties.status] ?? '#ffffff');
 				const ring = f.geometry.coordinates[0].flat();
+				// Outline only: draped fills and ground-clamped lines are expensive classification passes.
+				// depthFailMaterial keeps the line visible when 3D tiles are on.
 				entities.push(
 					viewer.entities.add({
 						name: `Catchment ${f.properties.id} · ${f.properties.status}`,
-						// No height: the fill drapes on terrain and on Google 3D tiles (classified ground primitive).
-						polygon: { hierarchy: C.Cartesian3.fromDegreesArray(ring), material: color.withAlpha(0.12) },
-						polyline: { positions: C.Cartesian3.fromDegreesArray(ring), width: 1.5, material: color.withAlpha(0.85), clampToGround: true }
+						polyline: {
+							positions: C.Cartesian3.fromDegreesArrayHeights(ring.flatMap((v, i) => (i % 2 ? [v, 40] : [v]))),
+							width: 1.5,
+							material: color.withAlpha(0.8),
+							depthFailMaterial: color.withAlpha(0.5)
+						}
 					})
 				);
 			}
@@ -90,8 +95,14 @@ export function attachLensLayer(globe: Globe): LensLayer {
 
 	return {
 		ready,
-		setCatchmentsVisible: (show) => entities.forEach((e) => (e.show = show)),
-		setParcelsVisible: (show) => (points.show = show),
+		setCatchmentsVisible: (show) => {
+			entities.forEach((e) => (e.show = show));
+			viewer.scene.requestRender();
+		},
+		setParcelsVisible: (show) => {
+			points.show = show;
+			viewer.scene.requestRender();
+		},
 		highlight(geometry) {
 			for (const i of highlighted) {
 				const p = parcelPoints[i];
