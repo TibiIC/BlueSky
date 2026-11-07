@@ -1,0 +1,202 @@
+{%- set f = r.facts -%}
+{%- set n = r.narrative -%}
+{%- set t = f.totals -%}
+{%- macro num(v, nd=0) -%}{{ '—' if v is none else ('{:,.' ~ nd ~ 'f}').format(v) }}{%- endmacro -%}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ r.title }} · {{ f.selection.name }}</title>
+<style>
+  :root { --ink: #16302a; --muted: #5b6f69; --line: #d9e2de; --soft: #f2f6f4; --accent: #1f5c4a;
+          --priority: #b3412b; --secondary: #b7791f; --monitor: #4b6f63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e9eeec; color: var(--ink); font: 10.5pt/1.5 "Helvetica Neue", Arial, sans-serif; }
+  .page { max-width: 210mm; margin: 16px auto; background: #fff; padding: 18mm 17mm; box-shadow: 0 1px 6px rgba(0,0,0,.08); }
+  header.cover { display: grid; grid-template-columns: 1fr auto; gap: 18px; border-bottom: 3px solid var(--accent); padding-bottom: 14px; }
+  figure.map { margin: 14px 0 4px; }
+  figure.map img { display: block; width: 100%; border-radius: 6px; border: 1px solid var(--line); }
+  figure.map figcaption { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 8.5pt; color: var(--muted); margin-top: 5px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #bbb; vertical-align: -1px; margin-right: 4px; }
+  .line { display: inline-block; width: 16px; height: 0; border-top: 3px solid var(--ink); vertical-align: 3px; margin-right: 4px; }
+  .eyebrow { font-size: 8pt; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  h1 { font-size: 21pt; line-height: 1.15; margin: 4px 0 6px; }
+  h2 { font-size: 13pt; margin: 22px 0 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+  h2 small { font-weight: 400; color: var(--muted); font-size: 9.5pt; margin-left: 6px; }
+  .meta { color: var(--muted); font-size: 9pt; margin: 0; }
+  .badge { display: inline-block; font-size: 8pt; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+           padding: 2px 8px; border-radius: 3px; background: #fdf1d8; color: #7a5208; }
+  .badge.done { background: #dff0e6; color: #1c5a3a; }
+  svg.outline { width: 62mm; height: auto; background: var(--soft); border-radius: 6px; }
+  svg.outline path { fill: #cfe3d8; stroke: var(--accent); stroke-width: 1.5; fill-rule: evenodd; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0 4px; }
+  .tile { background: var(--soft); border-radius: 6px; padding: 8px 10px; }
+  .tile b { display: block; font-size: 15pt; line-height: 1.2; }
+  .tile span { font-size: 8.5pt; color: var(--muted); }
+  p { margin: 6px 0; }
+  .lead { font-size: 11pt; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 9pt; }
+  th { text-align: left; font-weight: 600; color: var(--muted); font-size: 8pt; text-transform: uppercase; letter-spacing: .04em;
+       border-bottom: 1.5px solid var(--ink); padding: 4px 6px; }
+  td { border-bottom: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  td.n { white-space: nowrap; }
+  table.wide { font-size: 8pt; table-layout: fixed; }
+  table.wide th { font-size: 6.5pt; padding: 4px 3px; }
+  table.wide td { padding: 4px 3px; }
+  table.wide th:first-child { width: 11%; } table.wide th:nth-child(2) { width: 13%; }
+  tr { break-inside: avoid; }
+  thead { display: table-header-group; }
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 8pt; font-weight: 700; color: #fff; }
+  .pill.Priority { background: var(--priority); } .pill.Secondary { background: var(--secondary); } .pill.Monitor { background: var(--monitor); }
+  .status { font-weight: 600; }
+  .status.material { color: var(--priority); } .status.none { color: var(--monitor); } .status.na { color: var(--muted); font-weight: 400; }
+  .bar { height: 7px; background: var(--priority); border-radius: 2px; opacity: .8; }
+  .note { font-size: 8.5pt; color: var(--muted); }
+  .ai { border-left: 3px solid var(--accent); padding-left: 10px; }
+  .warn { background: #fdf1d8; border-radius: 4px; padding: 6px 10px; font-size: 9pt; margin: 8px 0; }
+  ol { margin: 6px 0; padding-left: 20px; }
+  .appendix { break-before: page; }
+  .appendix table { font-size: 8pt; }
+  .actions { max-width: 210mm; margin: 0 auto 16px; text-align: right; }
+  button { font: inherit; font-size: 10pt; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+  @page { size: A4; margin: 15mm 14mm; }
+  @media print {
+    body { background: #fff; }
+    .page { margin: 0; padding: 0; box-shadow: none; max-width: none; }
+    .actions { display: none; }
+  }
+  @media (max-width: 700px) {
+    .page { padding: 20px 16px; }
+    header.cover { grid-template-columns: 1fr; }
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .scroll { overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="actions"><button onclick="window.print()">Save as PDF</button></div>
+<article class="page">
+  <header class="cover">
+    <div>
+      <div class="eyebrow">Climate Lens · Nature screening</div>
+      <h1>{{ r.title }}</h1>
+      <p class="meta"><span class="badge {{ 'done' if r.status == 'Reviewed for screening' }}">{{ r.status }}</span>
+        &nbsp;Apetit Plc challenge scenario · generated {{ r.generated_at[:16].replace('T', ' ') }} UTC</p>
+      <p class="meta">Selection: {{ f.selection.name }}{% if f.selection.globe_id %} · globe ID {{ f.selection.globe_id[:8] }}{% endif %}</p>
+      {% if f.selection.bbox_wgs84 %}<p class="meta">Area (WGS84): {{ f.selection.bbox_wgs84 | join(', ') }}</p>{% endif %}
+    </div>
+    {% if r.outline and not r.map %}<svg class="outline" viewBox="0 0 320 200" role="img" aria-label="Outline of the selected area"><path d="{{ r.outline }}" fill="#cfe3d8" stroke="#1f5c4a" stroke-width="1.5" fill-rule="evenodd"/></svg>{% endif %}
+  </header>
+
+  {% if r.map %}
+  <figure class="map">
+    <img src="{{ r.map }}" alt="Map of the selected area with its parcels">
+    <figcaption>
+      <span><i class="line"></i>Drawn area</span>
+      <span><i class="dot" style="background:#c0392b"></i>Runoff-risk parcel (≤ 100 m from water, no buffer strip)</span>
+      <span><i class="dot" style="background:#1f6f8b"></i>Other parcel</span>
+      <span style="margin-left:auto">{{ r.map_attribution }}</span>
+    </figcaption>
+  </figure>
+  {% endif %}
+
+  <div class="tiles">
+    <div class="tile"><b>{{ num(t.parcels) }}</b><span>parcels from {{ num(t.farms) }} farms</span></div>
+    <div class="tile"><b>{{ num(t.ha) }} ha</b><span>cropland, {{ num(t.contract_ha) }} ha Apetit crops</span></div>
+    <div class="tile"><b>{{ num(t.catchments_linked) }}</b><span>catchments receive drainage</span></div>
+    <div class="tile"><b>{{ num(f.ranking | selectattr('tier', 'equalto', 'Priority') | list | length) }}</b><span>priority catchments</span></div>
+  </div>
+
+  <h2>Summary</h2>
+  <div class="ai"><p class="lead">{{ n.executive_summary }}</p></div>
+
+  <h2>Step 1a · Materiality screening <small>which pressures this data can evidence</small></h2>
+  <div class="ai"><p>{{ n.materiality }}</p></div>
+  <div class="scroll"><table>
+    <thead><tr><th>Pressure category</th><th>Screening result</th><th>Evidence in the data</th></tr></thead>
+    <tbody>
+    {% for s in f.screening %}
+      <tr><td>{{ s.pressure }}</td>
+          <td class="status {{ 'material' if s.status == 'Potentially material' else 'none' if s.status == 'Not indicated' else 'na' }}">{{ s.status }}</td>
+          <td>{{ s.evidence }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+
+  <h2>Step 1b · Pressures by catchment <small>parcels in the area, grouped by receiving catchment</small></h2>
+  <div class="ai"><p>{{ n.pressures }}</p></div>
+  <div class="scroll"><table class="wide">
+    <thead><tr><th>Catchment</th><th>Water · status</th><th class="n">Parcels</th><th class="n">ha</th>
+      <th class="n">Runoff-risk ha</th><th class="n">Open-ditch ha</th><th class="n">Organic ha</th><th class="n">Peat t CO₂e/yr</th><th class="n">Outlet P kg/yr</th></tr></thead>
+    <tbody>
+    {% for c in f.catchments %}
+      <tr><td><b>{{ c.catchment }}</b></td><td>{{ c.water }} · {{ c.status }}</td>
+        <td class="n">{{ num(c.parcels) }}</td><td class="n">{{ num(c.ha, 1) }}</td><td class="n">{{ num(c.runoff_risk_ha, 1) }}</td>
+        <td class="n">{{ num(c.open_ditch_ha, 1) }}</td><td class="n">{{ num(c.organic_ha, 1) }}</td><td class="n">{{ num(c.peat_co2e, 1) }}</td>
+        <td class="n">{{ num(c.outlet_load.p_kg) if c.outlet_load else 'no record' }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="note">Runoff-risk: {{ f.method.runoff_risk }} Outlet loads are catchment-wide ({{ f.catchments | selectattr('outlet_load') | map(attribute='outlet_load.year') | first | default('latest year') }}) and are not attributable to Apetit.
+    {% if f.crossed_without_parcels %}Also crossed by the area, with no matched parcels: {{ f.crossed_without_parcels | join(', ') }}.{% endif %}</p>
+
+  <h2>Step 2 · Prioritisation <small>pressure rank × state-of-nature rank</small></h2>
+  <div class="ai"><p>{{ n.prioritisation }}</p></div>
+  {% set maxrisk = (f.catchments | map(attribute='runoff_risk_ha') | max) or 1 %}
+  <div class="scroll"><table>
+    <thead><tr><th class="n">#</th><th>Catchment</th><th>Tier</th><th class="n">Pressure rank</th><th class="n">Nature rank</th><th>Ecological status · P sensitivity</th><th style="width:22%">Runoff-risk ha</th></tr></thead>
+    <tbody>
+    {% for x in f.ranking %}{% set c = f.catchments[loop.index0] %}
+      <tr><td class="n">{{ x.position }}</td><td><b>{{ x.catchment }}</b></td><td><span class="pill {{ x.tier }}">{{ x.tier }}</span></td>
+        <td class="n">{{ x.pressure_rank }}</td><td class="n">{{ x.nature_rank }}</td>
+        <td>{{ c.status }}{% if c.p_sensitivity %} · {{ c.p_sensitivity }}{% endif %}</td>
+        <td><div class="bar" style="width: {{ (c.runoff_risk_ha / maxrisk * 100) | round(1) }}%"></div>{{ num(c.runoff_risk_ha, 1) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="note">{{ f.method.pressure_rank }} {{ f.method.nature_rank }} {{ f.method.combined }}
+    This follows the structure of SBTN's Step 2 (rank by pressure, rank by state of nature, combine) with screening-level indicators, not SBTN's official indices.</p>
+
+  {% if r.review %}
+  <h2>Reviewer assessment</h2>
+  <table><tbody>
+    {% for q in r.review %}<tr><td style="width:34%">{{ q.label }}</td><td>{{ q.value }}</td></tr>{% endfor %}
+  </tbody></table>
+  {% endif %}
+
+  <h2>Evidence gaps and next steps</h2>
+  <div class="ai">
+    <p>{{ n.data_gaps }}</p>
+    <ol>{% for s in n.next_steps %}<li>{{ s }}</li>{% endfor %}</ol>
+  </div>
+  <p class="note">{{ num(f.data_gaps.missing_p_tests) }} parcels without a soil P test.
+    {% if f.data_gaps.catchments_without_outlet_record %}No outlet monitoring for {{ f.data_gaps.catchments_without_outlet_record | join(', ') }}.{% endif %}</p>
+
+  <h2>About this report</h2>
+  <p class="note">
+    {% if n.source == 'llm' %}Narrative sections (marked with a green rule) were written by {{ n.writer }} from the figures in this report only; all tables are computed directly from the data.
+    {% else %}Narrative sections use template text: {{ n.note }}{% endif %}
+    Parcels: {{ f.method.matching }} Data: synthetic Since AI 2026 Apetit challenge package.
+    This is an internal screening draft, not an SBTN validation submission; validated Steps 1–2 are submitted through SBTN's Accountability Accelerator.
+  </p>
+  {% if n.unverified %}<div class="warn">Check before sharing: the narrative mentions figures not found in the data: {{ n.unverified | join(', ') }}.</div>{% endif %}
+  <p class="note">Sources: {% for s in r.sources %}<a href="{{ s.url }}">{{ s.label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+
+  <section class="appendix">
+    <h2>Appendix · Parcel register <small>{{ num(t.parcels) }} parcels, {{ f.plan_year }} planned crop</small></h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Parcel</th><th>Farm</th><th>Catchment</th><th>{{ f.plan_year }} crop</th><th class="n">ha</th><th>Soil</th><th>Drainage</th><th class="n">m to water</th><th>Buffer</th><th class="n">P test mg/L</th></tr></thead>
+      <tbody>
+      {% for p in r.parcels %}
+        <tr><td>{{ p.id }}</td><td>{{ p.farm }}</td><td>{{ p.catchment }}</td><td>{{ p.crop | replace('_', ' ') }}</td><td class="n">{{ num(p.ha, 2) }}</td>
+          <td>{{ p.soil | replace('_', ' ') }}</td><td>{{ p.drainage | replace('_', ' ') }}</td><td class="n">{{ num(p.dist_water_m) }}</td>
+          <td>{{ 'yes' if p.buffer else 'no' }}</td><td class="n">{{ num(p.p_test, 1) if p.p_test is not none else '—' }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+</article>
+</body>
+</html>

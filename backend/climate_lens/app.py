@@ -6,32 +6,43 @@
     POST /reports          report as JSON
     POST /reports/html     report as a printable HTML page
     GET  /reports/view     report as HTML from query parameters (for quick browser testing)
+    POST /sbtn/report      SBTN Step 1–2 screening report for a globe selection, as JSON
+    POST /sbtn/report/html the same as an HTML page (JSON body, or a form field `payload`)
+    POST /sbtn/report/pdf  the same as a PDF download (what the SBTN page's Generate report uses)
+    POST /sbtn/map         small map image of a selection (the SBTN page's corner thumbnail)
     GET  /docs             interactive API docs
 """
 
+import json
 import os
+import re
 from pathlib import Path
+from urllib.parse import parse_qs
 from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
-from . import gemini
+from . import gemini, llm, sbtn
 from .data import CASE_LABELS
 from .report import build_report, options
 
 app = FastAPI(title="Climate Lens reports", version="0.1.0",
               description="Field decision reports from the FinlandIP DSS notebook. All figures are illustrative.")
 
-# The Svelte frontend runs on :5173 in dev; add more origins via CORS_ORIGINS (comma-separated).
+# Browser callers in dev: the Svelte frontend (:5173) and the SBTN review page (:8300).
+# Add more origins via CORS_ORIGINS (comma-separated).
+DEFAULT_ORIGINS = "http://localhost:5173,http://localhost:8300,http://127.0.0.1:8300"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()],
+    allow_origins=[o.strip() for o in os.environ.get("CORS_ORIGINS", DEFAULT_ORIGINS).split(",") if o.strip()],
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
+    expose_headers=["Content-Disposition"],
 )
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
@@ -111,7 +122,8 @@ def studio():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "gemini_configured": bool(os.environ.get("GEMINI_API_KEY", "").strip())}
+    return {"status": "ok", "llm": llm.label(), "gemini_configured": gemini.configured(),
+            "snowflake_configured": llm.snowflake_configured()}
 
 
 @app.get("/reports/options")
@@ -134,3 +146,57 @@ def view_report(request: Request, case: str, stage: str | None = None, observati
                 explain: bool = False, question: Annotated[str, Query(max_length=500)] = ""):
     return render(request, generate(ReportRequest(case=case, stage=stage, observation=observation,
                                                   explain=explain, question=question)))
+
+
+class SbtnReportRequest(BaseModel):
+    selection: sbtn.SelectionInput
+    review: dict[str, str] = Field(default_factory=dict, description="Reviewer answers from the SBTN review page")
+    ai: bool = Field(True, description="Write the narrative with the configured LLM (sends the report figures to it)")
+
+
+@app.post("/sbtn/report")
+def sbtn_report(req: SbtnReportRequest):
+    return sbtn.build(req.selection, req.review, req.ai)
+
+
+@app.post("/sbtn/report/html", response_class=HTMLResponse)
+async def sbtn_report_html(request: Request):
+    """JSON body, or a form post with the JSON in `payload` (how the SBTN page opens it in a new tab)."""
+    raw = await request.body()
+    if request.headers.get("content-type", "").startswith("application/x-www-form-urlencoded"):
+        raw = parse_qs(raw.decode()).get("payload", [""])[0]
+    try:
+        req = SbtnReportRequest.model_validate(json.loads(raw))
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=f"Expected {{selection, review, ai}}: {error}")
+    report = await run_in_threadpool(sbtn.build, req.selection, req.review, req.ai)  # the LLM call blocks
+    return templates.TemplateResponse(request, "sbtn_report.html", {"r": report})
+
+
+def sbtn_pdf(report):
+    """Render the report page to PDF (WeasyPrint uses the template's print styles)."""
+    from weasyprint import HTML  # imported lazily: needs the pango system library
+    html = templates.get_template("sbtn_report.html").render(r=report)
+    return HTML(string=html).write_pdf()
+
+
+@app.post("/sbtn/report/pdf")
+async def sbtn_report_pdf(req: SbtnReportRequest):
+    report = await run_in_threadpool(sbtn.build, req.selection, req.review, req.ai)
+    try:
+        pdf = await run_in_threadpool(sbtn_pdf, report)
+    except OSError:
+        raise HTTPException(status_code=500, detail="PDF rendering needs the pango library: brew install pango")
+    stem = re.sub(r"[^A-Za-z0-9-]+", "-", req.selection.name.removesuffix(".geojson")).strip("-") or "selection"
+    filename = f"SBTN-screening-{stem}.pdf"
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@app.post("/sbtn/map")
+async def sbtn_map(selection: sbtn.SelectionInput):
+    """Thumbnail map (data URI) for the SBTN page: OSM tiles, boundary, parcel dots. map is null if tiles fail."""
+    parcels = [sbtn.Parcel.from_row(r) for r in selection.matches]
+    image = await run_in_threadpool(sbtn.area_map.render, selection.selected, parcels, 960, 400,
+                                    sbtn.runoff_risk, 4, 16)
+    return {"map": image, "attribution": sbtn.area_map.ATTRIBUTION}

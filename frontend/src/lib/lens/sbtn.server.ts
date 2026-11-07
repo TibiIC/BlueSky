@@ -26,7 +26,13 @@ export async function sbtnInput(
 		P.drainage[i],
 		P.soil[i],
 		P.distWater[i],
-		P.planCrop[i]
+		P.planCrop[i],
+		P.pTest[i],
+		P.peatCo2e[i],
+		P.farm[i],
+		P.contract[i],
+		P.lon[i],
+		P.lat[i]
 	]);
 
 	const record = ({ properties: c }: (typeof catchments.features)[number]): SbtnCatchment => ({
@@ -35,6 +41,8 @@ export async function sbtnInput(
 		receiving_water_type: c.water,
 		ecological_status_class: c.status,
 		catchment_area_km2: c.areaKm2,
+		p_sensitivity: c.pSensitivity,
+		monitored: c.monitored,
 		load: c.load ? { year: String(c.load.year), total_p_load_kg: c.load.pKg, total_n_load_kg: c.load.nKg } : null
 	});
 	const linked = new Set(idx.map((i) => P.catchment[i]));

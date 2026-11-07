@@ -23,6 +23,47 @@ whenever it changes), loads `.env` and starts uvicorn with auto-reload.
 - http://localhost:8000: a sample report link for each case
 - http://localhost:8000/docs: try every endpoint with custom inputs
 
+## SBTN Step 1–2 screening report
+
+`POST /sbtn/report` (JSON) and `POST /sbtn/report/html` (printable A4 page)
+turn a globe selection into an SBTN Step 1–2 screening report. The SBTN review
+page (`sbtn/`) opens it with **Generate report**, sending the selection and the
+reviewer's answers.
+
+`climate_lens/sbtn.py` computes every figure: Step 1a screens pressure categories
+against the data, Step 1b quantifies pressures per catchment (runoff-risk
+hectares, open ditches, organic soils, peat CO₂e, missing P tests), and Step 2
+ranks catchments by pressure and by state of nature, then combines the ranks into
+Priority / Secondary / Monitor tiers. Gemini writes the narrative sections from
+those figures only; numbers in its text that aren't in the data are flagged in
+the report. Without a key, or if the call fails, the report uses template text.
+
+The report opens with a map of the area (`climate_lens/area_map.py`):
+OpenStreetMap tiles fetched at report time, the drawn boundary, and each parcel
+as a dot, red for runoff-risk parcels. Without internet it falls back to a plain
+outline. `POST /sbtn/report/pdf` returns the report as a PDF (WeasyPrint; on
+macOS it needs `brew install pango`).
+
+This is an internal screening, not an SBTN validation submission.
+
+## LLM providers
+
+Report text comes from Snowflake Cortex when `SNOWFLAKE_ACCOUNT` and
+`SNOWFLAKE_PAT` are set in `backend/.env`, otherwise from Gemini
+(`climate_lens/llm.py`). `LLM_PROVIDER=snowflake|gemini` forces one, and
+`GET /health` shows which is active.
+
+**Snowflake Cortex** is called through its OpenAI-compatible Chat Completions
+endpoint (`/api/v2/cortex/v1/chat/completions`) with a programmatic access
+token. Default model `claude-sonnet-4-5`; override with `SNOWFLAKE_MODEL`.
+
+### Gemini
+
+Uses the official `google-genai` SDK (model `gemini-3.8-flash`, override with
+`GEMINI_MODEL`). Create a key at https://aistudio.google.com/api-keys, put it in
+`backend/.env` as `GEMINI_API_KEY=…`, and restart `./run.sh`.
+`GET /health` reports `gemini_configured`.
+
 ## Field studio page
 
 `/studio` serves `climate_lens/static/field-studio.html`, a self-contained page

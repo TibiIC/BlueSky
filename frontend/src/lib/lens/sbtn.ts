@@ -8,6 +8,9 @@ export interface SbtnCatchment {
 	receiving_water_type: string;
 	ecological_status_class: string;
 	catchment_area_km2: number;
+	/** Phosphorus sensitivity of the receiving water (1 = typical, higher = more sensitive). */
+	p_sensitivity: number;
+	monitored: boolean;
 	load: { year: string; total_p_load_kg: number; total_n_load_kg: number } | null;
 }
 
@@ -17,8 +20,12 @@ export interface SbtnInput {
 	name: string;
 	/** Drawn polygons' coordinates (outer ring first). */
 	selected: Position[][][];
-	/** [parcel, catchment, whole-parcel ha, buffer strip, drainage, soil, metres to water, planned crop] */
-	matches: [string, string, number, boolean, string, string, number, string][];
+	/**
+	 * [parcel, catchment, whole-parcel ha, buffer strip, drainage, soil, metres to water, planned crop,
+	 *  soil P test mg/L (null if none), peat t CO₂e/yr, farm, Apetit contract crop, centroid lon, centroid lat]
+	 * The notebook page reads the first eight; the report backend reads them all.
+	 */
+	matches: [string, string, number, boolean, string, string, number, string, number | null, number, string, boolean, number, number][];
 	/** Catchments the drawn area crosses. */
 	crossed: SbtnCatchment[];
 	/** Catchments the matched parcels drain to. */
