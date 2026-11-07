@@ -27,8 +27,8 @@ class CropWeatherScreening(unittest.TestCase):
         e=Engine(True);c=e.comparison;c.forecast=fixture(Forecast,past);c.global_forecast=fixture(GlobalForecast,past);c.date=past
         e.live_forecast=fixture(Forecast,today.isoformat());e.live_global_forecast=fixture(GlobalForecast,today.isoformat())
         f=c.frame(e.live_forecast.start+3600)
-        self.assertTrue(f['global']['ready']);self.assertEqual(len(f['global']['grid']['land_mask']),612)
-        self.assertEqual(len(f['global']['live']['frost_pct']),612)
+        self.assertTrue(f['global']['ready']);self.assertEqual(len(f['global']['grid']['land_mask']),648)
+        self.assertEqual(len(f['global']['live']['frost_pct']),648)
         self.assertEqual(len(f['live']['frost_pct']),725)
         self.assertTrue(all(v==24 for v in f['difference']['rain_day_coverage_h']))
     def test_global_mask_has_land_and_sea(self):

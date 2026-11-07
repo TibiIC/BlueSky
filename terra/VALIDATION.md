@@ -23,6 +23,6 @@ Local preview services were stopped after QA. Follow README.md to restart; defau
 
 ## Global/Apetit filter update
 
-- 35 Python tests pass, including crop thresholds, daily-interval completeness and 612-cell global/725-cell regional comparison coverage. TypeScript/Svelte check and build pass.
+- 38 Python tests pass, including crop thresholds, daily-interval completeness and 648-cell global/725-cell regional comparison coverage. TypeScript/Svelte check and build pass.
 - Actual API comparison returned both grids, their land masks and all four crop-weather screens. Natural Earth land data is bundled, with source attribution. Crop thresholds are illustrative; no Apetit grower polygons or calibrated crop model were supplied.
 - The parent GitHub URL was supplied after this prototype was created. GitHub authorization completed as AndrewBulata. Pull and push permissions were verified. Integration starts from actual parent main commit a23fc36 on branch codex/terra-apetit-weather. Credentials and API keys are excluded from Git.

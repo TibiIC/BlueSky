@@ -31,7 +31,7 @@ export function differenceRgb(value:number,limit:number):[number,number,number]{
  const t=Math.min(1,Math.abs(value)/limit),end=value<0?[65,122,216]:[226,103,67];
  return [235,239,231].map((v,i)=>Math.round(v+(end[i]-v)*t)) as [number,number,number];
 }
-export interface Status {comparison?:WeatherComparison;comparisonView?:ComparisonView|null; regional?: Frame; global?: Frame; regionalConnected: boolean; globalConnected: boolean; error?: string }
+export interface Status {scenarioActive?:boolean;comparison?:WeatherComparison;comparisonView?:ComparisonView|null; regional?: Frame; global?: Frame; regionalConnected: boolean; globalConnected: boolean; error?: string }
 export const ranges: Record<Field, [number, number, string]> = {
  rain_day_mm:[0,30,'mm/day'],frost_pct:[0,100,'%'],heat_pct:[0,100,'%'],wind_risk_pct:[0,100,'%'],heavy_rain_pct:[0,100,'%'],
  snow_water_mm: [0,150,'mm'], moisture_g_m3: [0, 12, 'g/m³'], precip_mm_h: [0, 3, 'mm/h'], soil_fraction: [0, 1, 'fraction'], temp_c: [-15, 30, '°C'], wind: [0, 20, 'm/s']
@@ -45,6 +45,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
  const { C, viewer } = globe;
  const state: Status = { regionalConnected: false, globalConnected: false };
  let comparisonView:ComparisonView|null=null;let comparisonEnabled=false;let comparisonBusy=false;
+ let scenarioFrame:Frame|null=null;
  let selected: Field = 'moisture_g_m3', visible = true, disposed = false, previous = performance.now();
  const overlays: Partial<Record<'regional'|'global',ReturnType<typeof createFieldOverlay>>> = {};
  const buffers={regional:[document.createElement('canvas'),document.createElement('canvas')],global:[document.createElement('canvas'),document.createElement('canvas')]};
@@ -62,7 +63,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
  const credit = new C.Credit('Weather: Open-Meteo (CC BY 4.0) · TERRA simulated moisture / soil', true);
  viewer.creditDisplay.addStaticCredit(credit);
  function paint(kind: 'regional'|'global') {
-  let f = state[kind]; if (!f || disposed) return;
+  let f = kind==='regional'&&scenarioFrame?scenarioFrame:state[kind]; if (!f || disposed) return;
   const compare=kind==='global'?state.comparison?.global:state.comparison;
   if(comparisonView){
    if(!compare?.ready||!compare.grid||!compare[comparisonView]){overlays[kind]?.setVisible(false);return;}
@@ -89,7 +90,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   }
   // Global centers begin at -180: split at dateline by circularly shifting half a cell.
   if(kind==='global') { const image=ctx.getImageData(0,0,canvas.width,canvas.height);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.putImageData(image,-1,0);ctx.putImageData(image,canvas.width-1,0); }
-  if(!overlays[kind])overlays[kind]=createFieldOverlay(globe,kind,[west,kind==='global'?-85:south,kind==='global'?180:east,kind==='global'?85:north],canvas);
+  if(!overlays[kind])overlays[kind]=createFieldOverlay(globe,kind,[west,kind==='global'?-90:south,kind==='global'?180:east,kind==='global'?90:north],canvas);
   overlays[kind]!.update(canvas,visible);
  }
  function accept(kind:'regional'|'global',f:Frame){
@@ -149,14 +150,15 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   }
  },1500);
  return {
+  setScenario(frame:Frame|null){scenarioFrame=frame;state.scenarioActive=!!frame;queuePaint('regional');onStatus({...state});},
   async compare(day:string){
    const r=await fetch('/terra/api/comparison',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:day})});
    if(!r.ok)throw Error(await r.text());comparisonEnabled=true;state.comparison=await r.json();onStatus({...state});await refreshComparison();
   },
-  setComparisonView(view:ComparisonView|null){comparisonView=view;comparisonEnabled=view!==null;state.comparisonView=view;queuePaint('global');queuePaint('regional');onStatus({...state});},
+  setComparisonView(view:ComparisonView|null){scenarioFrame=null;state.scenarioActive=false;comparisonView=view;comparisonEnabled=view!==null;state.comparisonView=view;queuePaint('global');queuePaint('regional');onStatus({...state});},
   setFocusMarkers(show:boolean){focusEntities.forEach(e=>e.show=show);},
   setVisible(show:boolean){visible=show;queuePaint('global');queuePaint('regional');},
-  setLayer(field:Field){selected=field;queuePaint('global');queuePaint('regional');},
+  setLayer(field:Field){scenarioFrame=null;state.scenarioActive=false;onStatus({...state});selected=field;queuePaint('global');queuePaint('regional');},
   async timeline(body:Record<string,string>){const r=await fetch('/terra/api/timeline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());accept('regional',await r.json());},
   async control(body:Record<string,number|boolean>){const r=await fetch('/terra/api/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw Error(await r.text());accept('regional',await r.json());},
   destroy(){disposed=true;cancelAnimationFrame(paintRequest);clearInterval(comparisonTimer);clearInterval(stale);feeds.forEach(es=>es.close());removeTick();viewer.creditDisplay.removeStaticCredit(credit);focusEntities.forEach(e=>viewer.entities.remove(e));for(const overlay of Object.values(overlays))overlay?.destroy();viewer.scene.primitives.remove(points);}

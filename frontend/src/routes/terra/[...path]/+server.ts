@@ -2,9 +2,9 @@ import type { RequestHandler } from './$types';
 
 // Same-origin, allowlisted local bridge; never proxy arbitrary URLs or credentials.
 const handle: RequestHandler = async ({ params, request }) => {
- const allowed = new Set(['events', 'global-events', 'api/frame', 'api/global-frame', 'api/control', 'api/timeline', 'api/comparison', 'api/health']);
+ const allowed = new Set(['events', 'global-events', 'api/frame', 'api/global-frame', 'api/control', 'api/timeline', 'api/comparison', 'api/health', 'api/scenario']);
  const path = params.path ?? '';
- if (!allowed.has(path) || (request.method === 'POST' && !['api/control','api/timeline','api/comparison'].includes(path))) return new Response('Not found', { status: 404 });
+ if (!allowed.has(path) || (request.method === 'POST' && !['api/control','api/timeline','api/comparison','api/scenario'].includes(path))) return new Response('Not found', { status: 404 });
  try {
   const upstream = await fetch(`http://127.0.0.1:8765/${path}`, {
    method: request.method, signal: request.signal,

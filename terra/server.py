@@ -191,7 +191,7 @@ class Handler(BaseHTTPRequestHandler):
             name,ctype=files[path]; return self.send(200,(Path(__file__).parent/'static'/name).read_bytes(),ctype)
         self.send(404,{'error':'Not found'})
     def do_POST(self):
-        if self.path not in ('/api/control','/api/timeline','/api/comparison'): return self.send(404,{'error':'Not found'})
+        if self.path not in ('/api/control','/api/timeline','/api/comparison','/api/scenario'): return self.send(404,{'error':'Not found'})
         # Browsers may only control this local simulator from its own origin.
         origin=self.headers.get('Origin')
         if origin and origin!='http://'+self.headers.get('Host',''): return self.send(403,{'error':'Origin rejected'})
@@ -199,6 +199,13 @@ class Handler(BaseHTTPRequestHandler):
             size=int(self.headers.get('Content-Length','0'))
             if not 0<size<=2048: raise ValueError('Body must be 1..2048 bytes')
             body=json.loads(self.rfile.read(size))
+            if self.path=='/api/scenario':
+                from scenario import run
+                engine=self.server.engine
+                with engine.lock:
+                    if engine.require_live and not engine.forecast.records:raise ValueError('Wait for real weather data')
+                    forecast,start=engine.forecast,engine.model.time
+                return self.send(200,run(forecast,start,body))
             if self.path=='/api/comparison':return self.send(202,self.server.engine.comparison.select(body))
             self.send(202 if self.path=='/api/timeline' and body.get('mode')=='historical' else 200,self.server.engine.set_timeline(body) if self.path=='/api/timeline' else self.server.engine.control(body))
         except (ValueError,TypeError,AttributeError) as exc: self.send(400,{'error':str(exc)})
