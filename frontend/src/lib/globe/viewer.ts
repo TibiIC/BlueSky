@@ -80,22 +80,8 @@ export async function createGlobe(
 		isFlying: () => flying
 	});
 
-	// Start with the whole Earth, then ease to Finland and Sweden.
+	// Start on the whole Earth. Weather panel provides an explicit Nordic flight.
 	camera.setView({ destination: C.Cartesian3.fromDegrees(NORDIC_CENTER.lon, 25, 24_000_000) });
-	const fly = () => {
-		flying = true;
-		camera.flyToBoundingSphere(
-			new C.BoundingSphere(C.Cartesian3.fromDegrees(NORDIC_CENTER.lon, NORDIC_CENTER.lat), 0),
-			{
-				offset: new C.HeadingPitchRange(0, C.Math.toRadians(-72), 3_300_000),
-				duration: 4.5,
-				easingFunction: C.EasingFunction.CUBIC_IN_OUT,
-				complete: () => (flying = false),
-				cancel: () => (flying = false)
-			}
-		);
-	};
-	const introTimer = setTimeout(fly, 1600);
 
 	addGoogleTiles(C, viewer, keys).then((ts) => {
 		if (viewer.isDestroyed()) return;
@@ -109,7 +95,6 @@ export async function createGlobe(
 		tilesEnabled: () => !!tileset?.show,
 		setTilesEnabled,
 		destroy: () => {
-			clearTimeout(introTimer);
 			removeClamp();
 			if (!viewer.isDestroyed()) viewer.destroy();
 		}

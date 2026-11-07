@@ -4,8 +4,8 @@ import type { CesiumModule } from './cesium.ts';
 
 /** Street level inside Finland/Sweden. */
 export const NORDIC_MIN_HEIGHT = 300;
-/** Elsewhere the world is a backdrop: no closer than ~1,000 km. */
-export const WORLD_MIN_HEIGHT = 1_000_000;
+/** Allow detailed exploration worldwide; Nordic simulation remains finer. */
+export const WORLD_MIN_HEIGHT = 300;
 /** Width (degrees) of the band outside the box over which the limit ramps up. */
 const RAMP_DEG = 2.5;
 
@@ -20,7 +20,7 @@ export function minHeightAt(lon: number, lat: number): number {
 	const dLon = Math.max(0, w - lon, lon - e) * Math.cos((lat * Math.PI) / 180);
 	const dLat = Math.max(0, s - lat, lat - n);
 	const t = smoothstep(Math.hypot(dLon, dLat) / RAMP_DEG);
-	// Interpolate in log space so the limit rises evenly from 300 m to 1,000 km.
+	// Interpolate in log space so the limit rises evenly from 300 m worldwide.
 	return Math.exp(Math.log(NORDIC_MIN_HEIGHT) + t * Math.log(WORLD_MIN_HEIGHT / NORDIC_MIN_HEIGHT));
 }
 

@@ -10,10 +10,11 @@
 	import TilesToggle from '#lib/ui/TilesToggle.svelte';
 	import SidePanel from '#lib/ui/SidePanel.svelte';
 	import { panelOpen } from '#lib/ui/panel.ts';
+	import WeatherPanel from '#lib/weather/WeatherPanel.svelte';
 
 	let container: HTMLDivElement;
 	let credits: HTMLDivElement;
-	let globe = $state<Globe | null>(null);
+	let globe = $state.raw<Globe | null>(null);
 	let drawing = $state<DrawingSession | null>(null);
 	let failure = $state<string | null>(null);
 
@@ -70,6 +71,7 @@
 			<TilesToggle onToggle={(on) => globe?.setTilesEnabled(on)} />
 		</div>
 		<div class="bottom-left"><Hud /></div>
+		{#if globe}<WeatherPanel {globe} />{/if}
 		<div class="credits" bind:this={credits}></div>
 
 		{#if !globe}
@@ -177,8 +179,8 @@
 		}
 		.credits {
 			max-width: calc(100% - 24px);
-			bottom: auto;
-			top: 72px;
+			bottom: 8px;
+			top: auto;
 		}
 	}
 </style>
