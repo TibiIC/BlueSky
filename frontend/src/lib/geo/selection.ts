@@ -1,5 +1,6 @@
 import type { BBox, Polygon } from 'geojson';
 import { z } from 'zod';
+import type { LensResult } from '../lens/types.ts';
 import { intersectingCountries } from './countries.ts';
 import { areaKm2, bboxOf, centroidOf, type LonLat } from './turf.ts';
 
@@ -36,6 +37,11 @@ const featureCollection = z.object({
 	features: z.array(feature).min(1).max(200)
 });
 
+/** The polygons of a validated selection, for spatial queries. */
+export function selectionPolygons(input: SelectionInput): Polygon[] {
+	return input.type === 'Feature' ? [input.geometry] : input.features.map((f) => f.geometry);
+}
+
 /** Accepts a GeoJSON Feature or FeatureCollection whose geometries are all Polygons. */
 export const selectionInput = z.discriminatedUnion('type', [feature, featureCollection]);
 export type SelectionInput = z.infer<typeof selectionInput>;
@@ -48,6 +54,9 @@ export interface SelectionResult {
 	/** Countries the shape intersects, from Natural Earth borders, e.g. ["Finland"]. */
 	countries: string[];
 }
+
+/** Server reply: geometry facts plus the Climate Lens report for the area. */
+export type SelectionReply = (SelectionResult | SelectionCollectionResult) & { lens?: LensResult };
 
 export interface SelectionCollectionResult extends SelectionResult {
 	/** Per-feature results when a FeatureCollection was posted; top-level fields cover all features. */

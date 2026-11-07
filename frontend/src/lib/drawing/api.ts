@@ -1,4 +1,4 @@
-import type { SelectionResult } from '../geo/selection.ts';
+import type { SelectionReply } from '../geo/selection.ts';
 import { analyses } from './store.ts';
 import type { ShapeFeature } from './types.ts';
 
@@ -14,7 +14,7 @@ export async function analyseShape(feature: ShapeFeature) {
 		});
 		const body = await res.json();
 		if (!res.ok) throw new Error(body?.error ?? `HTTP ${res.status}`);
-		analyses.update((a) => ({ ...a, [id]: { status: 'done', result: body as SelectionResult } }));
+		analyses.update((a) => ({ ...a, [id]: { status: 'done', result: body as SelectionReply } }));
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		analyses.update((a) => ({ ...a, [id]: { status: 'error', message } }));
