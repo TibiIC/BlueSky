@@ -50,16 +50,18 @@ class Model:
     """Regional prescribed-wind transport, effective mixing layer, snow/soil stores."""
     def __init__(self,now):
         from physics import Transport
-        self.time=now; self.q=None; self.soil=[90. if m else 0. for m in MASK]
+        self.time=now; self.q=None; self.rain_pattern=None; self.soil=[90. if m else 0. for m in MASK]
         self.snow=[0.]*len(MASK); self.soil_temp=[2.]*len(MASK)
         self.speed=1.; self.capacity=450.; self.rain_scale=1.; self.paused=False
         self.ks=[1. if m else None for m in MASK]
         self.seq=0; self.ledger={}; self.fields={}; self.atmosphere_ledger={}
         self.transport=Transport(LONS,LATS); self.layer_height_m=1000.
+        from hydrology.routing import Router
+        self.hydrology=Router(self.transport.area,MASK)
         self.transport_wind='10m'
         self.initialization=dict(kind='assumed',soil_depth_m=1.,snow_density_kg_m3=200.,note='Explicit synthetic initial state')
     def initialize(self,forecast):
-        forcing=forecast.at(self.time); self.q=forcing['vapor_g_m3'][:]
+        forcing=forecast.at(self.time); self.q=forcing['vapor_g_m3'][:];self.rain_pattern=forcing['precip_mm_h'][:]
         self.fields=forcing
         if not forecast.records:return
         land=forecast.initial_land(self.time); seeded=0;clipped=0;snow_seeded=0
@@ -77,18 +79,25 @@ class Model:
     def step(self,forcing,dt):
         from physics import land_step,crop_coefficient,water_stress
         if self.q is None:self.q=forcing['vapor_g_m3'][:]
+        if self.rain_pattern is None:self.rain_pattern=forcing['precip_mm_h'][:]
+        rain_advected,rain_budget=self.transport.advance(self.rain_pattern,forcing.get('u_transport_ms',forcing['u_ms']),forcing.get('v_transport_ms',forcing['v_ms']),dt,forcing['precip_mm_h'])
+        rain_weight=1-math.exp(-dt/1800)
+        self.rain_pattern=[max(0,a+(b-a)*rain_weight) for a,b in zip(rain_advected,forcing['precip_mm_h'])]
+        self.rain_pattern_budget=rain_budget
         before=math.fsum(q*a for q,a in zip(self.q,self.transport.area))*self.layer_height_m/1000
         transported,transport_budget=self.transport.advance(self.q,forcing.get('u_transport_ms',forcing['u_ms']),forcing.get('v_transport_ms',forcing['v_ms']),dt,forcing['vapor_g_m3'])
         doy=datetime.fromtimestamp(self.time,timezone.utc).timetuple().tm_yday
-        totals={};evap=[0.]*len(MASK)
+        totals={};evap=[0.]*len(MASK);runoff_rates=[0.]*len(MASK)
         land_area=math.fsum(a for a,m in zip(self.transport.area,MASK) if m)
         for i,m in enumerate(MASK):
             if not m:continue
             self.soil_temp[i]+=(forcing['temp_c'][i]-self.soil_temp[i])*(1-math.exp(-dt/43200))
             soil,snow,ledger=land_step(self.soil[i],self.snow[i],forcing['precip_mm_h'][i]*self.rain_scale,forcing['et0_mm_h'][i],forcing['temp_c'][i],self.soil_temp[i],dt,self.capacity,kc=crop_coefficient(doy,LATS[i//NX]))
             self.soil[i]=soil;self.snow[i]=snow;evap[i]=ledger['et_mm'];ledger.pop('ks');self.ks[i]=water_stress(soil,self.capacity)
+            runoff_rates[i]=(ledger['runoff_mm']+ledger['drainage_mm'])*3600/dt if dt>0 else 0.
             for k,value in ledger.items():totals[k]=totals.get(k,0.)+value*self.transport.area[i]/land_area
         self.ledger=totals
+        self.hydrology.advance(runoff_rates,dt)
         nudging=0.;evap_mass=0.;precip_mass=0.;unresolved=0.;new=[]
         weight=1-math.exp(-dt/21600)
         for i,(q,target,area) in enumerate(zip(transported,forcing['vapor_g_m3'],self.transport.area)):
@@ -116,6 +125,6 @@ class Model:
         self.transport_wind=getattr(forecast,'transport_wind','10m') if forecast.records else 'synthetic (10m-equivalent)'
     def frame(self,source):
         fields={k:[round(x,4) for x in v] for k,v in self.fields.items() if k!='vapor_g_m3'}
-        fields.update(moisture_g_m3=[round(x,4) for x in self.q],soil_mm=[round(s,4) if m else None for s,m in zip(self.soil,MASK)],soil_fraction=[round(s/self.capacity,4) if m else None for s,m in zip(self.soil,MASK)],snow_water_mm=[round(s,4) if m else None for s,m in zip(self.snow,MASK)],water_stress_ks=[round(k,4) if m else None for k,m in zip(self.ks,MASK)],crop_stress=[round(1-k,4) if m else None for k,m in zip(self.ks,MASK)])
+        fields.update(rain_pattern_mm_h=[round(v,4) for v in (self.rain_pattern or self.fields['precip_mm_h'])],moisture_g_m3=[round(x,4) for x in self.q],soil_mm=[round(s,4) if m else None for s,m in zip(self.soil,MASK)],soil_fraction=[round(s/self.capacity,4) if m else None for s,m in zip(self.soil,MASK)],snow_water_mm=[round(s,4) if m else None for s,m in zip(self.snow,MASK)],water_stress_ks=[round(k,4) if m else None for k,m in zip(self.ks,MASK)],crop_stress=[round(1-k,4) if m else None for k,m in zip(self.ks,MASK)])
         fields.pop('u_transport_ms',None);fields.pop('v_transport_ms',None)
-        return dict(schema='terra.frame.v1',engine_version='2.0',sequence=self.seq,sim_time=iso(self.time),published_at=iso(datetime.now(timezone.utc).timestamp()),source=source,initialization=self.initialization,physics=dict(transport='conservative finite-volume upwind + diffusion; CFL substeps',diffusivity_m2_s=self.transport.k,layer_height_m=self.layer_height_m,wind='prescribed forecast; no prognostic momentum solver',transport_wind=self.transport_wind,land='snow + 1m soil bucket; degree-day melt; frozen-soil infiltration reduction; FAO-56 ET_a = Ks*Kc*ET0 with wilting point',crop_coefficient='generic Nordic spring crop, FAO-56 four-stage; placeholder for Apetit crop calendars'),grid=dict(crs='EPSG:4326',nx=NX,ny=NY,west=WEST,east=EAST,south=SOUTH,north=NORTH,order='row-major; south to north; west to east; cell centers at inclusive bounds',land_mask=MASK),fields=fields,controls=dict(speed=self.speed,paused=self.paused,capacity_mm=self.capacity,rain_scale=self.rain_scale),water_budget_mean_land_mm=self.ledger,water_budget_weighting='area-weighted; last substep; includes snow storage',atmosphere_budget_kg=self.atmosphere_ledger,units=dict(temp_c='degC',u_ms='m/s east',v_ms='m/s north',precip_mm_h='mm/h water equivalent',et0_mm_h='mm/h',moisture_g_m3='g/m3 effective layer',soil_mm='mm over 1m depth',soil_fraction='1',snow_water_mm='mm water equivalent',water_stress_ks='1 (FAO-56 Ks; 1=no stress)',crop_stress='1 (1-Ks)',rain_day_mm='mm/UTC day',frost_pct='% land area',heat_pct='% land area',wind_risk_pct='% land area',heavy_rain_pct='% land area'))
+        return dict(schema='terra.frame.v1',engine_version='2.0',sequence=self.seq,sim_time=iso(self.time),published_at=iso(datetime.now(timezone.utc).timestamp()),catchments=self.hydrology.frame(),source=source,initialization=self.initialization,physics=dict(transport='conservative finite-volume upwind + diffusion; CFL substeps',diffusivity_m2_s=self.transport.k,layer_height_m=self.layer_height_m,wind='prescribed forecast; no prognostic momentum solver',transport_wind=self.transport_wind,land='snow + 1m soil bucket; degree-day melt; frozen-soil infiltration reduction; FAO-56 ET_a = Ks*Kc*ET0 with wilting point',crop_coefficient='generic Nordic spring crop, FAO-56 four-stage; placeholder for Apetit crop calendars'),rain_pattern=dict(method='conservative transport of a rain-intensity proxy with 30-minute relaxation to hourly forecast precipitation; not microphysics, radar or diagnosed weather fronts',land_coupling='Land and water budgets retain API forecast precipitation, not the visualization tracer'),grid=dict(crs='EPSG:4326',nx=NX,ny=NY,west=WEST,east=EAST,south=SOUTH,north=NORTH,order='row-major; south to north; west to east; cell centers at inclusive bounds',land_mask=MASK),fields=fields,controls=dict(speed=self.speed,paused=self.paused,capacity_mm=self.capacity,rain_scale=self.rain_scale),water_budget_mean_land_mm=self.ledger,water_budget_weighting='area-weighted; last substep; includes snow storage',atmosphere_budget_kg=self.atmosphere_ledger,units=dict(rain_pattern_mm_h='mm/h advected intensity proxy',temp_c='degC',u_ms='m/s east',v_ms='m/s north',precip_mm_h='mm/h water equivalent',et0_mm_h='mm/h',moisture_g_m3='g/m3 effective layer',soil_mm='mm over 1m depth',soil_fraction='1',snow_water_mm='mm water equivalent',water_stress_ks='1 (FAO-56 Ks; 1=no stress)',crop_stress='1 (1-Ks)',rain_day_mm='mm/UTC day',frost_pct='% land area',heat_pct='% land area',wind_risk_pct='% land area',heavy_rain_pct='% land area'))

@@ -8,7 +8,7 @@ export interface Timeline {
  summary?:{precipitation_total_mm:number;min_mean_temperature_c:number;max_mean_temperature_c:number;peak_mean_wind_ms:number;series:{time:string;temperature_c:number;precip_mm_h:number;wind_ms:number}[]}|null;
 }
 export interface Frame {
- physics?:{transport_wind?:string};timeline?:Timeline;
+ catchments?:{notice:string;method:string;budget?:{residual_m3:number};basins:{id:number;outflow_m3_s:number;storage_m3:number;modeled_area_km2:number}[]};physics?:{transport_wind?:string};timeline?:Timeline;
  initialization?: {kind:string;soil_seeded_cells?:number;land_cells?:number}; atmosphere_budget_kg?: {relative_residual:number}; ready?: boolean; engine_version?: string; schema: string; sim_time: string; published_at: string;
  source: { notice?:string;forcing_kind?:string; mode: string; fetched_at: string | null; last_error: string | null; forecast_id: string; valid_end: string };
  grid: { nx: number; ny: number; west: number; east: number; south: number; north: number;land_mask?:boolean[];periodic_longitude?:boolean };
@@ -51,6 +51,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
  const overlays: Partial<Record<'regional'|'global',ReturnType<typeof createFieldOverlay>>> = {};
  const buffers={regional:[document.createElement('canvas'),document.createElement('canvas')],global:[document.createElement('canvas'),document.createElement('canvas')]};
  const bufferIndex={regional:0,global:0};
+ const previousFrames:Partial<Record<'regional'|'global',Frame>>={};const arrived={regional:0,global:0};
  const latestPublished={regional:0,global:0};
  const pendingPaint=new Set<'regional'|'global'>();let paintRequest=0;
  function queuePaint(kind:'regional'|'global'){
@@ -58,7 +59,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   paintRequest=requestAnimationFrame(()=>{paintRequest=0;for(const k of pendingPaint)paint(k);pendingPaint.clear();});
  }
  const points = viewer.scene.primitives.add(new C.PointPrimitiveCollection());
- const particles: { lon: number; lat: number; point: PointPrimitive }[] = [];
+ const particles: { kind:'regional'|'global';lon: number; lat: number; point: PointPrimitive }[] = [];
  const timestamps = { regional: 0, global: 0 };
  // Add a weather credit independently from existing Cesium/imagery credits.
  const credit = new C.Credit('Weather: Open-Meteo (CC BY 4.0) · TERRA simulated moisture / soil', true);
@@ -80,8 +81,9 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   canvas.height = kind === 'global' ? ny*2 : (ny-1)*2;
   const ctx=canvas.getContext('2d')!;
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++) {
-   const n=j*nx+i, raw=selected==='rain_bands'?f.fields.precip_mm_h?.[n]:selected==='wind'?(comparisonView?f.fields.wind[n]:Math.hypot(f.fields.u_ms[n] ?? 0,f.fields.v_ms[n] ?? 0)):f.fields[selected]?.[n];
+   const n=j*nx+i;let raw=selected==='rain_bands'?(kind==='regional'?(f.fields.rain_pattern_mm_h??f.fields.precip_mm_h)?.[n]:f.fields.precip_mm_h?.[n]):selected==='wind'?(comparisonView?f.fields.wind[n]:Math.hypot(f.fields.u_ms[n] ?? 0,f.fields.v_ms[n] ?? 0)):f.fields[selected]?.[n];
    if(raw===null||raw===undefined)continue;
+   if(selected==='rain_bands'&&kind==='regional'&&!f.controls.paused&&!comparisonView){const old=previousFrames.regional?.fields.rain_pattern_mm_h?.[n];if(old!=null)raw=old+(raw-old)*Math.min(1,(performance.now()-arrived.regional)/1000);}
    if(riskFields.has(selected)&&f.grid.land_mask?.[n]!==true)continue;
    if((selected==='rain_day_mm'||selected==='heavy_rain_pct')&&(f.fields.rain_day_coverage_h?.[n]??0)<24)continue;
    const value=(selected==='precip_mm_h'||selected==='rain_bands')?raw*(comparisonView?1:f.controls.rain_scale):raw;
@@ -90,7 +92,6 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
    if(kind==='global')ctx.fillRect(i*2,(ny-1-j)*2,2,2);
    else { const x=Math.max(0,i*2-1),y=Math.max(0,(ny-1-j)*2-1);ctx.fillRect(x,y,Math.min(canvas.width,i*2+1)-x,Math.min(canvas.height,(ny-1-j)*2+1)-y); }
   }
-  if(selected==='rain_bands'){ctx.save();ctx.globalCompositeOperation='source-atop';ctx.strokeStyle='rgba(225,245,255,.7)';ctx.lineWidth=.5;const phase=(performance.now()/500)%6;for(let x=-canvas.height;x<canvas.width+canvas.height;x+=6){ctx.beginPath();ctx.moveTo(x+phase,0);ctx.lineTo(x+phase-canvas.height*.3,canvas.height);ctx.stroke();}ctx.restore();}
   // Global centers begin at -180: split at dateline by circularly shifting half a cell.
   if(kind==='global') { const image=ctx.getImageData(0,0,canvas.width,canvas.height);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.putImageData(image,-1,0);ctx.putImageData(image,canvas.width-1,0); }
   if(!overlays[kind])overlays[kind]=createFieldOverlay(globe,kind,[west,kind==='global'?-90:south,kind==='global'?180:east,kind==='global'?90:north],canvas);
@@ -100,7 +101,7 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   const stamp=Date.parse(f.published_at);
   if(!Number.isFinite(stamp)||stamp<latestPublished[kind])return;
   latestPublished[kind]=stamp;
-  state[kind]=f;state[kind==='regional'?'regionalConnected':'globalConnected']=true;
+  previousFrames[kind]=state[kind];arrived[kind]=performance.now();state[kind]=f;state[kind==='regional'?'regionalConnected':'globalConnected']=true;
   timestamps[kind]=performance.now();state.error=undefined;queuePaint(kind);onStatus({...state});
  }
 
@@ -113,16 +114,18 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   }catch(e){state.error=String(e);onStatus({...state});}});
   es.onerror=()=>{state[kind==='regional'?'regionalConnected':'globalConnected']=false;onStatus({...state});};return es;
  }
- for(let i=0;i<220;i++){const lon=10+Math.random()*23,lat=54+Math.random()*17;particles.push({lon,lat,point:points.add({position:C.Cartesian3.fromDegrees(lon,lat,3500),pixelSize:2,color:C.Color.fromCssColorString('#e4ffd0')})});}
+ for(let i=0;i<700;i++){const lon=10+Math.random()*23,lat=54+Math.random()*17;particles.push({kind:'regional',lon,lat,point:points.add({position:C.Cartesian3.fromDegrees(lon,lat,18000),pixelSize:3,color:C.Color.fromCssColorString('#e4ffd0')})});}
+ for(let i=0;i<500;i++){const lon=-180+Math.random()*360,lat=-85+Math.random()*170;particles.push({kind:'global',lon,lat,point:points.add({position:C.Cartesian3.fromDegrees(lon,lat,18000),pixelSize:3,color:C.Color.fromCssColorString('#e4ffd0')})});}
  const removeTick=viewer.scene.preRender.addEventListener(()=>{
   const now=performance.now(),dt=Math.min(.05,(now-previous)/1000);previous=now;
-  const f=state.regional;if(!f||f.ready===false){points.show=false;return;}
-  points.show=visible && !comparisonView && now-timestamps.regional<4000;
-  if(f.controls.paused||f.at_forecast_end||!points.show)return;
-  for(const p of particles){const i=Math.max(0,Math.min(f.grid.nx-1,Math.round((p.lon-10)/23*(f.grid.nx-1)))),j=Math.max(0,Math.min(f.grid.ny-1,Math.round((p.lat-54)/17*(f.grid.ny-1)))),n=j*f.grid.nx+i;
+  points.show=visible&&selected==='wind'&&!scenarioFrame&&!comparisonView;
+  if(!points.show)return;
+  for(const p of particles){const f=state[p.kind];p.point.show=!!f&&f.ready!==false&&now-timestamps[p.kind]<4000;if(!f||!p.point.show||f.controls.paused||f.at_forecast_end)continue;
+   const grid=f.grid,i=p.kind==='global'?((Math.round((p.lon-grid.west)/360*grid.nx)%grid.nx)+grid.nx)%grid.nx:Math.max(0,Math.min(grid.nx-1,Math.round((p.lon-grid.west)/(grid.east-grid.west)*(grid.nx-1)))),j=Math.max(0,Math.min(grid.ny-1,Math.round((p.lat-grid.south)/(grid.north-grid.south)*(grid.ny-1)))),n=j*grid.nx+i;
    p.lon+=(f.fields.u_ms[n]??0)*dt*f.controls.speed/(111320*Math.cos(p.lat*Math.PI/180));p.lat+=(f.fields.v_ms[n]??0)*dt*f.controls.speed/111320;
-   if(p.lon<10||p.lon>33||p.lat<54||p.lat>71){p.lon=10+Math.random()*23;p.lat=54+Math.random()*17;}
-   p.point.position=C.Cartesian3.fromDegrees(p.lon,p.lat,3500);
+   if(p.kind==='global'){p.lon=((p.lon+180)%360+360)%360-180;if(Math.abs(p.lat)>85)p.lat=-85+Math.random()*170;}
+   else if(p.lon<10||p.lon>33||p.lat<54||p.lat>71){p.lon=10+Math.random()*23;p.lat=54+Math.random()*17;}
+   p.point.position=C.Cartesian3.fromDegrees(p.lon,p.lat,18000);
   }
  });
  const focusEntities=[

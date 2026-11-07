@@ -34,3 +34,7 @@ Local preview services were stopped after QA. Follow README.md to restart; defau
 ## Finland biology / denser rain fields / decision evidence
 
 55 Python tests pass; seven Node rendering/data tests pass. Added checks cover Finland's 24 Soil rows (Root excluded), 192 enzyme records, date precision, nonfinite measurement rejection, exact bilinear reproduction of linear fields using at most four corners, bounded interpolation, bias/RMSE arithmetic and 183-day 2018 benchmark coverage. Actual API fetch returned 195 regional locations with 850 hPa winds and initialized all 500 regional land cells. Svelte check and build pass. The ERA5-Land mismatch remains visible: it is not independent observation validation. Climate results are two model members at two locations with illustrative ten-year windows; supplier/cost data remain explicitly synthetic assumptions.
+
+## Weather motion and hydrology
+
+59 Python tests pass, including rain-tracer evolution/positivity/pause, unchanged land-rain forcing, two-basin downstream delay, routed-volume conservation/decay and graph-cycle rejection. Svelte check/build and the existing seven Node tests pass. Browser checks verify selecting wind enables 600×, the clock advances, pause freezes time, catchment selection highlights intersecting reaches and live routed storage/outflow is reported. All 500 regional land cells seed from real API forecasts. Hydrology's real-world geometry is a source dataset, not physical validation of the assumed reservoir timescale or velocity law.

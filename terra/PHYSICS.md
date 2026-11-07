@@ -45,3 +45,9 @@ Combined land closure per cell is `P − ET − runoff − drainage − ΔS − 
 Parameters are transparent assumptions, not fitted Nordic hydrology. Freeze effects are a factor on infiltration/ET, not phase-change thermodynamics. There is no catchment routing, lateral groundwater, vegetation or crop growth. The mask remains hand-drawn, so an apparently precise coastline in satellite imagery does not imply a precise hydrology mask.
 
 Only reduced moisture/land processes are solved. Weather-model winds, temperature and precipitation supply most meteorological dynamics. This is an executable physical prototype intended for visualization/integration and controlled experiments, not operational forecasting.
+
+## Rain-intensity transport proxy and catchment routing
+
+`rain_pattern_mm_h` is a visualization state, not an additional prognostic water store. It uses the conservative transport kernel with transport-level winds and a 30-minute exponential relaxation to API precipitation intensity. Its intensity-area transport budget is diagnostic, not an atmospheric water budget. The land and vapor ledgers retain forecast precipitation so the display proxy cannot create water flux in those systems.
+
+Hydrology maps each spherical model-cell area fraction into intersecting HydroBASINS units (fractions computed before display simplification). Only modeled land-cell runoff plus drainage contributes. For basin storage V and piecewise-constant incoming rate I, `dV/dt = I - V/tau`, tau=21600 s. Integration uses `V_new=V_old exp(-dt/tau)+I tau(1-exp(-dt/tau))`; outflow volume is `V_old+I dt-V_new`. Directed topological ordering passes each outflow to the retained downstream unit during the same substep; outside-network outputs are boundary outflows. The diagnostic closes `external_input - boundary_outflow - delta_storage`. This is a simplified routing response, not a calibrated flood model.

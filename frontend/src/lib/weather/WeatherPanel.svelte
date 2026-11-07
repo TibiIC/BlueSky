@@ -1,4 +1,5 @@
 <script lang="ts">
+ import CatchmentPanel from '../hydrology/CatchmentPanel.svelte';
  import DecisionEvidence from './DecisionEvidence.svelte';
  import MeasuredBiology from './MeasuredBiology.svelte';
  import ScenarioPanel from './ScenarioPanel.svelte';
@@ -10,7 +11,7 @@
  let status=$state<Status>({regionalConnected:false,globalConnected:false});
  let field=$state<Field>('moisture_g_m3');
  let error=$state('');
- let rotateEarth=$state(false);
+ let rotateEarth=$state(false);let weatherMotion=$state(true);
  let visible=$state(true);let focusMarkers=$state(true);
  let compareDate=$state('');let comparing=$state(false);let compareView=$state<ComparisonView>('difference');
  const comparison=$derived(status.comparison);
@@ -35,6 +36,7 @@
  $effect(()=>{const g=globe;let last=performance.now();return g.viewer.clock.onTick.addEventListener(()=>{const now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;if(rotateEarth){g.viewer.camera.rotate(g.C.Cartesian3.UNIT_Z,.025*dt);g.viewer.scene.requestRender();}});});
  $effect(()=>{const target=globe;const connection=untrack(()=>attachTerra(target,s=>status=s));api=connection;return()=>{connection.destroy();api=undefined;};});
  async function control(body:Record<string,number|boolean>){try{await api?.control(body);error='';}catch(e){error=String(e);}}
+ function chooseField(){api?.setLayer(field);if(!comparing&&weatherMotion&&(field==='wind'||field==='rain_bands'))control({speed:600,paused:false,...(status.regional?.at_forecast_end?{reset:true}:{})});}
  const utc=(t:string|null|undefined)=>t?t.slice(0,19).replace('T',' ')+' UTC':'Never / synthetic';
 </script>
 <section class="weather" class:collapsed={!expanded} aria-label="TERRA weather controls">
@@ -45,12 +47,18 @@
  <label><span>Rotate Earth <small>presentation motion</small></span><input type="checkbox" bind:checked={rotateEarth}/></label>
  <div class="apetit-focus"><strong>APETIT / CROP WEATHER</strong><p>Global display: 10°. Nordic display cells: ~35–68 km; forcing uses 195 bilinear samples (~100–135 km spacing).<br>Peas, vegetables and oilseed growing conditions.</p><div class="buttons"><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)});}}>Whole world</button><button onclick={()=>{rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(19,59.5,1800000)});}}>Apetit focus</button></div><label><span>Focus markers</span><input type="checkbox" bind:checked={focusMarkers} onchange={()=>api?.setFocusMarkers(focusMarkers)} /></label></div>
  <FarmPanel {globe} regional={status.regional} />
- <label>Field <select bind:value={field} onchange={()=>api?.setLayer(field)}>{#each options.filter(([k])=>!comparing||comparableFields.has(k)) as [key,title]}<option value={key}>{title}</option>{/each}</select></label>
+ <label>Field <select bind:value={field} onchange={chooseField}>{#each options.filter(([k])=>!comparing||comparableFields.has(k)) as [key,title]}<option value={key}>{title}</option>{/each}</select></label>
+ {#if !comparing&&(field==='wind'||field==='rain_bands')}
+ <label>Animate weather (600× demo)<input type="checkbox" bind:checked={weatherMotion} onchange={()=>control({speed:weatherMotion?600:1,paused:false})}/></label>
+ <p class="note">Simulation: {utc(status.regional?.sim_time)} · {status.regional?.controls.speed??1}×<br>600× = ten simulated minutes per real second. Forecasts still update hourly.</p>
+ <div class="buttons"><button onclick={()=>control({paused:!status.regional?.controls.paused})}>{status.regional?.controls.paused?'Resume motion':'Pause motion'}</button><button onclick={async()=>{weatherMotion=false;await changeTimeline({mode:'live'});control({speed:1,reset:true});}}>Return to live 1×</button></div>
+ {/if}
  <div class="ramp" style={`background:linear-gradient(90deg,rgb(${legendColor(Number(legend[0])).join(',')}),rgb(${legendColor((Number(legend[0])+Number(legend[1]))/2).join(',')}),rgb(${legendColor(Number(legend[1])).join(',')}))`}></div><div class="range"><span>{legend[0]}</span><span>{legend[1]} {legend[2]}</span></div>
  {#if riskFields.has(field)&&field!=='crop_stress'}<p class="note">Colored land cells exceed the displayed, illustrative threshold. This is weather screening—not a calibrated crop-damage or yield forecast.</p>{/if}
- {#if field==='rain_bands'}<p class="note">Forecast rain ≥0.1 mm/h. Moving streaks are presentation animation, not new observations or diagnosed meteorological fronts. Use physics replay speed to evolve the forecast.</p>{/if}
+ {#if field==='rain_bands'}<p class="note">Forecast rain ≥0.1 mm/h. Nordic rain intensity is advected with transport-level winds and relaxed toward hourly forecasts (30 min). This is an evolving forecast-driven proxy, not radar or diagnosed meteorological fronts. Land-water budgets still use forecast rain. Global rain remains coarse forecast forcing.</p>{/if}
  {#if field==='crop_stress'}<p class="note">FAO-56 water limitation: 0 = no limitation, 1 = wilting-point limit. Generic soil and crop-calendar assumptions; not measured crop damage.</p>{/if}
  {#if field==='soil_fraction'||field==='snow_water_mm'||field==='crop_stress'}<p class="note">Nordic model only; no global soil/snow simulation is being implied.</p>{/if}
+ <CatchmentPanel {globe} regional={status.regional} onPlay={()=>{weatherMotion=true;control({speed:600,paused:false});}} onFocus={()=>rotateEarth=false} onPause={()=>control({paused:!status.regional?.controls.paused})}/>
  <MeasuredBiology {globe} onFocus={()=>{rotateEarth=false;}} />
  <DecisionEvidence />
  <ScenarioPanel active={!!status.scenarioActive} onMap={frame=>{if(frame){closeComparison();field='soil_fraction';api?.setLayer(field);}api?.setScenario(frame);}} />
