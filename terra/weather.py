@@ -10,9 +10,14 @@ import urllib.request
 from model import LATS,LONS,iso
 from agriculture import enrich,THRESHOLDS
 
-ANCHORS=[(lat,lon) for lat in (55.,58.5,62.,65.5,70.) for lon in (11.,16.25,21.5,26.75,32.)]
+ANCHOR_LATS=[54+i*17/14 for i in range(15)]
+ANCHOR_LONS=[10+i*23/12 for i in range(13)]
+ANCHORS=[(lat,lon) for lat in ANCHOR_LATS for lon in ANCHOR_LONS]
 LAND_VARIABLES='soil_moisture_0_to_7cm,soil_moisture_7_to_28cm,soil_moisture_28_to_100cm,soil_temperature_0_to_7cm,snow_depth'
 VARIABLES='temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m,et0_fao_evapotranspiration'
+# Optional transport-level winds. Served by the forecast API; the ERA5 archive
+# endpoint returns nulls, so history falls back to 10 m winds (recorded in frames).
+TRANSPORT_VARIABLES='wind_speed_850hPa,wind_direction_850hPa'
 
 def vapor(t,rh):
     # Absolute vapor concentration from Tetens saturation pressure, near-surface proxy.
@@ -23,7 +28,7 @@ class Forecast:
     variables=VARIABLES+','+LAND_VARIABLES
     lats=LATS
     lons=LONS
-    spatial_method="inverse-distance weighted, 25 samples; not native grid resolution"
+    spatial_method="bilinear interpolation, 195 regular Nordic samples (~100–135 km spacing); not native model resolution"
     def __init__(self,start=None,records=None,fetched=None):
         self.start=start if start is not None else time.time()
         self.records=records; self.fetched=fetched
@@ -32,12 +37,23 @@ class Forecast:
         self.weights=[]
         for y in self.lats:
             for x in self.lons:
-                distances=[((x-lon)*math.cos(math.radians(y)))**2+(y-lat)**2 for lat,lon in self.anchors]
-                w=[1/max(d,.001) for d in distances]; total=sum(w)
-                self.weights.append([v/total for v in w])
+                if self.anchors is ANCHORS:
+                    yi=max(0,min(13,bisect.bisect_right(ANCHOR_LATS,y)-1));xi=max(0,min(11,bisect.bisect_right(ANCHOR_LONS,x)-1))
+                    fy=max(0,min(1,(y-ANCHOR_LATS[yi])/(ANCHOR_LATS[yi+1]-ANCHOR_LATS[yi])));fx=max(0,min(1,(x-ANCHOR_LONS[xi])/(ANCHOR_LONS[xi+1]-ANCHOR_LONS[xi])))
+                    w=[0.]*len(ANCHORS)
+                    for j,i,v in [(yi,xi,(1-fy)*(1-fx)),(yi,xi+1,(1-fy)*fx),(yi+1,xi,fy*(1-fx)),(yi+1,xi+1,fy*fx)]:w[j*13+i]=v
+                    self.weights.append(w)
+                else:
+                    distances=[((x-lon)*math.cos(math.radians(y)))**2+(y-lat)**2 for lat,lon in self.anchors]
+                    w=[1/max(d,.001) for d in distances]; total=sum(w)
+                    self.weights.append([v/total for v in w])
+    def sparse_weights(self):
+        if getattr(self,'_weights_ref',None) is not self.weights:
+            self._weights_ref=self.weights;self._sparse_weights=[[(i,w) for i,w in enumerate(row) if w>0] for row in self.weights]
+        return self._sparse_weights
     @classmethod
     def fetch(cls):
-        params=dict(latitude=','.join(str(a[0]) for a in cls.anchors),longitude=','.join(str(a[1]) for a in cls.anchors),hourly=cls.variables,wind_speed_unit='ms',timeformat='unixtime',timezone='GMT',forecast_days=7,cell_selection='nearest')
+        params=dict(latitude=','.join(f'{a[0]:.4f}' for a in cls.anchors),longitude=','.join(f'{a[1]:.4f}' for a in cls.anchors),hourly=cls.variables+','+TRANSPORT_VARIABLES,wind_speed_unit='ms',timeformat='unixtime',timezone='GMT',forecast_days=7,cell_selection='nearest')
         req=urllib.request.Request('https://api.open-meteo.com/v1/forecast?'+urllib.parse.urlencode(params),headers={'User-Agent':'TERRA-hackathon-prototype/1.0'})
         with urllib.request.urlopen(req,timeout=20) as response: records=json.load(response)
         cls.validate(records)
@@ -67,7 +83,7 @@ class Forecast:
     def fetch_history(cls,start_date,end_date):
         start,end=cls.history_dates(start_date,end_date)
         # Extra endpoint day supplies the midnight closing the final hourly interval.
-        params=dict(latitude=','.join(str(a[0]) for a in cls.anchors),longitude=','.join(str(a[1]) for a in cls.anchors),hourly=cls.variables,wind_speed_unit='ms',timeformat='unixtime',timezone='GMT',models='era5_seamless',start_date=start.isoformat(),end_date=(end+timedelta(days=1)).isoformat(),cell_selection='nearest')
+        params=dict(latitude=','.join(f'{a[0]:.4f}' for a in cls.anchors),longitude=','.join(f'{a[1]:.4f}' for a in cls.anchors),hourly=cls.variables,wind_speed_unit='ms',timeformat='unixtime',timezone='GMT',models='era5_seamless',start_date=start.isoformat(),end_date=(end+timedelta(days=1)).isoformat(),cell_selection='nearest')
         recent=end>datetime.now(timezone.utc).date()-timedelta(days=7)
         if recent:
             params.pop('models')
@@ -81,7 +97,7 @@ class Forecast:
         f=cls(start=beginning,records=records,fetched=time.time());f.end=ending;f.product='recent-history' if recent else 'reanalysis';f.history_range=[start.isoformat(),end.isoformat()]
         return f
     def initial_land(self,t):
-        """IDW land initialization; renormalize around sea/missing soil samples."""
+        """Regional bilinear / global IDW initialization; renormalize valid soil corners."""
         output={k:[] for k in LAND_VARIABLES.split(',')}
         if not self.records:return output
         anchor_values=[]
@@ -94,9 +110,9 @@ class Forecast:
                 output[key].append(sum(w*v for w,v in pairs)/sum(w for w,v in pairs) if pairs else None)
         return output
     def at(self,t):
-        out={k:[] for k in ('temp_c','u_ms','v_ms','precip_mm_h','et0_mm_h','vapor_g_m3')}
+        out={k:[] for k in ('temp_c','u_ms','v_ms','precip_mm_h','et0_mm_h','vapor_g_m3','u_transport_ms','v_transport_ms')}
         if self.records:
-            values=[]
+            values=[];levels=set()
             for r in self.records:
                 h=r['hourly']; ts=h['time']; hi=max(1,min(len(ts)-1,bisect.bisect_right(ts,t))); lo=hi-1
                 a=max(0,min(1,(t-ts[lo])/3600))
@@ -105,19 +121,30 @@ class Forecast:
                     rad=math.radians(h['wind_direction_10m'][i]); s=h['wind_speed_10m'][i]
                     return -s*math.sin(rad),-s*math.cos(rad)
                 u0,v0=uv(lo); u1,v1=uv(hi)
+                def uv850(i):
+                    sp=h.get('wind_speed_850hPa');di=h.get('wind_direction_850hPa')
+                    if not (isinstance(sp,list) and isinstance(di,list) and len(sp)==len(ts)==len(di)):return None
+                    s_,d_=sp[i],di[i]
+                    if not all(isinstance(x,(int,float)) and math.isfinite(x) for x in (s_,d_)):return None
+                    rad=math.radians(d_);return -s_*math.sin(rad),-s_*math.cos(rad)
+                t0,t1=uv850(lo),uv850(hi)
+                if t0 and t1:levels.add('850hPa');tu,tv=t0[0]*(1-a)+t1[0]*a,t0[1]*(1-a)+t1[1]*a
+                else:levels.add('10m');tu,tv=u0*(1-a)+u1*a,v0*(1-a)+v1*a
                 # Interval accumulation is held over (time[k-1],time[k]], not linearly blended.
                 rate_index=max(0,min(len(ts)-1,bisect.bisect_left(ts,t)))
                 temp=lerp('temperature_2m'); rh=lerp('relative_humidity_2m')
-                values.append((temp,u0*(1-a)+u1*a,v0*(1-a)+v1*a,h['precipitation'][rate_index],h['et0_fao_evapotranspiration'][rate_index],vapor(temp,rh)))
-            for weights in self.weights:
-                for idx,key in enumerate(out): out[key].append(sum(w*v[idx] for w,v in zip(weights,values)))
+                values.append((temp,u0*(1-a)+u1*a,v0*(1-a)+v1*a,h['precipitation'][rate_index],h['et0_fao_evapotranspiration'][rate_index],vapor(temp,rh),tu,tv))
+            for weights in self.sparse_weights():
+                for idx,key in enumerate(out): out[key].append(sum(w*values[i][idx] for i,w in weights))
+            self.transport_wind='850hPa' if levels=={'850hPa'} else '10m' if levels=={'10m'} else 'mixed 850hPa/10m'
         else:
             hour=(t-self.start)/3600
             for y in self.lats:
                 for x in self.lons:
                     front=math.exp(-((x-(16+hour*.22))**2/14+(y-63)**2/35))
                     temp=8-(y-55)*.7+2*math.sin(hour*.26+x*.2)
-                    for key,value in zip(out,(temp,5+2*math.sin(y*.4+hour*.1),2+2*math.cos(x*.3),front*2.2,max(0,.07*math.sin(hour*.26)),vapor(temp,60+35*front))): out[key].append(value)
+                    uu,vv=5+2*math.sin(y*.4+hour*.1),2+2*math.cos(x*.3)
+                    for key,value in zip(out,(temp,uu,vv,front*2.2,max(0,.07*math.sin(hour*.26)),vapor(temp,60+35*front),uu,vv)): out[key].append(value)
         return enrich(self,out,t)
     def meta(self,error=None,attempt=None):
         historical=getattr(self,'product',None) in ('reanalysis','recent-history')

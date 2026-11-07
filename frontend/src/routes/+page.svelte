@@ -8,9 +8,8 @@
 	import Toolbar from '#lib/ui/Toolbar.svelte';
 	import Hud from '#lib/ui/Hud.svelte';
 	import TilesToggle from '#lib/ui/TilesToggle.svelte';
-	import SidePanel from '#lib/ui/SidePanel.svelte';
 	import { panelOpen } from '#lib/ui/panel.ts';
-	import WeatherPanel from '#lib/weather/WeatherPanel.svelte';
+	import SidePanel from '#lib/ui/SidePanel.svelte';
 	import RightPanel from '#lib/ui/RightPanel.svelte';
 
 	let container: HTMLDivElement;
@@ -86,7 +85,6 @@
 			<TilesToggle onToggle={(on) => globe?.setTilesEnabled(on)} />
 		</div>
 		<div class="bottom-left"><Hud /></div>
-		{#if globe}<WeatherPanel {globe} />{/if}
 		<div class="credits" bind:this={credits}></div>
 
 		{#if !globe}

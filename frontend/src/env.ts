@@ -21,5 +21,18 @@ export const variables = defineEnvVars({
 		public: true,
 		description: 'Where the SBTN screening review (sbtn/run.sh) is served. The Lens panel opens it with the selected parcels.',
 		schema: (value: string | undefined) => value?.trim() || 'http://localhost:8300'
+	},
+	// Server-only (`$app/env/private`): never sent to the browser.
+	MONGODB_URI: {
+		description: 'MongoDB Atlas connection string. Saves area reports, versions and the expert review log.',
+		// Unset, empty, or still holding the <db_password> placeholder all mean "not configured".
+		schema: (value: string | undefined) => {
+			const v = value?.trim();
+			return v && !v.includes('<db_password>') ? v : undefined;
+		}
+	},
+	MONGODB_DB: {
+		description: 'MongoDB database name.',
+		schema: (value: string | undefined) => value?.trim() || 'bluesky'
 	}
 });

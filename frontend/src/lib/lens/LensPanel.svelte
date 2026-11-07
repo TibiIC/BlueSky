@@ -3,7 +3,8 @@
 	import type { Globe } from '../globe/viewer.ts';
 	import { analyses, selectedShape } from '../drawing/store.ts';
 	import { centroidOf } from '../geo/turf.ts';
-	import { panelOpen } from '../ui/panel.ts';
+	import { panelOpen, activeTab } from '../ui/panel.ts';
+	import ReviewPanel from '../review/ReviewPanel.svelte';
 	import { attachLensLayer, SOIL_COLOR, STATUS_COLOR, type LensLayer } from './layer.ts';
 	import { terraNow, type TerraNow } from './terraNow.ts';
 	import { openSbtnReview } from './sbtn.ts';
@@ -41,6 +42,13 @@
 	const lens = $derived(analysis?.status === 'done' ? analysis.result.lens : undefined);
 	const report = $derived(lens?.available ? (lens as LensReport) : null);
 	const hasParcels = $derived(!!report && report.area.parcels > 0);
+
+	// Parcels and synthetic catchments step aside on the Weather tab, which has its own field and river layers.
+	$effect(() => {
+		const onWeather = $activeTab === 'weather';
+		layer?.setCatchmentsVisible(showCatchments && !onWeather);
+		layer?.setParcelsVisible(showParcels && !onWeather);
+	});
 
 	// Highlight the selected area's parcels and open the panel when a report arrives.
 	$effect(() => {
@@ -308,7 +316,8 @@
 
 		<section class="review">
 			<h3><span>6</span> Expert review</h3>
-			<p class="sub">Status: <b>Draft</b>. This report is computed, not reviewed. Screen the {fmt(report.area.parcels)} parcels in this area against SBTN steps 1–2 and export the review as a PDF.</p>
+			<ReviewPanel {report} shape={$selectedShape!} />
+			<p class="sub">Screen the {fmt(report.area.parcels)} parcels in this area against SBTN steps 1–2 and export the review as a PDF.</p>
 			<div class="buttons">
 				<button onclick={() => (sbtnBlocked = !openSbtnReview($selectedShape!))}>Open SBTN screening review ↗</button>
 			</div>

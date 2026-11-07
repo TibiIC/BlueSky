@@ -1,0 +1,2032 @@
+{
+  "input_hashes": {
+    "baseline.json": "9ef83312e40101aedaf4d3bf56a948e56c85c724204b7a1e418412d38c2080d4",
+    "future.json": "7f4502aa45d175d8fd2e717cc57064b788690253bbc2b1e83e2b09e41f5d42ca",
+    "era5-seamless-2018.json": "5db3a0f8427b132e57e0ef25fe70dd115a4c3963c10b34273e170aca90062968"
+  },
+  "schema": "terra.decision-evidence.v1",
+  "generated_at": "2026-11-07T15:08:47.424399+00:00",
+  "climate": {
+    "models": [
+      "MRI_AGCM3_2_S",
+      "EC_Earth3P_HR"
+    ],
+    "members": [
+      {
+        "place": "Säkylä",
+        "model": "MRI_AGCM3_2_S",
+        "period": "baseline",
+        "start": "2000-01-01",
+        "end": "2009-12-31",
+        "mean_temp_c": 5.633096085409252,
+        "mean_annual_precip_mm": 680.142,
+        "days": 3653
+      },
+      {
+        "place": "Säkylä",
+        "model": "EC_Earth3P_HR",
+        "period": "baseline",
+        "start": "2000-01-01",
+        "end": "2009-12-31",
+        "mean_temp_c": 5.616370106761566,
+        "mean_annual_precip_mm": 694.592,
+        "days": 3653
+      },
+      {
+        "place": "Bjuv",
+        "model": "MRI_AGCM3_2_S",
+        "period": "baseline",
+        "start": "2000-01-01",
+        "end": "2009-12-31",
+        "mean_temp_c": 8.686805365453052,
+        "mean_annual_precip_mm": 789.574,
+        "days": 3653
+      },
+      {
+        "place": "Bjuv",
+        "model": "EC_Earth3P_HR",
+        "period": "baseline",
+        "start": "2000-01-01",
+        "end": "2009-12-31",
+        "mean_temp_c": 8.604982206405694,
+        "mean_annual_precip_mm": 786.0649999999999,
+        "days": 3653
+      },
+      {
+        "place": "Säkylä",
+        "model": "MRI_AGCM3_2_S",
+        "period": "future",
+        "start": "2040-01-01",
+        "end": "2049-12-31",
+        "mean_temp_c": 7.019162332329592,
+        "mean_annual_precip_mm": 744.8109999999999,
+        "days": 3653
+      },
+      {
+        "place": "Säkylä",
+        "model": "EC_Earth3P_HR",
+        "period": "future",
+        "start": "2040-01-01",
+        "end": "2049-12-31",
+        "mean_temp_c": 7.583575143717493,
+        "mean_annual_precip_mm": 664.36,
+        "days": 3653
+      },
+      {
+        "place": "Bjuv",
+        "model": "MRI_AGCM3_2_S",
+        "period": "future",
+        "start": "2040-01-01",
+        "end": "2049-12-31",
+        "mean_temp_c": 9.815110867779907,
+        "mean_annual_precip_mm": 759.597,
+        "days": 3653
+      },
+      {
+        "place": "Bjuv",
+        "model": "EC_Earth3P_HR",
+        "period": "future",
+        "start": "2040-01-01",
+        "end": "2049-12-31",
+        "mean_temp_c": 10.02003832466466,
+        "mean_annual_precip_mm": 721.027,
+        "days": 3653
+      }
+    ],
+    "notice": "Public CMIP6 HighResMIP projections via Open-Meteo, ERA5-Land bias correction enabled. Near-RCP8.5 forcing; not an SSP scenario ensemble. Two-model spread is not a probability interval or full uncertainty estimate. Ten-year windows are illustrative, not 30-year climate normals. Only two representative locations; no farm-scale projections.",
+    "source": "https://open-meteo.com/en/docs/climate-api"
+  },
+  "benchmark": {
+    "results": [
+      {
+        "place": "Säkylä",
+        "days": 183,
+        "bias_mm": -87.11980572111972,
+        "rmse_mm": 91.24089105824618,
+        "series": [
+          {
+            "date": "2018-04-01",
+            "model_soil_mm": 329.9410949897523,
+            "era5_land_soil_mm": 353.84
+          },
+          {
+            "date": "2018-04-02",
+            "model_soil_mm": 321.23947292951135,
+            "era5_land_soil_mm": 353.05
+          },
+          {
+            "date": "2018-04-03",
+            "model_soil_mm": 317.7910456909434,
+            "era5_land_soil_mm": 352.77
+          },
+          {
+            "date": "2018-04-04",
+            "model_soil_mm": 319.4941663321238,
+            "era5_land_soil_mm": 357.53
+          },
+          {
+            "date": "2018-04-05",
+            "model_soil_mm": 318.8880944535361,
+            "era5_land_soil_mm": 366.3
+          },
+          {
+            "date": "2018-04-06",
+            "model_soil_mm": 318.65737096634655,
+            "era5_land_soil_mm": 372.69000000000005
+          },
+          {
+            "date": "2018-04-07",
+            "model_soil_mm": 315.96416739435324,
+            "era5_land_soil_mm": 372.84000000000003
+          },
+          {
+            "date": "2018-04-08",
+            "model_soil_mm": 314.97704380913,
+            "era5_land_soil_mm": 377.09999999999997
+          },
+          {
+            "date": "2018-04-09",
+            "model_soil_mm": 319.7000109064712,
+            "era5_land_soil_mm": 382.49
+          },
+          {
+            "date": "2018-04-10",
+            "model_soil_mm": 316.25062917722926,
+            "era5_land_soil_mm": 382.06000000000006
+          },
+          {
+            "date": "2018-04-11",
+            "model_soil_mm": 314.96352773238425,
+            "era5_land_soil_mm": 382.78
+          },
+          {
+            "date": "2018-04-12",
+            "model_soil_mm": 314.0795277323843,
+            "era5_land_soil_mm": 383.94
+          },
+          {
+            "date": "2018-04-13",
+            "model_soil_mm": 313.05152773238433,
+            "era5_land_soil_mm": 384.45000000000005
+          },
+          {
+            "date": "2018-04-14",
+            "model_soil_mm": 311.9475277323842,
+            "era5_land_soil_mm": 384.24
+          },
+          {
+            "date": "2018-04-15",
+            "model_soil_mm": 312.4595277323842,
+            "era5_land_soil_mm": 385.45
+          },
+          {
+            "date": "2018-04-16",
+            "model_soil_mm": 312.22752773238415,
+            "era5_land_soil_mm": 386.33
+          },
+          {
+            "date": "2018-04-17",
+            "model_soil_mm": 311.9635277323841,
+            "era5_land_soil_mm": 385.28
+          },
+          {
+            "date": "2018-04-18",
+            "model_soil_mm": 312.34352773238413,
+            "era5_land_soil_mm": 385.37
+          },
+          {
+            "date": "2018-04-19",
+            "model_soil_mm": 311.463527732384,
+            "era5_land_soil_mm": 383.46
+          },
+          {
+            "date": "2018-04-20",
+            "model_soil_mm": 311.22752773238403,
+            "era5_land_soil_mm": 382.76
+          },
+          {
+            "date": "2018-04-21",
+            "model_soil_mm": 311.639527732384,
+            "era5_land_soil_mm": 382.55
+          },
+          {
+            "date": "2018-04-22",
+            "model_soil_mm": 311.01152773238397,
+            "era5_land_soil_mm": 381.06
+          },
+          {
+            "date": "2018-04-23",
+            "model_soil_mm": 311.7475277323838,
+            "era5_land_soil_mm": 380.43
+          },
+          {
+            "date": "2018-04-24",
+            "model_soil_mm": 311.7275277323839,
+            "era5_land_soil_mm": 380.15000000000003
+          },
+          {
+            "date": "2018-04-25",
+            "model_soil_mm": 313.73152773238405,
+            "era5_land_soil_mm": 379.5
+          },
+          {
+            "date": "2018-04-26",
+            "model_soil_mm": 312.859527732384,
+            "era5_land_soil_mm": 378.72999999999996
+          },
+          {
+            "date": "2018-04-27",
+            "model_soil_mm": 312.13952773238384,
+            "era5_land_soil_mm": 377.24
+          },
+          {
+            "date": "2018-04-28",
+            "model_soil_mm": 314.4715277323837,
+            "era5_land_soil_mm": 377.08
+          },
+          {
+            "date": "2018-04-29",
+            "model_soil_mm": 315.69111346401303,
+            "era5_land_soil_mm": 377.36
+          },
+          {
+            "date": "2018-04-30",
+            "model_soil_mm": 314.51356697570503,
+            "era5_land_soil_mm": 375.8
+          },
+          {
+            "date": "2018-05-01",
+            "model_soil_mm": 318.9102490830221,
+            "era5_land_soil_mm": 379.3
+          },
+          {
+            "date": "2018-05-02",
+            "model_soil_mm": 318.32539284070714,
+            "era5_land_soil_mm": 382.26
+          },
+          {
+            "date": "2018-05-03",
+            "model_soil_mm": 319.22094056603436,
+            "era5_land_soil_mm": 383.1
+          },
+          {
+            "date": "2018-05-04",
+            "model_soil_mm": 316.3980658344695,
+            "era5_land_soil_mm": 382.77000000000004
+          },
+          {
+            "date": "2018-05-05",
+            "model_soil_mm": 314.6740722526731,
+            "era5_land_soil_mm": 381.09000000000003
+          },
+          {
+            "date": "2018-05-06",
+            "model_soil_mm": 313.502072252673,
+            "era5_land_soil_mm": 378.9
+          },
+          {
+            "date": "2018-05-07",
+            "model_soil_mm": 312.110072252673,
+            "era5_land_soil_mm": 377.43
+          },
+          {
+            "date": "2018-05-08",
+            "model_soil_mm": 310.79807225267297,
+            "era5_land_soil_mm": 375.31
+          },
+          {
+            "date": "2018-05-09",
+            "model_soil_mm": 309.12207225267304,
+            "era5_land_soil_mm": 373.05
+          },
+          {
+            "date": "2018-05-10",
+            "model_soil_mm": 307.406072252673,
+            "era5_land_soil_mm": 370.86
+          },
+          {
+            "date": "2018-05-11",
+            "model_soil_mm": 305.55007225267286,
+            "era5_land_soil_mm": 368.6
+          },
+          {
+            "date": "2018-05-12",
+            "model_soil_mm": 303.6740722526727,
+            "era5_land_soil_mm": 365.96999999999997
+          },
+          {
+            "date": "2018-05-13",
+            "model_soil_mm": 301.85007225267253,
+            "era5_land_soil_mm": 363.84999999999997
+          },
+          {
+            "date": "2018-05-14",
+            "model_soil_mm": 299.9540722526724,
+            "era5_land_soil_mm": 361.15
+          },
+          {
+            "date": "2018-05-15",
+            "model_soil_mm": 297.95407225267246,
+            "era5_land_soil_mm": 359.45
+          },
+          {
+            "date": "2018-05-16",
+            "model_soil_mm": 296.18207225267236,
+            "era5_land_soil_mm": 356.82
+          },
+          {
+            "date": "2018-05-17",
+            "model_soil_mm": 296.1140722526723,
+            "era5_land_soil_mm": 355.96
+          },
+          {
+            "date": "2018-05-18",
+            "model_soil_mm": 294.19407225267213,
+            "era5_land_soil_mm": 353.53999999999996
+          },
+          {
+            "date": "2018-05-19",
+            "model_soil_mm": 292.45007225267216,
+            "era5_land_soil_mm": 352.05
+          },
+          {
+            "date": "2018-05-20",
+            "model_soil_mm": 290.57407225267207,
+            "era5_land_soil_mm": 349.63
+          },
+          {
+            "date": "2018-05-21",
+            "model_soil_mm": 288.51407225267184,
+            "era5_land_soil_mm": 347.21000000000004
+          },
+          {
+            "date": "2018-05-22",
+            "model_soil_mm": 286.6940722526718,
+            "era5_land_soil_mm": 345.71999999999997
+          },
+          {
+            "date": "2018-05-23",
+            "model_soil_mm": 284.68607225267175,
+            "era5_land_soil_mm": 343.44
+          },
+          {
+            "date": "2018-05-24",
+            "model_soil_mm": 282.76207225267166,
+            "era5_land_soil_mm": 341.3
+          },
+          {
+            "date": "2018-05-25",
+            "model_soil_mm": 280.7260722526716,
+            "era5_land_soil_mm": 339.66999999999996
+          },
+          {
+            "date": "2018-05-26",
+            "model_soil_mm": 278.7180722526716,
+            "era5_land_soil_mm": 337.53000000000003
+          },
+          {
+            "date": "2018-05-27",
+            "model_soil_mm": 276.6740722526716,
+            "era5_land_soil_mm": 335.9
+          },
+          {
+            "date": "2018-05-28",
+            "model_soil_mm": 274.65007225267146,
+            "era5_land_soil_mm": 333.83
+          },
+          {
+            "date": "2018-05-29",
+            "model_soil_mm": 272.4020722526715,
+            "era5_land_soil_mm": 331.69
+          },
+          {
+            "date": "2018-05-30",
+            "model_soil_mm": 270.2300722526714,
+            "era5_land_soil_mm": 330.34
+          },
+          {
+            "date": "2018-05-31",
+            "model_soil_mm": 268.2220722526714,
+            "era5_land_soil_mm": 328.34
+          },
+          {
+            "date": "2018-06-01",
+            "model_soil_mm": 266.4900722526714,
+            "era5_land_soil_mm": 327.2
+          },
+          {
+            "date": "2018-06-02",
+            "model_soil_mm": 264.55807225267125,
+            "era5_land_soil_mm": 325.92
+          },
+          {
+            "date": "2018-06-03",
+            "model_soil_mm": 262.56207225267104,
+            "era5_land_soil_mm": 324.13
+          },
+          {
+            "date": "2018-06-04",
+            "model_soil_mm": 260.542072252671,
+            "era5_land_soil_mm": 322.85
+          },
+          {
+            "date": "2018-06-05",
+            "model_soil_mm": 258.70607225267105,
+            "era5_land_soil_mm": 321.92
+          },
+          {
+            "date": "2018-06-06",
+            "model_soil_mm": 257.5860722526711,
+            "era5_land_soil_mm": 321.13
+          },
+          {
+            "date": "2018-06-07",
+            "model_soil_mm": 255.99407225267112,
+            "era5_land_soil_mm": 320.13
+          },
+          {
+            "date": "2018-06-08",
+            "model_soil_mm": 254.55407225267106,
+            "era5_land_soil_mm": 319.2
+          },
+          {
+            "date": "2018-06-09",
+            "model_soil_mm": 253.15007225267107,
+            "era5_land_soil_mm": 318.13
+          },
+          {
+            "date": "2018-06-10",
+            "model_soil_mm": 251.258072252671,
+            "era5_land_soil_mm": 316.34000000000003
+          },
+          {
+            "date": "2018-06-11",
+            "model_soil_mm": 251.05807225267108,
+            "era5_land_soil_mm": 316.76000000000005
+          },
+          {
+            "date": "2018-06-12",
+            "model_soil_mm": 249.09807225267107,
+            "era5_land_soil_mm": 314.83000000000004
+          },
+          {
+            "date": "2018-06-13",
+            "model_soil_mm": 247.47692578973772,
+            "era5_land_soil_mm": 313.76000000000005
+          },
+          {
+            "date": "2018-06-14",
+            "model_soil_mm": 245.50055324147112,
+            "era5_land_soil_mm": 312.62
+          },
+          {
+            "date": "2018-06-15",
+            "model_soil_mm": 243.36636634627118,
+            "era5_land_soil_mm": 311.62
+          },
+          {
+            "date": "2018-06-16",
+            "model_soil_mm": 241.1272667934712,
+            "era5_land_soil_mm": 310.55
+          },
+          {
+            "date": "2018-06-17",
+            "model_soil_mm": 238.63283241053787,
+            "era5_land_soil_mm": 309.2
+          },
+          {
+            "date": "2018-06-18",
+            "model_soil_mm": 236.78487773693783,
+            "era5_land_soil_mm": 308.48
+          },
+          {
+            "date": "2018-06-19",
+            "model_soil_mm": 242.72297822760444,
+            "era5_land_soil_mm": 311.77
+          },
+          {
+            "date": "2018-06-20",
+            "model_soil_mm": 240.0554786748044,
+            "era5_land_soil_mm": 310.49
+          },
+          {
+            "date": "2018-06-21",
+            "model_soil_mm": 246.7442588748044,
+            "era5_land_soil_mm": 314.04
+          },
+          {
+            "date": "2018-06-22",
+            "model_soil_mm": 255.25094709293762,
+            "era5_land_soil_mm": 318.38
+          },
+          {
+            "date": "2018-06-23",
+            "model_soil_mm": 253.5323678742709,
+            "era5_land_soil_mm": 317.52
+          },
+          {
+            "date": "2018-06-24",
+            "model_soil_mm": 251.0165279326709,
+            "era5_land_soil_mm": 316.54
+          },
+          {
+            "date": "2018-06-25",
+            "model_soil_mm": 250.95571334973747,
+            "era5_land_soil_mm": 315.89
+          },
+          {
+            "date": "2018-06-26",
+            "model_soil_mm": 248.4460953881376,
+            "era5_land_soil_mm": 314.26
+          },
+          {
+            "date": "2018-06-27",
+            "model_soil_mm": 244.9246675265376,
+            "era5_land_soil_mm": 313.35
+          },
+          {
+            "date": "2018-06-28",
+            "model_soil_mm": 246.8093288457376,
+            "era5_land_soil_mm": 314.8
+          },
+          {
+            "date": "2018-06-29",
+            "model_soil_mm": 248.47257271880423,
+            "era5_land_soil_mm": 315.62
+          },
+          {
+            "date": "2018-06-30",
+            "model_soil_mm": 245.10285417960415,
+            "era5_land_soil_mm": 314.64
+          },
+          {
+            "date": "2018-07-01",
+            "model_soil_mm": 241.16509428893752,
+            "era5_land_soil_mm": 312.73
+          },
+          {
+            "date": "2018-07-02",
+            "model_soil_mm": 240.08496907933758,
+            "era5_land_soil_mm": 313.08
+          },
+          {
+            "date": "2018-07-03",
+            "model_soil_mm": 248.21130647453748,
+            "era5_land_soil_mm": 318.05
+          },
+          {
+            "date": "2018-07-04",
+            "model_soil_mm": 246.14259131400414,
+            "era5_land_soil_mm": 317.19
+          },
+          {
+            "date": "2018-07-05",
+            "model_soil_mm": 243.74184654040414,
+            "era5_land_soil_mm": 316.56
+          },
+          {
+            "date": "2018-07-06",
+            "model_soil_mm": 241.18249152520403,
+            "era5_land_soil_mm": 315.49
+          },
+          {
+            "date": "2018-07-07",
+            "model_soil_mm": 237.0951986862708,
+            "era5_land_soil_mm": 314.23
+          },
+          {
+            "date": "2018-07-08",
+            "model_soil_mm": 233.95134236680414,
+            "era5_land_soil_mm": 313.53000000000003
+          },
+          {
+            "date": "2018-07-09",
+            "model_soil_mm": 230.06853315000413,
+            "era5_land_soil_mm": 311.69
+          },
+          {
+            "date": "2018-07-10",
+            "model_soil_mm": 225.50003248547068,
+            "era5_land_soil_mm": 309.71000000000004
+          },
+          {
+            "date": "2018-07-11",
+            "model_soil_mm": 225.32229945027066,
+            "era5_land_soil_mm": 309.43
+          },
+          {
+            "date": "2018-07-12",
+            "model_soil_mm": 222.19655226067064,
+            "era5_land_soil_mm": 309.22
+          },
+          {
+            "date": "2018-07-13",
+            "model_soil_mm": 219.9385522606707,
+            "era5_land_soil_mm": 308.64
+          },
+          {
+            "date": "2018-07-14",
+            "model_soil_mm": 214.04972289999125,
+            "era5_land_soil_mm": 306.45
+          },
+          {
+            "date": "2018-07-15",
+            "model_soil_mm": 208.3089355422098,
+            "era5_land_soil_mm": 305.33
+          },
+          {
+            "date": "2018-07-16",
+            "model_soil_mm": 203.34370721103429,
+            "era5_land_soil_mm": 303.34999999999997
+          },
+          {
+            "date": "2018-07-17",
+            "model_soil_mm": 198.01897419977325,
+            "era5_land_soil_mm": 301.3
+          },
+          {
+            "date": "2018-07-18",
+            "model_soil_mm": 192.77451966661377,
+            "era5_land_soil_mm": 299.46
+          },
+          {
+            "date": "2018-07-19",
+            "model_soil_mm": 188.49872293162866,
+            "era5_land_soil_mm": 298.62
+          },
+          {
+            "date": "2018-07-20",
+            "model_soil_mm": 205.53907286517526,
+            "era5_land_soil_mm": 307.78999999999996
+          },
+          {
+            "date": "2018-07-21",
+            "model_soil_mm": 225.6558188021626,
+            "era5_land_soil_mm": 318.21999999999997
+          },
+          {
+            "date": "2018-07-22",
+            "model_soil_mm": 220.6288188021626,
+            "era5_land_soil_mm": 316.46999999999997
+          },
+          {
+            "date": "2018-07-23",
+            "model_soil_mm": 216.00948478835986,
+            "era5_land_soil_mm": 314.21
+          },
+          {
+            "date": "2018-07-24",
+            "model_soil_mm": 210.99996990836524,
+            "era5_land_soil_mm": 312.25
+          },
+          {
+            "date": "2018-07-25",
+            "model_soil_mm": 206.586011652251,
+            "era5_land_soil_mm": 310.92
+          },
+          {
+            "date": "2018-07-26",
+            "model_soil_mm": 201.92009608310326,
+            "era5_land_soil_mm": 308.52
+          },
+          {
+            "date": "2018-07-27",
+            "model_soil_mm": 197.66701398487862,
+            "era5_land_soil_mm": 307.12
+          },
+          {
+            "date": "2018-07-28",
+            "model_soil_mm": 194.19331616872896,
+            "era5_land_soil_mm": 305.93
+          },
+          {
+            "date": "2018-07-29",
+            "model_soil_mm": 221.84990995993928,
+            "era5_land_soil_mm": 326.11
+          },
+          {
+            "date": "2018-07-30",
+            "model_soil_mm": 217.2829960284459,
+            "era5_land_soil_mm": 323.89
+          },
+          {
+            "date": "2018-07-31",
+            "model_soil_mm": 221.14764208706274,
+            "era5_land_soil_mm": 327.27
+          },
+          {
+            "date": "2018-08-01",
+            "model_soil_mm": 220.82564208706273,
+            "era5_land_soil_mm": 328.15
+          },
+          {
+            "date": "2018-08-02",
+            "model_soil_mm": 216.47744479449085,
+            "era5_land_soil_mm": 326.56
+          },
+          {
+            "date": "2018-08-03",
+            "model_soil_mm": 212.30376057304846,
+            "era5_land_soil_mm": 325.18
+          },
+          {
+            "date": "2018-08-04",
+            "model_soil_mm": 214.8020666060638,
+            "era5_land_soil_mm": 325.46000000000004
+          },
+          {
+            "date": "2018-08-05",
+            "model_soil_mm": 212.63801241146402,
+            "era5_land_soil_mm": 324.92
+          },
+          {
+            "date": "2018-08-06",
+            "model_soil_mm": 209.3911765319339,
+            "era5_land_soil_mm": 323.38
+          },
+          {
+            "date": "2018-08-07",
+            "model_soil_mm": 205.6110495401532,
+            "era5_land_soil_mm": 321.84000000000003
+          },
+          {
+            "date": "2018-08-08",
+            "model_soil_mm": 201.82901082596246,
+            "era5_land_soil_mm": 320.3
+          },
+          {
+            "date": "2018-08-09",
+            "model_soil_mm": 198.6915669469101,
+            "era5_land_soil_mm": 319.04
+          },
+          {
+            "date": "2018-08-10",
+            "model_soil_mm": 201.37186001010943,
+            "era5_land_soil_mm": 320.51
+          },
+          {
+            "date": "2018-08-11",
+            "model_soil_mm": 197.98986747605593,
+            "era5_land_soil_mm": 319.04
+          },
+          {
+            "date": "2018-08-12",
+            "model_soil_mm": 208.69880910721696,
+            "era5_land_soil_mm": 323.8
+          },
+          {
+            "date": "2018-08-13",
+            "model_soil_mm": 206.48499487658503,
+            "era5_land_soil_mm": 323.17
+          },
+          {
+            "date": "2018-08-14",
+            "model_soil_mm": 204.1695134624791,
+            "era5_land_soil_mm": 322.40000000000003
+          },
+          {
+            "date": "2018-08-15",
+            "model_soil_mm": 202.72448775999015,
+            "era5_land_soil_mm": 322.42
+          },
+          {
+            "date": "2018-08-16",
+            "model_soil_mm": 199.93436205155288,
+            "era5_land_soil_mm": 321.23
+          },
+          {
+            "date": "2018-08-17",
+            "model_soil_mm": 200.2237821594105,
+            "era5_land_soil_mm": 322.0
+          },
+          {
+            "date": "2018-08-18",
+            "model_soil_mm": 200.52891223636678,
+            "era5_land_soil_mm": 322.77000000000004
+          },
+          {
+            "date": "2018-08-19",
+            "model_soil_mm": 201.27358427379488,
+            "era5_land_soil_mm": 323.19
+          },
+          {
+            "date": "2018-08-20",
+            "model_soil_mm": 199.19525597966557,
+            "era5_land_soil_mm": 322.42
+          },
+          {
+            "date": "2018-08-21",
+            "model_soil_mm": 197.17746346393412,
+            "era5_land_soil_mm": 321.58000000000004
+          },
+          {
+            "date": "2018-08-22",
+            "model_soil_mm": 194.67870088700982,
+            "era5_land_soil_mm": 320.67
+          },
+          {
+            "date": "2018-08-23",
+            "model_soil_mm": 195.47663353700472,
+            "era5_land_soil_mm": 321.23
+          },
+          {
+            "date": "2018-08-24",
+            "model_soil_mm": 196.18231183685697,
+            "era5_land_soil_mm": 321.3
+          },
+          {
+            "date": "2018-08-25",
+            "model_soil_mm": 194.87303915113117,
+            "era5_land_soil_mm": 321.02
+          },
+          {
+            "date": "2018-08-26",
+            "model_soil_mm": 199.4223251437858,
+            "era5_land_soil_mm": 322.77000000000004
+          },
+          {
+            "date": "2018-08-27",
+            "model_soil_mm": 197.46205419693496,
+            "era5_land_soil_mm": 321.86
+          },
+          {
+            "date": "2018-08-28",
+            "model_soil_mm": 196.37557765618791,
+            "era5_land_soil_mm": 321.65000000000003
+          },
+          {
+            "date": "2018-08-29",
+            "model_soil_mm": 194.2447397714423,
+            "era5_land_soil_mm": 320.6
+          },
+          {
+            "date": "2018-08-30",
+            "model_soil_mm": 192.61271522753452,
+            "era5_land_soil_mm": 319.83000000000004
+          },
+          {
+            "date": "2018-08-31",
+            "model_soil_mm": 191.38320010205777,
+            "era5_land_soil_mm": 319.27000000000004
+          },
+          {
+            "date": "2018-09-01",
+            "model_soil_mm": 196.87908064658643,
+            "era5_land_soil_mm": 321.95
+          },
+          {
+            "date": "2018-09-02",
+            "model_soil_mm": 195.6575684130415,
+            "era5_land_soil_mm": 321.53000000000003
+          },
+          {
+            "date": "2018-09-03",
+            "model_soil_mm": 194.00885986144536,
+            "era5_land_soil_mm": 320.69
+          },
+          {
+            "date": "2018-09-04",
+            "model_soil_mm": 192.6960036120516,
+            "era5_land_soil_mm": 319.92
+          },
+          {
+            "date": "2018-09-05",
+            "model_soil_mm": 192.10366025079594,
+            "era5_land_soil_mm": 319.57
+          },
+          {
+            "date": "2018-09-06",
+            "model_soil_mm": 191.25552581855814,
+            "era5_land_soil_mm": 319.36
+          },
+          {
+            "date": "2018-09-07",
+            "model_soil_mm": 190.36300534049835,
+            "era5_land_soil_mm": 319.15000000000003
+          },
+          {
+            "date": "2018-09-08",
+            "model_soil_mm": 189.12584012811178,
+            "era5_land_soil_mm": 318.45
+          },
+          {
+            "date": "2018-09-09",
+            "model_soil_mm": 192.24785426305462,
+            "era5_land_soil_mm": 319.78000000000003
+          },
+          {
+            "date": "2018-09-10",
+            "model_soil_mm": 192.97948989780684,
+            "era5_land_soil_mm": 319.41
+          },
+          {
+            "date": "2018-09-11",
+            "model_soil_mm": 202.46695624872163,
+            "era5_land_soil_mm": 325.66
+          },
+          {
+            "date": "2018-09-12",
+            "model_soil_mm": 204.49856758881145,
+            "era5_land_soil_mm": 327.2
+          },
+          {
+            "date": "2018-09-13",
+            "model_soil_mm": 203.63699863677704,
+            "era5_land_soil_mm": 326.94
+          },
+          {
+            "date": "2018-09-14",
+            "model_soil_mm": 203.62311189342225,
+            "era5_land_soil_mm": 326.66
+          },
+          {
+            "date": "2018-09-15",
+            "model_soil_mm": 210.020626778412,
+            "era5_land_soil_mm": 330.53
+          },
+          {
+            "date": "2018-09-16",
+            "model_soil_mm": 208.94259563413428,
+            "era5_land_soil_mm": 329.48
+          },
+          {
+            "date": "2018-09-17",
+            "model_soil_mm": 217.56693655552516,
+            "era5_land_soil_mm": 334.91
+          },
+          {
+            "date": "2018-09-18",
+            "model_soil_mm": 216.90960283721802,
+            "era5_land_soil_mm": 334.23
+          },
+          {
+            "date": "2018-09-19",
+            "model_soil_mm": 215.92253688964257,
+            "era5_land_soil_mm": 333.62
+          },
+          {
+            "date": "2018-09-20",
+            "model_soil_mm": 214.55674699068868,
+            "era5_land_soil_mm": 333.08
+          },
+          {
+            "date": "2018-09-21",
+            "model_soil_mm": 218.86751651465792,
+            "era5_land_soil_mm": 336.11
+          },
+          {
+            "date": "2018-09-22",
+            "model_soil_mm": 220.50351651465786,
+            "era5_land_soil_mm": 336.55
+          },
+          {
+            "date": "2018-09-23",
+            "model_soil_mm": 220.0275165146578,
+            "era5_land_soil_mm": 336.43
+          },
+          {
+            "date": "2018-09-24",
+            "model_soil_mm": 219.51151651465776,
+            "era5_land_soil_mm": 336.24
+          },
+          {
+            "date": "2018-09-25",
+            "model_soil_mm": 218.71551651465782,
+            "era5_land_soil_mm": 335.19
+          },
+          {
+            "date": "2018-09-26",
+            "model_soil_mm": 229.31551651465776,
+            "era5_land_soil_mm": 341.02
+          },
+          {
+            "date": "2018-09-27",
+            "model_soil_mm": 228.47151651465768,
+            "era5_land_soil_mm": 340.20000000000005
+          },
+          {
+            "date": "2018-09-28",
+            "model_soil_mm": 228.09151651465768,
+            "era5_land_soil_mm": 339.66
+          },
+          {
+            "date": "2018-09-29",
+            "model_soil_mm": 229.85151651465767,
+            "era5_land_soil_mm": 340.38
+          },
+          {
+            "date": "2018-09-30",
+            "model_soil_mm": 229.90351651465767,
+            "era5_land_soil_mm": 340.68
+          }
+        ],
+        "max_water_residual_mm": 6.82509604388315e-14
+      },
+      {
+        "place": "Bjuv",
+        "days": 183,
+        "bias_mm": -27.83725219734708,
+        "rmse_mm": 39.98640626036674,
+        "series": [
+          {
+            "date": "2018-04-01",
+            "model_soil_mm": 338.36326538919144,
+            "era5_land_soil_mm": 375.36
+          },
+          {
+            "date": "2018-04-02",
+            "model_soil_mm": 323.18047317286147,
+            "era5_land_soil_mm": 373.94
+          },
+          {
+            "date": "2018-04-03",
+            "model_soil_mm": 320.2787346466665,
+            "era5_land_soil_mm": 375.65000000000003
+          },
+          {
+            "date": "2018-04-04",
+            "model_soil_mm": 320.32639165864816,
+            "era5_land_soil_mm": 380.11
+          },
+          {
+            "date": "2018-04-05",
+            "model_soil_mm": 321.4072745556911,
+            "era5_land_soil_mm": 386.75
+          },
+          {
+            "date": "2018-04-06",
+            "model_soil_mm": 316.86227974485445,
+            "era5_land_soil_mm": 383.40999999999997
+          },
+          {
+            "date": "2018-04-07",
+            "model_soil_mm": 315.08454823203556,
+            "era5_land_soil_mm": 380.47
+          },
+          {
+            "date": "2018-04-08",
+            "model_soil_mm": 314.0033818024375,
+            "era5_land_soil_mm": 377.44
+          },
+          {
+            "date": "2018-04-09",
+            "model_soil_mm": 313.0273818024374,
+            "era5_land_soil_mm": 374.83
+          },
+          {
+            "date": "2018-04-10",
+            "model_soil_mm": 312.03138180243735,
+            "era5_land_soil_mm": 371.57
+          },
+          {
+            "date": "2018-04-11",
+            "model_soil_mm": 310.8833818024374,
+            "era5_land_soil_mm": 368.1
+          },
+          {
+            "date": "2018-04-12",
+            "model_soil_mm": 309.6353818024373,
+            "era5_land_soil_mm": 365.34999999999997
+          },
+          {
+            "date": "2018-04-13",
+            "model_soil_mm": 308.33138180243736,
+            "era5_land_soil_mm": 362.15999999999997
+          },
+          {
+            "date": "2018-04-14",
+            "model_soil_mm": 307.9793818024374,
+            "era5_land_soil_mm": 359.74
+          },
+          {
+            "date": "2018-04-15",
+            "model_soil_mm": 307.91538180243737,
+            "era5_land_soil_mm": 358.09
+          },
+          {
+            "date": "2018-04-16",
+            "model_soil_mm": 307.0393818024374,
+            "era5_land_soil_mm": 355.39
+          },
+          {
+            "date": "2018-04-17",
+            "model_soil_mm": 306.47138180243735,
+            "era5_land_soil_mm": 354.04
+          },
+          {
+            "date": "2018-04-18",
+            "model_soil_mm": 305.5073818024372,
+            "era5_land_soil_mm": 350.62
+          },
+          {
+            "date": "2018-04-19",
+            "model_soil_mm": 304.3953818024371,
+            "era5_land_soil_mm": 347.85
+          },
+          {
+            "date": "2018-04-20",
+            "model_soil_mm": 302.91938180243704,
+            "era5_land_soil_mm": 344.52
+          },
+          {
+            "date": "2018-04-21",
+            "model_soil_mm": 301.687381802437,
+            "era5_land_soil_mm": 341.75
+          },
+          {
+            "date": "2018-04-22",
+            "model_soil_mm": 300.791381802437,
+            "era5_land_soil_mm": 338.60999999999996
+          },
+          {
+            "date": "2018-04-23",
+            "model_soil_mm": 303.77938180243694,
+            "era5_land_soil_mm": 339.47999999999996
+          },
+          {
+            "date": "2018-04-24",
+            "model_soil_mm": 304.6793818024369,
+            "era5_land_soil_mm": 339.32
+          },
+          {
+            "date": "2018-04-25",
+            "model_soil_mm": 309.5273818024369,
+            "era5_land_soil_mm": 341.09999999999997
+          },
+          {
+            "date": "2018-04-26",
+            "model_soil_mm": 314.9342643362142,
+            "era5_land_soil_mm": 344.02
+          },
+          {
+            "date": "2018-04-27",
+            "model_soil_mm": 316.01955538170455,
+            "era5_land_soil_mm": 343.0
+          },
+          {
+            "date": "2018-04-28",
+            "model_soil_mm": 316.0970715093983,
+            "era5_land_soil_mm": 343.05
+          },
+          {
+            "date": "2018-04-29",
+            "model_soil_mm": 314.75926106076935,
+            "era5_land_soil_mm": 340.86
+          },
+          {
+            "date": "2018-04-30",
+            "model_soil_mm": 317.8116113478598,
+            "era5_land_soil_mm": 342.57000000000005
+          },
+          {
+            "date": "2018-05-01",
+            "model_soil_mm": 317.0733908172757,
+            "era5_land_soil_mm": 342.48
+          },
+          {
+            "date": "2018-05-02",
+            "model_soil_mm": 314.89525803463494,
+            "era5_land_soil_mm": 338.52
+          },
+          {
+            "date": "2018-05-03",
+            "model_soil_mm": 313.77125803463485,
+            "era5_land_soil_mm": 335.84000000000003
+          },
+          {
+            "date": "2018-05-04",
+            "model_soil_mm": 312.61525803463473,
+            "era5_land_soil_mm": 333.09000000000003
+          },
+          {
+            "date": "2018-05-05",
+            "model_soil_mm": 311.19525803463466,
+            "era5_land_soil_mm": 329.62
+          },
+          {
+            "date": "2018-05-06",
+            "model_soil_mm": 309.65925803463466,
+            "era5_land_soil_mm": 325.66
+          },
+          {
+            "date": "2018-05-07",
+            "model_soil_mm": 307.9832580346347,
+            "era5_land_soil_mm": 321.77
+          },
+          {
+            "date": "2018-05-08",
+            "model_soil_mm": 306.05125803463454,
+            "era5_land_soil_mm": 316.95
+          },
+          {
+            "date": "2018-05-09",
+            "model_soil_mm": 304.07125803463435,
+            "era5_land_soil_mm": 312.99
+          },
+          {
+            "date": "2018-05-10",
+            "model_soil_mm": 302.5392580346342,
+            "era5_land_soil_mm": 309.52
+          },
+          {
+            "date": "2018-05-11",
+            "model_soil_mm": 305.74325803463404,
+            "era5_land_soil_mm": 311.37
+          },
+          {
+            "date": "2018-05-12",
+            "model_soil_mm": 304.46325803463407,
+            "era5_land_soil_mm": 308.32
+          },
+          {
+            "date": "2018-05-13",
+            "model_soil_mm": 302.47125803463405,
+            "era5_land_soil_mm": 304.43
+          },
+          {
+            "date": "2018-05-14",
+            "model_soil_mm": 300.4592580346338,
+            "era5_land_soil_mm": 299.61
+          },
+          {
+            "date": "2018-05-15",
+            "model_soil_mm": 298.96725803463386,
+            "era5_land_soil_mm": 296.41999999999996
+          },
+          {
+            "date": "2018-05-16",
+            "model_soil_mm": 296.93525803463376,
+            "era5_land_soil_mm": 292.81
+          },
+          {
+            "date": "2018-05-17",
+            "model_soil_mm": 296.1192580346338,
+            "era5_land_soil_mm": 289.76
+          },
+          {
+            "date": "2018-05-18",
+            "model_soil_mm": 301.10325803463365,
+            "era5_land_soil_mm": 291.61
+          },
+          {
+            "date": "2018-05-19",
+            "model_soil_mm": 299.9072580346336,
+            "era5_land_soil_mm": 289.19
+          },
+          {
+            "date": "2018-05-20",
+            "model_soil_mm": 298.1312580346335,
+            "era5_land_soil_mm": 285.72
+          },
+          {
+            "date": "2018-05-21",
+            "model_soil_mm": 296.3392580346335,
+            "era5_land_soil_mm": 282.46
+          },
+          {
+            "date": "2018-05-22",
+            "model_soil_mm": 294.59125803463337,
+            "era5_land_soil_mm": 279.34
+          },
+          {
+            "date": "2018-05-23",
+            "model_soil_mm": 292.74325803463324,
+            "era5_land_soil_mm": 276.21999999999997
+          },
+          {
+            "date": "2018-05-24",
+            "model_soil_mm": 290.51525803463306,
+            "era5_land_soil_mm": 272.24
+          },
+          {
+            "date": "2018-05-25",
+            "model_soil_mm": 288.23125803463296,
+            "era5_land_soil_mm": 268.84
+          },
+          {
+            "date": "2018-05-26",
+            "model_soil_mm": 292.08325803463293,
+            "era5_land_soil_mm": 271.40999999999997
+          },
+          {
+            "date": "2018-05-27",
+            "model_soil_mm": 298.05125803463284,
+            "era5_land_soil_mm": 276.15
+          },
+          {
+            "date": "2018-05-28",
+            "model_soil_mm": 298.07125803463276,
+            "era5_land_soil_mm": 273.8
+          },
+          {
+            "date": "2018-05-29",
+            "model_soil_mm": 295.7125359612995,
+            "era5_land_soil_mm": 269.84
+          },
+          {
+            "date": "2018-05-30",
+            "model_soil_mm": 292.8693355412996,
+            "era5_land_soil_mm": 265.81
+          },
+          {
+            "date": "2018-05-31",
+            "model_soil_mm": 289.9545388532996,
+            "era5_land_soil_mm": 261.48
+          },
+          {
+            "date": "2018-06-01",
+            "model_soil_mm": 287.19544205063283,
+            "era5_land_soil_mm": 258.15000000000003
+          },
+          {
+            "date": "2018-06-02",
+            "model_soil_mm": 284.41665595996614,
+            "era5_land_soil_mm": 255.10000000000002
+          },
+          {
+            "date": "2018-06-03",
+            "model_soil_mm": 281.633788643966,
+            "era5_land_soil_mm": 252.19
+          },
+          {
+            "date": "2018-06-04",
+            "model_soil_mm": 278.96349329329917,
+            "era5_land_soil_mm": 249.77
+          },
+          {
+            "date": "2018-06-05",
+            "model_soil_mm": 275.55996857063235,
+            "era5_land_soil_mm": 247.0
+          },
+          {
+            "date": "2018-06-06",
+            "model_soil_mm": 272.5332291746321,
+            "era5_land_soil_mm": 244.58
+          },
+          {
+            "date": "2018-06-07",
+            "model_soil_mm": 269.00055655996545,
+            "era5_land_soil_mm": 242.23000000000002
+          },
+          {
+            "date": "2018-06-08",
+            "model_soil_mm": 265.27794471463216,
+            "era5_land_soil_mm": 239.67000000000002
+          },
+          {
+            "date": "2018-06-09",
+            "model_soil_mm": 261.3072624706323,
+            "era5_land_soil_mm": 236.67000000000002
+          },
+          {
+            "date": "2018-06-10",
+            "model_soil_mm": 258.608128857299,
+            "era5_land_soil_mm": 235.95
+          },
+          {
+            "date": "2018-06-11",
+            "model_soil_mm": 255.818608605299,
+            "era5_land_soil_mm": 234.88
+          },
+          {
+            "date": "2018-06-12",
+            "model_soil_mm": 253.84480328129902,
+            "era5_land_soil_mm": 234.51
+          },
+          {
+            "date": "2018-06-13",
+            "model_soil_mm": 262.4814436839656,
+            "era5_land_soil_mm": 241.07
+          },
+          {
+            "date": "2018-06-14",
+            "model_soil_mm": 260.5610701266321,
+            "era5_land_soil_mm": 240.20999999999998
+          },
+          {
+            "date": "2018-06-15",
+            "model_soil_mm": 257.2556633506321,
+            "era5_land_soil_mm": 238.09
+          },
+          {
+            "date": "2018-06-16",
+            "model_soil_mm": 257.19739688796534,
+            "era5_land_soil_mm": 238.42
+          },
+          {
+            "date": "2018-06-17",
+            "model_soil_mm": 260.54080227596523,
+            "era5_land_soil_mm": 243.39
+          },
+          {
+            "date": "2018-06-18",
+            "model_soil_mm": 257.9115555559653,
+            "era5_land_soil_mm": 241.9
+          },
+          {
+            "date": "2018-06-19",
+            "model_soil_mm": 254.49091652929883,
+            "era5_land_soil_mm": 239.92000000000002
+          },
+          {
+            "date": "2018-06-20",
+            "model_soil_mm": 252.48918966663214,
+            "era5_land_soil_mm": 238.99
+          },
+          {
+            "date": "2018-06-21",
+            "model_soil_mm": 249.38254197863216,
+            "era5_land_soil_mm": 238.22
+          },
+          {
+            "date": "2018-06-22",
+            "model_soil_mm": 246.9651282226321,
+            "era5_land_soil_mm": 237.36
+          },
+          {
+            "date": "2018-06-23",
+            "model_soil_mm": 242.80177415329877,
+            "era5_land_soil_mm": 235.31
+          },
+          {
+            "date": "2018-06-24",
+            "model_soil_mm": 238.92811250529874,
+            "era5_land_soil_mm": 233.47
+          },
+          {
+            "date": "2018-06-25",
+            "model_soil_mm": 235.1153110279654,
+            "era5_land_soil_mm": 231.84
+          },
+          {
+            "date": "2018-06-26",
+            "model_soil_mm": 230.28597476529873,
+            "era5_land_soil_mm": 229.65
+          },
+          {
+            "date": "2018-06-27",
+            "model_soil_mm": 224.60739024129867,
+            "era5_land_soil_mm": 227.74
+          },
+          {
+            "date": "2018-06-28",
+            "model_soil_mm": 218.43639024129862,
+            "era5_land_soil_mm": 225.03999999999996
+          },
+          {
+            "date": "2018-06-29",
+            "model_soil_mm": 212.40261548467788,
+            "era5_land_soil_mm": 223.2
+          },
+          {
+            "date": "2018-06-30",
+            "model_soil_mm": 207.3101495417546,
+            "era5_land_soil_mm": 220.98999999999998
+          },
+          {
+            "date": "2018-07-01",
+            "model_soil_mm": 202.18904766190013,
+            "era5_land_soil_mm": 219.57
+          },
+          {
+            "date": "2018-07-02",
+            "model_soil_mm": 196.84743066929965,
+            "era5_land_soil_mm": 218.14999999999998
+          },
+          {
+            "date": "2018-07-03",
+            "model_soil_mm": 192.15714204879893,
+            "era5_land_soil_mm": 216.15
+          },
+          {
+            "date": "2018-07-04",
+            "model_soil_mm": 187.94750710140949,
+            "era5_land_soil_mm": 214.8
+          },
+          {
+            "date": "2018-07-05",
+            "model_soil_mm": 185.43189393520586,
+            "era5_land_soil_mm": 214.59000000000003
+          },
+          {
+            "date": "2018-07-06",
+            "model_soil_mm": 182.37641077690034,
+            "era5_land_soil_mm": 213.59000000000003
+          },
+          {
+            "date": "2018-07-07",
+            "model_soil_mm": 179.35414093378316,
+            "era5_land_soil_mm": 212.59000000000003
+          },
+          {
+            "date": "2018-07-08",
+            "model_soil_mm": 176.4193069154391,
+            "era5_land_soil_mm": 211.59
+          },
+          {
+            "date": "2018-07-09",
+            "model_soil_mm": 173.96755567610705,
+            "era5_land_soil_mm": 210.59
+          },
+          {
+            "date": "2018-07-10",
+            "model_soil_mm": 172.28141744134234,
+            "era5_land_soil_mm": 210.51999999999998
+          },
+          {
+            "date": "2018-07-11",
+            "model_soil_mm": 170.25521624188488,
+            "era5_land_soil_mm": 209.8
+          },
+          {
+            "date": "2018-07-12",
+            "model_soil_mm": 167.5868206156076,
+            "era5_land_soil_mm": 208.73
+          },
+          {
+            "date": "2018-07-13",
+            "model_soil_mm": 165.76545538031922,
+            "era5_land_soil_mm": 207.87
+          },
+          {
+            "date": "2018-07-14",
+            "model_soil_mm": 163.49119985328403,
+            "era5_land_soil_mm": 207.07999999999998
+          },
+          {
+            "date": "2018-07-15",
+            "model_soil_mm": 161.3882469350671,
+            "era5_land_soil_mm": 206.07999999999998
+          },
+          {
+            "date": "2018-07-16",
+            "model_soil_mm": 159.2093860228576,
+            "era5_land_soil_mm": 205.01000000000002
+          },
+          {
+            "date": "2018-07-17",
+            "model_soil_mm": 158.5403915933899,
+            "era5_land_soil_mm": 205.43
+          },
+          {
+            "date": "2018-07-18",
+            "model_soil_mm": 162.25715870163086,
+            "era5_land_soil_mm": 207.11
+          },
+          {
+            "date": "2018-07-19",
+            "model_soil_mm": 160.05749798444583,
+            "era5_land_soil_mm": 205.9
+          },
+          {
+            "date": "2018-07-20",
+            "model_soil_mm": 157.8062383567251,
+            "era5_land_soil_mm": 204.62
+          },
+          {
+            "date": "2018-07-21",
+            "model_soil_mm": 155.68224430904672,
+            "era5_land_soil_mm": 203.34
+          },
+          {
+            "date": "2018-07-22",
+            "model_soil_mm": 153.8814353617753,
+            "era5_land_soil_mm": 203.13
+          },
+          {
+            "date": "2018-07-23",
+            "model_soil_mm": 152.78917460642305,
+            "era5_land_soil_mm": 202.41
+          },
+          {
+            "date": "2018-07-24",
+            "model_soil_mm": 151.23912293820968,
+            "era5_land_soil_mm": 201.27
+          },
+          {
+            "date": "2018-07-25",
+            "model_soil_mm": 149.40033013808556,
+            "era5_land_soil_mm": 200.13
+          },
+          {
+            "date": "2018-07-26",
+            "model_soil_mm": 147.550194079177,
+            "era5_land_soil_mm": 199.20000000000002
+          },
+          {
+            "date": "2018-07-27",
+            "model_soil_mm": 146.07911953562459,
+            "era5_land_soil_mm": 198.20000000000002
+          },
+          {
+            "date": "2018-07-28",
+            "model_soil_mm": 146.95665987725587,
+            "era5_land_soil_mm": 199.60000000000002
+          },
+          {
+            "date": "2018-07-29",
+            "model_soil_mm": 150.32985261074782,
+            "era5_land_soil_mm": 201.82
+          },
+          {
+            "date": "2018-07-30",
+            "model_soil_mm": 149.0019432983018,
+            "era5_land_soil_mm": 201.19
+          },
+          {
+            "date": "2018-07-31",
+            "model_soil_mm": 147.14870550291533,
+            "era5_land_soil_mm": 199.27999999999997
+          },
+          {
+            "date": "2018-08-01",
+            "model_soil_mm": 146.59157001476808,
+            "era5_land_soil_mm": 198.35
+          },
+          {
+            "date": "2018-08-02",
+            "model_soil_mm": 145.19102319690614,
+            "era5_land_soil_mm": 197.79
+          },
+          {
+            "date": "2018-08-03",
+            "model_soil_mm": 143.866082210639,
+            "era5_land_soil_mm": 196.57999999999998
+          },
+          {
+            "date": "2018-08-04",
+            "model_soil_mm": 143.6348829537651,
+            "era5_land_soil_mm": 195.92999999999998
+          },
+          {
+            "date": "2018-08-05",
+            "model_soil_mm": 142.577130853536,
+            "era5_land_soil_mm": 195.79
+          },
+          {
+            "date": "2018-08-06",
+            "model_soil_mm": 141.70759245234402,
+            "era5_land_soil_mm": 195.57999999999998
+          },
+          {
+            "date": "2018-08-07",
+            "model_soil_mm": 140.47120557525082,
+            "era5_land_soil_mm": 194.51
+          },
+          {
+            "date": "2018-08-08",
+            "model_soil_mm": 142.52749781248775,
+            "era5_land_soil_mm": 196.67999999999998
+          },
+          {
+            "date": "2018-08-09",
+            "model_soil_mm": 141.71746831440566,
+            "era5_land_soil_mm": 195.60999999999999
+          },
+          {
+            "date": "2018-08-10",
+            "model_soil_mm": 141.6528386333511,
+            "era5_land_soil_mm": 196.1
+          },
+          {
+            "date": "2018-08-11",
+            "model_soil_mm": 151.01995691573214,
+            "era5_land_soil_mm": 205.54999999999998
+          },
+          {
+            "date": "2018-08-12",
+            "model_soil_mm": 157.02737013723615,
+            "era5_land_soil_mm": 210.31
+          },
+          {
+            "date": "2018-08-13",
+            "model_soil_mm": 176.3425926660587,
+            "era5_land_soil_mm": 228.01999999999998
+          },
+          {
+            "date": "2018-08-14",
+            "model_soil_mm": 188.90956708626365,
+            "era5_land_soil_mm": 240.14999999999998
+          },
+          {
+            "date": "2018-08-15",
+            "model_soil_mm": 187.17258657467025,
+            "era5_land_soil_mm": 238.7
+          },
+          {
+            "date": "2018-08-16",
+            "model_soil_mm": 185.4528300277812,
+            "era5_land_soil_mm": 236.6
+          },
+          {
+            "date": "2018-08-17",
+            "model_soil_mm": 183.89592043677015,
+            "era5_land_soil_mm": 235.29
+          },
+          {
+            "date": "2018-08-18",
+            "model_soil_mm": 182.1878189911493,
+            "era5_land_soil_mm": 233.60999999999999
+          },
+          {
+            "date": "2018-08-19",
+            "model_soil_mm": 181.9554126993667,
+            "era5_land_soil_mm": 234.54
+          },
+          {
+            "date": "2018-08-20",
+            "model_soil_mm": 181.29657512897919,
+            "era5_land_soil_mm": 233.42
+          },
+          {
+            "date": "2018-08-21",
+            "model_soil_mm": 180.0960799740559,
+            "era5_land_soil_mm": 232.52999999999997
+          },
+          {
+            "date": "2018-08-22",
+            "model_soil_mm": 178.09151268896497,
+            "era5_land_soil_mm": 230.22
+          },
+          {
+            "date": "2018-08-23",
+            "model_soil_mm": 176.0711945828606,
+            "era5_land_soil_mm": 227.91
+          },
+          {
+            "date": "2018-08-24",
+            "model_soil_mm": 175.6073615246406,
+            "era5_land_soil_mm": 227.63
+          },
+          {
+            "date": "2018-08-25",
+            "model_soil_mm": 182.36224982819982,
+            "era5_land_soil_mm": 234.07
+          },
+          {
+            "date": "2018-08-26",
+            "model_soil_mm": 181.06351351766088,
+            "era5_land_soil_mm": 233.39
+          },
+          {
+            "date": "2018-08-27",
+            "model_soil_mm": 190.11985609131,
+            "era5_land_soil_mm": 241.15999999999997
+          },
+          {
+            "date": "2018-08-28",
+            "model_soil_mm": 189.32002218494392,
+            "era5_land_soil_mm": 241.11
+          },
+          {
+            "date": "2018-08-29",
+            "model_soil_mm": 187.9950248289602,
+            "era5_land_soil_mm": 239.29000000000002
+          },
+          {
+            "date": "2018-08-30",
+            "model_soil_mm": 199.7244788549078,
+            "era5_land_soil_mm": 250.16
+          },
+          {
+            "date": "2018-08-31",
+            "model_soil_mm": 199.69123829627182,
+            "era5_land_soil_mm": 251.32
+          },
+          {
+            "date": "2018-09-01",
+            "model_soil_mm": 199.22900224577938,
+            "era5_land_soil_mm": 250.71
+          },
+          {
+            "date": "2018-09-02",
+            "model_soil_mm": 197.99308502797507,
+            "era5_land_soil_mm": 249.33
+          },
+          {
+            "date": "2018-09-03",
+            "model_soil_mm": 196.78295981026145,
+            "era5_land_soil_mm": 247.81
+          },
+          {
+            "date": "2018-09-04",
+            "model_soil_mm": 195.72939167533914,
+            "era5_land_soil_mm": 246.57
+          },
+          {
+            "date": "2018-09-05",
+            "model_soil_mm": 194.5816000002218,
+            "era5_land_soil_mm": 244.68
+          },
+          {
+            "date": "2018-09-06",
+            "model_soil_mm": 193.88664270761785,
+            "era5_land_soil_mm": 243.51
+          },
+          {
+            "date": "2018-09-07",
+            "model_soil_mm": 196.2059387148342,
+            "era5_land_soil_mm": 244.63
+          },
+          {
+            "date": "2018-09-08",
+            "model_soil_mm": 195.79624466851902,
+            "era5_land_soil_mm": 244.51
+          },
+          {
+            "date": "2018-09-09",
+            "model_soil_mm": 196.96965106446424,
+            "era5_land_soil_mm": 244.79
+          },
+          {
+            "date": "2018-09-10",
+            "model_soil_mm": 198.11651667659152,
+            "era5_land_soil_mm": 246.14
+          },
+          {
+            "date": "2018-09-11",
+            "model_soil_mm": 202.54724505061728,
+            "era5_land_soil_mm": 249.29
+          },
+          {
+            "date": "2018-09-12",
+            "model_soil_mm": 202.83948715159988,
+            "era5_land_soil_mm": 249.1
+          },
+          {
+            "date": "2018-09-13",
+            "model_soil_mm": 202.72846243466563,
+            "era5_land_soil_mm": 248.12
+          },
+          {
+            "date": "2018-09-14",
+            "model_soil_mm": 202.58348657699594,
+            "era5_land_soil_mm": 248.14
+          },
+          {
+            "date": "2018-09-15",
+            "model_soil_mm": 205.03417227941986,
+            "era5_land_soil_mm": 249.68
+          },
+          {
+            "date": "2018-09-16",
+            "model_soil_mm": 204.30839283974944,
+            "era5_land_soil_mm": 249.0
+          },
+          {
+            "date": "2018-09-17",
+            "model_soil_mm": 206.22036666563497,
+            "era5_land_soil_mm": 249.63
+          },
+          {
+            "date": "2018-09-18",
+            "model_soil_mm": 205.14434587633883,
+            "era5_land_soil_mm": 248.32
+          },
+          {
+            "date": "2018-09-19",
+            "model_soil_mm": 204.28733066842503,
+            "era5_land_soil_mm": 246.77999999999997
+          },
+          {
+            "date": "2018-09-20",
+            "model_soil_mm": 205.50914776819957,
+            "era5_land_soil_mm": 247.48
+          },
+          {
+            "date": "2018-09-21",
+            "model_soil_mm": 211.62543336736397,
+            "era5_land_soil_mm": 253.17
+          },
+          {
+            "date": "2018-09-22",
+            "model_soil_mm": 212.1763308411324,
+            "era5_land_soil_mm": 252.95999999999998
+          },
+          {
+            "date": "2018-09-23",
+            "model_soil_mm": 211.62156367383258,
+            "era5_land_soil_mm": 252.49
+          },
+          {
+            "date": "2018-09-24",
+            "model_soil_mm": 211.5363481808418,
+            "era5_land_soil_mm": 251.58
+          },
+          {
+            "date": "2018-09-25",
+            "model_soil_mm": 210.73560819999352,
+            "era5_land_soil_mm": 249.97000000000003
+          },
+          {
+            "date": "2018-09-26",
+            "model_soil_mm": 210.16183811100146,
+            "era5_land_soil_mm": 250.34000000000003
+          },
+          {
+            "date": "2018-09-27",
+            "model_soil_mm": 210.73359158758865,
+            "era5_land_soil_mm": 250.27
+          },
+          {
+            "date": "2018-09-28",
+            "model_soil_mm": 209.8449582778739,
+            "era5_land_soil_mm": 249.52
+          },
+          {
+            "date": "2018-09-29",
+            "model_soil_mm": 209.52447649058595,
+            "era5_land_soil_mm": 248.89000000000001
+          },
+          {
+            "date": "2018-09-30",
+            "model_soil_mm": 209.13984708529938,
+            "era5_land_soil_mm": 248.33
+          }
+        ],
+        "max_water_residual_mm": 4.796163466380676e-14
+      }
+    ],
+    "notice": "2018 April–September comparison with ERA5-Land modeled 0–1 m storage. Uses ERA5/ERA5-Land seamless forcing and the same soil reanalysis for initialization: a diagnostic benchmark, not independent observational validation or held-out crop-yield validation. Generic Kc/capacity; snow starts zero; no irrigation/calibration.",
+    "source": "https://open-meteo.com/en/docs/historical-weather-api"
+  },
+  "supply": {
+    "prices": [
+      {
+        "year": "2026",
+        "item": "pea",
+        "contract_price_eur_t": "434.7",
+        "replacement_import_premium_frac": "0.55",
+        "note": "replacement = buying frozen/processed equivalent from import when contract volume falls short"
+      },
+      {
+        "year": "2026",
+        "item": "potato",
+        "contract_price_eur_t": "238.0",
+        "replacement_import_premium_frac": "0.45",
+        "note": "replacement = buying frozen/processed equivalent from import when contract volume falls short"
+      },
+      {
+        "year": "2026",
+        "item": "carrot",
+        "contract_price_eur_t": "300.1",
+        "replacement_import_premium_frac": "0.4",
+        "note": "replacement = buying frozen/processed equivalent from import when contract volume falls short"
+      },
+      {
+        "year": "2026",
+        "item": "spinach",
+        "contract_price_eur_t": "393.3",
+        "replacement_import_premium_frac": "0.6",
+        "note": "replacement = buying frozen/processed equivalent from import when contract volume falls short"
+      },
+      {
+        "year": "2026",
+        "item": "turnip_rape",
+        "contract_price_eur_t": "486.4",
+        "replacement_import_premium_frac": "0.08",
+        "note": "replacement = buying frozen/processed equivalent from import when contract volume falls short"
+      },
+      {
+        "year": "2026",
+        "item": "pea_SE",
+        "contract_price_eur_t": "424.3",
+        "replacement_import_premium_frac": "0.55",
+        "note": "replacement = buying frozen/processed equivalent from import when contract volume falls short"
+      }
+    ],
+    "shipments_2025_by_mode": [
+      {
+        "mode": "ropax",
+        "shipments": 516,
+        "tonnes": 37269.298,
+        "tonne_km": 20329662.2
+      },
+      {
+        "mode": "ship-bulk",
+        "shipments": 30,
+        "tonnes": 92579.467,
+        "tonne_km": 43938215.51
+      },
+      {
+        "mode": "ship-reefer",
+        "shipments": 80,
+        "tonnes": 939.836,
+        "tonne_km": 10132546.1
+      },
+      {
+        "mode": "truck",
+        "shipments": 1305,
+        "tonnes": 267785.785,
+        "tonne_km": 43600752.1
+      },
+      {
+        "mode": "truck-reefer",
+        "shipments": 408,
+        "tonnes": 49355.387,
+        "tonne_km": 29002340.96
+      }
+    ],
+    "notice": "Apetit Climate & Nature Navigator synthetic dataset, Since AI ry 2026 (CC BY 4.0). Volumes, prices and shipments are synthetic. No calibrated weather-to-loss function, actual supplier routing or real company cost claim. Replacement cost is a user-specified shortfall scenario, not a predicted loss. Adaptation project costs are not yet linked."
+  }
+}
