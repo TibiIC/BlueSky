@@ -1,5 +1,5 @@
 import {sampleGrid,smoothRamp} from './interpolation.mjs';
-import type { PointPrimitive } from 'cesium';
+import type { Polyline } from 'cesium';
 import { createFieldOverlay } from './overlay.ts';
 import type { Globe } from '../globe/viewer.ts';
 
@@ -60,8 +60,8 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   pendingPaint.add(kind);if(paintRequest||disposed)return;
   paintRequest=requestAnimationFrame(()=>{paintRequest=0;for(const k of pendingPaint)paint(k);pendingPaint.clear();});
  }
- const points = viewer.scene.primitives.add(new C.PointPrimitiveCollection());
- const particles: { kind:'regional'|'global';lon: number; lat: number; point: PointPrimitive }[] = [];
+ const points = viewer.scene.primitives.add(new C.PolylineCollection());
+ const particles: { kind:'regional'|'global';lon: number; lat: number; line: Polyline; trail:{lon:number;lat:number;age:number}[]; elapsed:number }[] = [];
  const timestamps = { regional: 0, global: 0 };
  // Add a weather credit independently from existing Cesium/imagery credits.
  const credit = new C.Credit('Weather: Open-Meteo (CC BY 4.0) · TERRA simulated moisture / soil', true);
@@ -136,19 +136,39 @@ export function attachTerra(globe: Globe, onStatus: (state: Status) => void) {
   }catch(e){state.error=String(e);onStatus({...state});}});
   es.onerror=()=>{state[kind==='regional'?'regionalConnected':'globalConnected']=false;onStatus({...state});};return es;
  }
- for(let i=0;i<700;i++){const lon=10+Math.random()*23,lat=54+Math.random()*17;particles.push({kind:'regional',lon,lat,point:points.add({position:C.Cartesian3.fromDegrees(lon,lat,18000),pixelSize:3,color:C.Color.fromCssColorString('#e4ffd0')})});}
- for(let i=0;i<500;i++){const lon=-180+Math.random()*360,lat=-85+Math.random()*170;particles.push({kind:'global',lon,lat,point:points.add({position:C.Cartesian3.fromDegrees(lon,lat,18000),pixelSize:3,color:C.Color.fromCssColorString('#e4ffd0')})});}
+ const windMaterial=C.Material.fromType('PolylineGlow',{color:C.Color.fromCssColorString('#ddffd1').withAlpha(.8),glowPower:.12,taperPower:.65});
+ for(const [kind,count] of [['regional',450],['global',250]] as const)for(let i=0;i<count;i++){
+  const lon=kind==='regional'?10+Math.random()*23:-180+Math.random()*360,lat=kind==='regional'?54+Math.random()*17:-85+Math.random()*170;
+  particles.push({kind,lon,lat,trail:[],elapsed:0,line:points.add({positions:[],width:1.7,material:windMaterial})});
+ }
  const removeTick=viewer.scene.preRender.addEventListener(()=>{
   const now=performance.now(),dt=Math.min(.05,(now-previous)/1000);previous=now;
   points.show=visible&&(selected==='wind'||(selected==='rain_bands'&&windOnRain))&&!scenarioFrame&&!comparisonView;
   if(!points.show)return;
-  for(const p of particles){const f=state[p.kind];p.point.show=!!f&&f.ready!==false&&now-timestamps[p.kind]<4000;if(!f||!p.point.show||f.controls.paused||f.at_forecast_end)continue;
+  for(const p of particles){const f=state[p.kind];p.line.show=!!f&&f.ready!==false&&now-timestamps[p.kind]<4000;if(!f||!p.line.show||f.controls.paused||f.at_forecast_end)continue;
    const grid=f.grid,gx=p.kind==='global'?(p.lon-grid.west)/360*grid.nx:(p.lon-grid.west)/(grid.east-grid.west)*(grid.nx-1),gy=(p.lat-grid.south)/(grid.north-grid.south)*(grid.ny-1);
    const u=sampleGrid(f.fields.u_ms,grid.nx,grid.ny,gx,gy,p.kind==='global')??0,v=sampleGrid(f.fields.v_ms,grid.nx,grid.ny,gx,gy,p.kind==='global')??0;
-   p.lon+=u*dt*f.controls.speed/(111320*Math.cos(p.lat*Math.PI/180));p.lat+=v*dt*f.controls.speed/111320;
-   if(p.kind==='global'){p.lon=((p.lon+180)%360+360)%360-180;if(Math.abs(p.lat)>85)p.lat=-85+Math.random()*170;}
-   else if(p.lon<10||p.lon>33||p.lat<54||p.lat>71){p.lon=10+Math.random()*23;p.lat=54+Math.random()*17;}
-   p.point.position=C.Cartesian3.fromDegrees(p.lon,p.lat,18000);
+   const elapsed=dt*f.controls.speed,oldLon=p.lon;
+   p.lon+=u*elapsed/(111320*Math.cos(p.lat*Math.PI/180));p.lat+=v*elapsed/111320;
+   let reseed=false;
+   if(p.kind==='global'){p.lon=((p.lon+180)%360+360)%360-180;if(Math.abs(p.lat)>85){p.lat=-85+Math.random()*170;reseed=true;}if(Math.abs(p.lon-oldLon)>180)reseed=true;}
+   else if(p.lon<10||p.lon>33||p.lat<54||p.lat>71){p.lon=10+Math.random()*23;p.lat=54+Math.random()*17;reseed=true;}
+   if(reseed){p.trail=[];p.elapsed=0;p.line.positions=[];continue;}
+   // Seed a short back-traced streamline so live 1× has a visible wind direction immediately.
+   if(!p.trail.length){let lon=p.lon,lat=p.lat;const back=[];
+    for(let k=0;k<24;k++){
+     const x=p.kind==='global'?(lon-grid.west)/360*grid.nx:(lon-grid.west)/(grid.east-grid.west)*(grid.nx-1),y=(lat-grid.south)/(grid.north-grid.south)*(grid.ny-1);
+     const bu=sampleGrid(f.fields.u_ms,grid.nx,grid.ny,x,y,p.kind==='global')??0,bv=sampleGrid(f.fields.v_ms,grid.nx,grid.ny,x,y,p.kind==='global')??0;
+     lon-=bu*300/(111320*Math.cos(lat*Math.PI/180));lat-=bv*300/111320;
+     if(lon<grid.west||lon>(p.kind==='global'?180:grid.east)||lat<grid.south||lat>grid.north)break;
+     back.unshift({lon,lat,age:(k+1)*300});
+    }p.trail=back;
+   }
+   for(const t of p.trail)t.age+=elapsed;
+   p.trail=p.trail.filter(t=>t.age<=7200);p.elapsed+=elapsed;
+   if(p.elapsed>=300){p.trail.push({lon:p.lon,lat:p.lat,age:0});p.elapsed=0;}
+   p.line.positions=[...p.trail.map(t=>C.Cartesian3.fromDegrees(t.lon,t.lat,18000)),C.Cartesian3.fromDegrees(p.lon,p.lat,18000)];
+
   }
  });
  const focusEntities=[
