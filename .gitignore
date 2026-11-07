@@ -21,3 +21,6 @@ Climate Lens reporting plan.pdf
 
 # Climate Lens data is derived from the team-only Apetit package: rebuild with lens/build_data.py
 frontend/static/data/lens/
+
+# Data-quality outputs are derived from the team-only package: rebuild with python3 -m quality.pipeline
+quality/out/
