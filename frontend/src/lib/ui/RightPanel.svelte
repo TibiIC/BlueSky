@@ -2,21 +2,25 @@
 	import type { Globe } from '../globe/viewer.ts';
 	import PolicyPanel from '../policy/PolicyPanel.svelte';
 	import LensPanel from '../lens/LensPanel.svelte';
+	import WeatherPanel from '../weather/WeatherPanel.svelte';
+	import { panelOpen, activeTab as tab } from './panel.ts';
 	import { selectedShape } from '../drawing/store.ts';
 
 	let { globe }: { globe: Globe } = $props();
-	let tab = $state<'scenario' | 'area'>('scenario');
 </script>
 
 <div class="tabs" role="tablist">
-	<button role="tab" aria-selected={tab === 'scenario'} class:on={tab === 'scenario'} onclick={() => (tab = 'scenario')}>Scenario</button>
-	<button role="tab" aria-selected={tab === 'area'} class:on={tab === 'area'} onclick={() => (tab = 'area')}>
+	<button role="tab" aria-selected={$tab === 'scenario'} class:on={$tab === 'scenario'} onclick={() => ($tab = 'scenario')}>Scenario</button>
+	<button role="tab" aria-selected={$tab === 'area'} class:on={$tab === 'area'} onclick={() => ($tab = 'area')}>
 		Area report{#if $selectedShape}<i></i>{/if}
 	</button>
+	<button role="tab" aria-selected={$tab === 'weather'} class:on={$tab === 'weather'} onclick={() => ($tab = 'weather')}>Weather &amp; data</button>
+	<button class="collapse" aria-label="Collapse panel" title="Collapse panel (])" onclick={() => panelOpen.set(false)}>›</button>
 </div>
-<!-- Both stay mounted so their globe layers persist; only one is visible. -->
-<div hidden={tab !== 'scenario'}><PolicyPanel {globe} /></div>
-<div hidden={tab !== 'area'}><LensPanel {globe} /></div>
+<!-- All three stay mounted so their globe layers persist; only one is visible, and map layers follow $tab. -->
+<div hidden={$tab !== 'scenario'}><PolicyPanel {globe} /></div>
+<div hidden={$tab !== 'area'}><LensPanel {globe} /></div>
+<div hidden={$tab !== 'weather'} class="weather-tab"><WeatherPanel {globe} embedded /></div>
 
 <style>
 	.tabs {
@@ -42,6 +46,14 @@
 	.tabs button.on {
 		color: var(--text);
 		border-bottom-color: #cfeb9b;
+	}
+	.tabs .collapse {
+		margin-left: auto;
+		font-size: 18px;
+		line-height: 1;
+	}
+	.weather-tab {
+		padding: 0 6px 24px;
 	}
 	.tabs i {
 		position: absolute;

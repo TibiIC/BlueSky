@@ -6,9 +6,9 @@ from weather import Forecast,vapor,VARIABLES
 from agriculture import enrich
 from geography import land_mask
 
-GX,GY=36,17
+GX,GY=36,18
 GLONS=[-180+i*10 for i in range(GX)]
-GLATS=[-80+j*10 for j in range(GY)]
+GLATS=[-85+j*10 for j in range(GY)]
 GLOBAL_MASK=land_mask(GLONS,GLATS)
 class GlobalForecast(Forecast):
     variables=VARIABLES
@@ -55,4 +55,4 @@ class GlobalModel:
             f=forecast.at(self.time+dt/2);q=global_advect(self.q,f['u_ms'],f['v_ms'],dt);w=1-math.exp(-dt/21600)
             self.q=[max(0,a+(b-a)*w) for a,b in zip(q,f['vapor_g_m3'])];self.fields=f;self.time+=dt;self.seq+=1
     def frame(self,forecast,error=None,attempt=None):
-        return dict(schema='terra.global-frame.v1',sequence=self.seq,sim_time=iso(self.time),published_at=iso(time.time()),source=forecast.meta(error,attempt),grid=dict(crs='EPSG:4326',nx=GX,ny=GY,west=-180,east=170,south=-80,north=80,periodic_longitude=True,land_mask=GLOBAL_MASK,land_mask_source='Natural Earth 1:110m; coarse cell-center mask',order='row-major; south to north; west to east; centers at inclusive bounds',coverage='10 degree global longitude; centers 80S..80N; display edges 85S..85N; polar caps unmodeled'),fields={**{k:[round(v,4) for v in a] for k,a in self.fields.items() if k not in ('et0_mm_h','vapor_g_m3')},'moisture_g_m3':[round(v,4) for v in self.q]},units=dict(temp_c='degC',u_ms='m/s east',v_ms='m/s north',precip_mm_h='mm/h',moisture_g_m3='g/m3 tracer'))
+        return dict(schema='terra.global-frame.v1',sequence=self.seq,sim_time=iso(self.time),published_at=iso(time.time()),source=forecast.meta(error,attempt),grid=dict(crs='EPSG:4326',nx=GX,ny=GY,west=-180,east=170,south=-85,north=85,periodic_longitude=True,land_mask=GLOBAL_MASK,land_mask_source='Natural Earth 1:110m; coarse cell-center mask',order='row-major; south to north; west to east; centers at inclusive bounds',coverage='10 degree global longitude; centers 85S..85N; display edges 90S..90N; polar values are sparse-sample interpolation, not a polar circulation model'),fields={**{k:[round(v,4) for v in a] for k,a in self.fields.items() if k not in ('et0_mm_h','vapor_g_m3')},'moisture_g_m3':[round(v,4) for v in self.q]},units=dict(temp_c='degC',u_ms='m/s east',v_ms='m/s north',precip_mm_h='mm/h',moisture_g_m3='g/m3 tracer'))

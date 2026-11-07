@@ -1,12 +1,18 @@
 <script lang="ts">
+ import CatchmentPanel from '../hydrology/CatchmentPanel.svelte';
+ import DecisionEvidence from './DecisionEvidence.svelte';
+ import MeasuredBiology from './MeasuredBiology.svelte';
+ import FarmPanel from '../farms/FarmPanel.svelte';
  import { untrack } from 'svelte';
  import type { Globe } from '../globe/viewer.ts';
  import { attachTerra, ranges, rgb, differenceRanges, differenceRgb, comparableFields, riskFields, type ComparisonView, type Field, type Status } from './terra.ts';
- let { globe }: {globe:Globe} = $props();
+ /** embedded: rendered inside the right panel's Weather tab (full width, always expanded). */
+ let { globe, embedded = false }: {globe:Globe; embedded?: boolean} = $props();
  let status=$state<Status>({regionalConnected:false,globalConnected:false});
  let field=$state<Field>('moisture_g_m3');
  let error=$state('');
- let visible=$state(false);let focusMarkers=$state(false);
+ let rotateEarth=$state(false);let weatherMotion=$state(true);let windOnRain=$state(true);
+ let visible=$state(false);let focusMarkers=$state(false); // off by default: performance and a clear globe
  let compareDate=$state('');let comparing=$state(false);let compareView=$state<ComparisonView>('difference');
  const comparison=$derived(status.comparison);
  const legend=$derived(comparing&&compareView==='difference'?[-(differenceRanges[field]??10),differenceRanges[field]??10,riskFields.has(field)?'pp':ranges[field][2]]:ranges[field]);
@@ -21,81 +27,169 @@
  const timeline=$derived(status.regional?.timeline);
  const showHistory=$derived(historyOpen||timeline?.mode==='historical');
  $effect(()=>{if(!compareDate&&timeline?.max_history_date)compareDate=timeline.max_history_date;if(!startDate&&timeline?.max_history_date){startDate=timeline.range?.[0]??timeline.max_history_date;endDate=timeline.range?.[1]??timeline.max_history_date;}});
- async function changeTimeline(body:Record<string,string>){try{await api?.timeline(body);error='';if(body.mode==='live')historyOpen=false;}catch(e){error=String(e);}}
+ async function changeTimeline(body:Record<string,string>){try{api?.setScenario(null);await api?.timeline(body);error='';if(body.mode==='live')historyOpen=false;}catch(e){error=String(e);}}
  const rainPoints=(series:{precip_mm_h:number}[])=>{const max=Math.max(.1,...series.map(s=>s.precip_mm_h));return series.map((s,i)=>`${i*240/Math.max(1,series.length-1)},${50-s.precip_mm_h/max*45}`).join(' ');};
- let expanded=$state(false); // collapsed by default so the globe stays clear
  let api:ReturnType<typeof attachTerra>|undefined;
- const options: [Field,string][]=[['temp_c','Temperature · global'],['precip_mm_h','Hourly rain · global'],['rain_day_mm','UTC-day rain · global'],['wind','Wind · global'],['moisture_g_m3','Moisture · global'],['frost_pct','Air frost ≤0°C · crop screen'],['heat_pct','Heat ≥28°C · crop screen'],['heavy_rain_pct','Wet day ≥20mm · crop screen'],['wind_risk_pct','Wind ≥12m/s · crop screen'],['soil_fraction','Soil water · Nordic model'],['snow_water_mm','Snow water · Nordic model']];
+ const options: [Field,string][]=[['rain_bands','Animated rain bands · forecast'],['temp_c','Temperature · global'],['precip_mm_h','Hourly rain · global'],['rain_day_mm','UTC-day rain · global'],['wind','Wind · global'],['moisture_g_m3','Moisture · global'],['frost_pct','Air frost ≤0°C · crop screen'],['heat_pct','Heat ≥28°C · crop screen'],['heavy_rain_pct','Wet day ≥20mm · crop screen'],['wind_risk_pct','Wind ≥12m/s · crop screen'],['soil_fraction','Soil water · Nordic model'],['snow_water_mm','Snow water · Nordic model'],['crop_stress','Crop water stress (FAO-56) · Nordic model']];
 
+ $effect(()=>{const g=globe;let last=performance.now();return g.viewer.clock.onTick.addEventListener(()=>{const now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;if(rotateEarth){g.viewer.camera.rotate(g.C.Cartesian3.UNIT_Z,.025*dt);g.viewer.scene.requestRender();}});});
  $effect(()=>{const target=globe;const connection=untrack(()=>attachTerra(target,s=>status=s));api=connection;return()=>{connection.destroy();api=undefined;};});
  async function control(body:Record<string,number|boolean>){try{await api?.control(body);error='';}catch(e){error=String(e);}}
- const utc=(t:string|null|undefined)=>t?t.slice(0,19).replace('T',' ')+' UTC':'Never / synthetic';
+ function chooseField(){api?.setLayer(field);if(!comparing&&weatherMotion&&(field==='wind'||field==='rain_bands'))control({speed:600,paused:false,...(status.regional?.at_forecast_end?{reset:true}:{})});}
+ const utc=(t:string|null|undefined)=>t?t.slice(0,16).replace('T',' ')+' UTC':'never';
+ const connected=$derived(status.regionalConnected&&status.globalConnected);
+ const modeLabel=$derived(comparing?(compareView==='difference'?'Showing live minus a past date':compareView==='historical'?'Showing a past date':'Showing live weather for comparison'):timeline?.mode==='historical'?'Historical replay with the land physics':'Live forecast with the land physics: soil water, snow and rivers');
+ /** One-tap layers; the rest stay in "More layers". */
+ const QUICK:[Field,string][]=[['rain_bands','Rain'],['wind','Wind'],['temp_c','Temperature'],['soil_fraction','Soil water'],['crop_stress','Crop stress'],['heat_pct','Heat ≥ 28 °C']];
+ const NOTES:Partial<Record<Field,string>>={
+  rain_bands:'Forecast rain ≥ 0.1 mm/h, moved by transport-level winds. A forecast-driven proxy, not radar.',
+  wind:'10 m forecast winds as moving trails. Forecast forcing, not a momentum simulation.',
+  soil_fraction:'How full the top metre of soil is. Nordic land model only.',
+  snow_water_mm:'Snow water equivalent. Nordic land model only.',
+  crop_stress:'FAO-56 water limitation: 0 none, 1 wilting point. Generic soil and crop calendar; not measured damage.',
+  moisture_g_m3:'Near-surface humidity in an effective 1 km layer.'};
+ const fieldNote=$derived(NOTES[field]??(riskFields.has(field)?'Coloured land cells pass the shown threshold. Weather screening, not a crop-damage forecast.':'Global coverage with finer Nordic detail.'));
+ function fly(lon:number,lat:number,h:number){rotateEarth=false;globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(lon,lat,h)});}
+ function pickField(key:Field){field=key;if(!visible){visible=true;api?.setVisible(true);}chooseField();}
 </script>
-<section class="weather" aria-label="TERRA weather controls">
- <header><button class="expand" aria-expanded={expanded} onclick={()=>expanded=!expanded}>{expanded?'−':'+'}</button><strong>TERRA / WEATHER</strong><span class:live={status.regionalConnected&&status.globalConnected}>{status.regionalConnected&&status.globalConnected?'● CONNECTED':'○ RECONNECTING'}</span></header>
- <div class="mode-label">{comparing?compareView==='difference'?'LIVE − HISTORICAL DIFFERENCE':compareView==='historical'?'HISTORICAL WEATHER COMPARISON':'LIVE WEATHER COMPARISON':timeline?.mode==='historical'?'HISTORICAL DATA + SIMULATION':'LIVE FORECAST + SIMULATION'}</div>
- <label class="climate-toggle"><span>Climate view <small>weather layers</small></span><input aria-label="Climate view" type="checkbox" bind:checked={visible} onchange={()=>api?.setVisible(visible)} /></label>
- {#if expanded}
- <div class="apetit-focus"><strong>APETIT / CROP WEATHER</strong><p>Global: 10° grid · Nordic detail: ~35–68 km.<br>Peas, vegetables and oilseed growing conditions.</p><div class="buttons"><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)})}>Whole world</button><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(19,59.5,1800000)})}>Apetit focus</button></div><label><span>Focus markers</span><input type="checkbox" bind:checked={focusMarkers} onchange={()=>api?.setFocusMarkers(focusMarkers)} /></label></div>
- <label>Field <select bind:value={field} onchange={()=>api?.setLayer(field)}>{#each options.filter(([k])=>!comparing||comparableFields.has(k)) as [key,title]}<option value={key}>{title}</option>{/each}</select></label>
- <div class="ramp" style={`background:linear-gradient(90deg,rgb(${legendColor(Number(legend[0])).join(',')}),rgb(${legendColor((Number(legend[0])+Number(legend[1]))/2).join(',')}),rgb(${legendColor(Number(legend[1])).join(',')}))`}></div><div class="range"><span>{legend[0]}</span><span>{legend[1]} {legend[2]}</span></div>
- {#if riskFields.has(field)}<p class="note">Colored land cells exceed the displayed, illustrative threshold. This is weather screening—not a calibrated crop-damage or yield forecast.</p>{/if}
- {#if field==='soil_fraction'||field==='snow_water_mm'}<p class="note">Nordic model only; no global soil/snow simulation is being implied.</p>{/if}
- <div class="compare-box">
- <strong>Compare historical and live weather</strong>
- <label>Past date (UTC)<input aria-label="Comparison date" type="date" bind:value={compareDate} min="1950-01-01" max={timeline?.max_history_date} /></label>
- <button disabled={!compareDate||comparison?.loading} onclick={loadComparison}>{comparison?.loading?'Loading comparison…':'Compare with live'}</button>
- {#if comparing}
- <div class="mode-tabs"><button class:chosen={compareView==='live'} onclick={()=>viewComparison('live')}>Live</button><button class:chosen={compareView==='historical'} onclick={()=>viewComparison('historical')}>Historical</button><button class:chosen={compareView==='difference'} onclick={()=>viewComparison('difference')}>Difference</button></div>
- {#if comparison?.ready&&comparison.summary?.[field]}
- {@const s=comparison.summary[field]}
- <div class="compare-values"><span>Live <b>{s.live.toFixed(2)} {ranges[field][2]}</b></span><span>Past <b>{s.historical.toFixed(2)} {ranges[field][2]}</b></span><span>Change <b>{s.difference>=0?'+':''}{s.difference.toFixed(2)} {riskFields.has(field)?'pp':ranges[field][2]}</b></span></div>
- {#if compareView==='difference'}<p class="note">Blue: lower now · white: similar · red: higher now</p>{/if}
- <p class="note">{field==='rain_day_mm'||field==='heavy_rain_pct'?'Complete UTC calendar days':'Same UTC hour'} · Nordic land means<br>Live: {utc(comparison.live_time)}<br>Past: {utc(comparison.historical_time)}</p>
- <p class="note">{comparison.historical_source?.notice} Differences show live minus past weather, not a long-term climate anomaly.</p>
- {/if}
- <button class="secondary" onclick={closeComparison}>Return to physics layers</button>
- {/if}
- {#if comparison?.error}<p class="error" role="alert">{comparison.error}</p>{/if}
+<section class="weather" class:embedded aria-label="Live weather and land">
+ <header class="top">
+  <div><span class="eyebrow">TERRA · LIVE WEATHER &amp; LAND</span><h2>What the weather is doing now</h2></div>
+  <span class="pill" class:live={connected}>{connected?'● Live':'○ Reconnecting'}</span>
+ </header>
+ <p class="lede">{modeLabel}</p>
+ <div class="nav">
+  <button onclick={()=>fly(22,25,24000000)}>Whole Earth</button>
+  <button onclick={()=>fly(21.5,63,2600000)}>Nordics</button>
+  <button onclick={()=>fly(19,59.5,1800000)}>Apetit regions</button>
  </div>
- <div class="mode-tabs"><button class:chosen={timeline?.mode!=='historical'&&!historyOpen} onclick={()=>changeTimeline({mode:'live'})}>Live forecast</button><button class:chosen={showHistory} onclick={()=>historyOpen=true}>Historical replay</button></div>
- {#if showHistory}
- <div class="history-controls">
- <label>From (UTC)<input aria-label="Historical start date" type="date" bind:value={startDate} min="1950-01-01" max={timeline?.max_history_date} /></label>
- <label>Through (UTC)<input aria-label="Historical end date" type="date" bind:value={endDate} min={startDate||'1950-01-01'} max={timeline?.max_history_date} /></label>
- <button disabled={timeline?.loading||!startDate||!endDate} onclick={()=>changeTimeline({mode:'historical',start_date:startDate,end_date:endDate})}>{timeline?.loading?'Loading historical data…':'Load period (up to 7 days)'}</button>
- <p class="note">ERA5/ERA5-Land through {timeline?.reanalysis_through??'…'}. More recent days use past model data from the forecast API. Both are labeled; neither is direct station observations.</p>
- {#if timeline?.summary&&timeline.mode==='historical'}
- <div class="history-summary"><p class="note">{status.regional?.source.notice}</p><strong>{timeline.range?.join(' → ')}</strong><p>Mean land precipitation: {timeline.summary.precipitation_total_mm.toFixed(1)} mm<br>Mean air temperature range: {timeline.summary.min_mean_temperature_c.toFixed(1)}–{timeline.summary.max_mean_temperature_c.toFixed(1)} °C<br>Peak mean wind: {timeline.summary.peak_mean_wind_ms.toFixed(1)} m/s</p>
- <svg viewBox="0 0 240 55" role="img" aria-label="Historical hourly precipitation across the selected period"><polyline points={rainPoints(timeline.summary.series)} fill="none" stroke="#cfea9b" stroke-width="2" /></svg><small>Hourly regional land-mean precipitation · historical forcing</small>
- <p>Replay position: {(timeline.position_seconds/3600).toFixed(1)} hours. Use speed and pause below.</p></div>
- {/if}
- </div>
- {/if}
- {#if timeline?.error}<p role="alert" class="error">Historical data: {timeline.error}</p>{/if}
- <p>Whole Earth · coarse weather<br><b>Finland + Sweden · finer regional model</b></p>
- <div class="buttons"><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)})}>Whole Earth</button><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(21.5,63,2600000)})}>Nordics</button></div>
 
+ <article class="card">
+  <div class="card-head">
+   <h3>Weather on the map</h3>
+   <label class="switch" title="Show weather layers"><input aria-label="Weather layers" type="checkbox" bind:checked={visible} onchange={()=>api?.setVisible(visible)} /><span></span></label>
+  </div>
+  <div class="quick">
+   {#each QUICK as [key,label] (key)}
+    <button class:on={visible&&field===key} disabled={comparing&&!comparableFields.has(key)} onclick={()=>pickField(key)}>{label}</button>
+   {/each}
+  </div>
+  <label class="row">More layers <select bind:value={field} onchange={()=>pickField(field)}>{#each options.filter(([k])=>!comparing||comparableFields.has(k)) as [key,title]}<option value={key}>{title}</option>{/each}</select></label>
+  <div class="ramp" style={`background:linear-gradient(90deg,rgb(${legendColor(Number(legend[0])).join(',')}),rgb(${legendColor((Number(legend[0])+Number(legend[1]))/2).join(',')}),rgb(${legendColor(Number(legend[1])).join(',')}))`}></div>
+  <div class="range"><span>{legend[0]}</span><span>{legend[1]} {legend[2]}</span></div>
+  <p class="note">{fieldNote}</p>
+  {#if !comparing&&(field==='wind'||field==='rain_bands')}
+   <label class="row">Animate (600× demo)<input type="checkbox" bind:checked={weatherMotion} onchange={()=>control({speed:weatherMotion?600:1,paused:false})}/></label>
+   {#if field==='rain_bands'}<label class="row">Wind trails over rain<input type="checkbox" bind:checked={windOnRain} onchange={()=>api?.setWindOnRain(windOnRain)}/></label>{/if}
+   <div class="buttons">
+    <button onclick={()=>control({paused:!status.regional?.controls.paused})}>{status.regional?.controls.paused?'Resume':'Pause'}</button>
+    <button class="ghost" onclick={async()=>{weatherMotion=false;await changeTimeline({mode:'live'});control({speed:1,reset:true});}}>Back to live 1×</button>
+   </div>
+   <p class="note">Model time {utc(status.regional?.sim_time)} · {status.regional?.controls.speed??1}× (600× = ten minutes per second)</p>
+  {/if}
+ </article>
 
- <dl><dt>PHYSICS ENGINE</dt><dd>Regional v{status.regional?.engine_version??'—'} / finite-volume transport</dd><dt>SOIL INITIALIZATION</dt><dd>{status.regional?.initialization?.kind??'Waiting'} · {status.regional?.initialization?.soil_seeded_cells??0} cells</dd><dt>NORDIC FORCING</dt><dd>{status.regional?.source.mode??'Waiting'}</dd><dt>GLOBAL FORCING</dt><dd>{status.global?.source.mode??'Waiting'}</dd><dt>SIMULATION CLOCK</dt><dd>{utc(status.regional?.sim_time)}</dd><dt>LAST NORDIC / GLOBAL FETCH</dt><dd>{utc(status.regional?.source.fetched_at)}<br>{utc(status.global?.source.fetched_at)}</dd></dl>
- {#if !comparing}<label>Speed <select value={String(status.regional?.controls.speed??1)} onchange={e=>control({speed:+e.currentTarget.value})}><option value="1">1× wall time</option><option value="60">60×</option><option value="600">600× demo</option><option value="3600">3600×</option></select></label>
- <label>Nordic precipitation <select value={String(status.regional?.controls.rain_scale??1)} onchange={e=>control({rain_scale:+e.currentTarget.value})}><option value="0">0× dry scenario</option><option value="1">1× forecast</option><option value="2">2× wet scenario</option><option value="4">4× extreme scenario</option></select></label>
- <div class="buttons"><button onclick={()=>control({paused:!status.regional?.controls.paused})}>{status.regional?.controls.paused?'Resume':'Pause'}</button><button onclick={()=>control({reset:true})}>{timeline?.mode==='historical'?'Restart period':'Reset to now'}</button></div>
- {/if}
+ <article class="card"><FarmPanel {globe} regional={status.regional} /></article>
+
+ <CatchmentPanel {globe} regional={status.regional} onPlay={()=>{weatherMotion=true;control({speed:600,paused:false});}} onFocus={()=>rotateEarth=false} onPause={()=>control({paused:!status.regional?.controls.paused})}/>
+
+ <details class="card fold"><summary>Research evidence <small>real climate models · soil biology</small></summary>
+  <DecisionEvidence />
+  <MeasuredBiology {globe} onFocus={()=>{rotateEarth=false;}} />
+ </details>
+
+ <details class="card fold"><summary>Compare with a past date <small>live − historical</small></summary>
+  <label class="row">Past date (UTC)<input aria-label="Comparison date" type="date" bind:value={compareDate} min="1950-01-01" max={timeline?.max_history_date} /></label>
+  <button disabled={!compareDate||comparison?.loading} onclick={loadComparison}>{comparison?.loading?'Loading comparison…':'Compare with live'}</button>
+  {#if comparing}
+   <div class="seg"><button class:on={compareView==='live'} onclick={()=>viewComparison('live')}>Live</button><button class:on={compareView==='historical'} onclick={()=>viewComparison('historical')}>Historical</button><button class:on={compareView==='difference'} onclick={()=>viewComparison('difference')}>Difference</button></div>
+   {#if comparison?.ready&&comparison.summary?.[field]}
+    {@const s=comparison.summary[field]}
+    <div class="stats"><div><b>{s.live.toFixed(2)}</b>live {ranges[field][2]}</div><div><b>{s.historical.toFixed(2)}</b>past</div><div><b>{s.difference>=0?'+':''}{s.difference.toFixed(2)}</b>change {riskFields.has(field)?'pp':''}</div></div>
+    <p class="note">{field==='rain_day_mm'||field==='heavy_rain_pct'?'Complete UTC days':'Same UTC hour'} · Nordic land means · live {utc(comparison.live_time)} · past {utc(comparison.historical_time)}. {comparison.historical_source?.notice} Weather difference, not a climate anomaly.</p>
+   {/if}
+   <button class="ghost" onclick={closeComparison}>Back to live layers</button>
+  {/if}
+  {#if comparison?.error}<p class="error" role="alert">{comparison.error}</p>{/if}
+ </details>
+
+ <details class="card fold"><summary>Historical replay <small>any week since 1950</small></summary>
+  <div class="seg"><button class:on={timeline?.mode!=='historical'&&!historyOpen} onclick={()=>changeTimeline({mode:'live'})}>Live forecast</button><button class:on={showHistory} onclick={()=>historyOpen=true}>Historical</button></div>
+  {#if showHistory}
+   <label class="row">From (UTC)<input aria-label="Historical start date" type="date" bind:value={startDate} min="1950-01-01" max={timeline?.max_history_date} /></label>
+   <label class="row">Through (UTC)<input aria-label="Historical end date" type="date" bind:value={endDate} min={startDate||'1950-01-01'} max={timeline?.max_history_date} /></label>
+   <button disabled={timeline?.loading||!startDate||!endDate} onclick={()=>changeTimeline({mode:'historical',start_date:startDate,end_date:endDate})}>{timeline?.loading?'Loading…':'Load period (up to 7 days)'}</button>
+   <p class="note">ERA5/ERA5-Land through {timeline?.reanalysis_through??'…'}; newer days use past forecast-model data. Neither is station observations.</p>
+   {#if timeline?.summary&&timeline.mode==='historical'}
+    <div class="stats"><div><b>{timeline.summary.precipitation_total_mm.toFixed(1)}</b>mm rain</div><div><b>{timeline.summary.min_mean_temperature_c.toFixed(0)}–{timeline.summary.max_mean_temperature_c.toFixed(0)}</b>°C</div><div><b>{timeline.summary.peak_mean_wind_ms.toFixed(1)}</b>m/s peak wind</div></div>
+    <svg class="spark" viewBox="0 0 240 55" role="img" aria-label="Hourly precipitation across the selected period"><polyline points={rainPoints(timeline.summary.series)} /></svg>
+    <p class="note">{timeline.range?.join(' → ')} · replay {(timeline.position_seconds/3600).toFixed(1)} h · {status.regional?.source.notice}</p>
+   {/if}
+  {/if}
+  {#if timeline?.error}<p role="alert" class="error">Historical data: {timeline.error}</p>{/if}
+ </details>
+
+ <details class="card fold"><summary>Engine &amp; provenance <small>physics, sources, controls</small></summary>
+  <label class="row">Rotate Earth <small>presentation</small><input type="checkbox" bind:checked={rotateEarth}/></label>
+  <label class="row">Säkylä / Bjuv markers<input type="checkbox" bind:checked={focusMarkers} onchange={()=>api?.setFocusMarkers(focusMarkers)} /></label>
+  {#if !comparing}
+   <label class="row">Speed <select value={String(status.regional?.controls.speed??1)} onchange={e=>control({speed:+e.currentTarget.value})}><option value="1">1× wall time</option><option value="60">60×</option><option value="600">600× demo</option><option value="3600">3600×</option></select></label>
+   <label class="row">Nordic rain <select value={String(status.regional?.controls.rain_scale??1)} onchange={e=>control({rain_scale:+e.currentTarget.value})}><option value="0">0× dry</option><option value="1">1× forecast</option><option value="2">2× wet</option><option value="4">4× extreme</option></select></label>
+   <div class="buttons"><button onclick={()=>control({paused:!status.regional?.controls.paused})}>{status.regional?.controls.paused?'Resume':'Pause'}</button><button class="ghost" onclick={()=>control({reset:true})}>{timeline?.mode==='historical'?'Restart period':'Reset to now'}</button></div>
+  {/if}
+  <dl><dt>Engine</dt><dd>Regional v{status.regional?.engine_version??'—'} · finite-volume transport</dd><dt>Soil start</dt><dd>{status.regional?.initialization?.kind??'Waiting'} · {status.regional?.initialization?.soil_seeded_cells??0} cells</dd><dt>Transport winds</dt><dd>{status.regional?.physics?.transport_wind??'Waiting'}</dd><dt>Forcing</dt><dd>Nordic {status.regional?.source.mode??'waiting'} · global {status.global?.source.mode??'waiting'}</dd><dt>Last fetch</dt><dd>{utc(status.regional?.source.fetched_at)}</dd></dl>
+  <p class="note">Nordic 25×29 grid from 195 forecast samples; global 36×18 from 24. Forecasts are not observations. Wind is forecast forcing; soil starts from forecast soil moisture. Säkylä/Bjuv markers are town centres, not farms.</p>
+  <a href="http://127.0.0.1:8765" target="_blank" rel="noreferrer">Open the physics dashboard ↗</a>
+ </details>
+
  {#if status.regional?.at_forecast_end}<p class="error">Forecast horizon reached; simulation held.</p>{/if}
  {#if error||status.error}<p class="error" role="alert">{error||status.error}</p>{/if}
- {#if status.regional?.source.last_error||status.global?.source.last_error}<p class="error">API unavailable for at least one grid. Its last forecast or synthetic fallback remains active.</p>{/if}
- <p class="note">Nordic: 25×29 grid / 25 API samples.<br>Global: 36×17 grid / 24 API samples.<br>Global polar caps above 85° are unmodeled.<br>{timeline?.mode==='historical'?'Hourly historical forcing · selected period':'Hourly forecasts · fetched every 15 min.'}<br>1 Hz feed · animated between frames.<br>Forecasts are not observations. Nordic: conservative transport + snow/soil water balance. Wind is forecast forcing. Soil is initialized from forecast soil moisture. Nordic rain scenarios do not alter the global layer.</p>
-<p class="note">Säkylä/Bjuv markers are approximate town centers; actual contract-farm data has not been supplied. <a href="https://apetit.fi/en/sustainability/cultivation-and-experimental-work/" target="_blank" rel="noreferrer">Apetit context ↗</a></p>
- <a href="http://127.0.0.1:8765" target="_blank" rel="noreferrer">Open physics dashboard ↗</a>
-{:else}<p>{timeline?.mode==='historical'?timeline.range?.join(' → '):'Global atmosphere + finer Nordic weather'}</p><div class="buttons"><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(22,25,24000000)})}>Whole Earth</button><button onclick={()=>globe.viewer.camera.flyTo({destination:globe.C.Cartesian3.fromDegrees(21.5,63,2600000)})}>Nordics</button></div>{/if}
+ {#if status.regional?.source.last_error||status.global?.source.last_error}<p class="error">Weather API unavailable for at least one grid; the last forecast stays active.</p>{/if}
 </section>
 <style>
-.apetit-focus{padding:10px;background:#122c31;border:1px solid #37534c;border-radius:5px;font-size:10px}.apetit-focus>strong{font-size:9px;letter-spacing:1px;color:#cfeb9b}.apetit-focus p{font-size:9px}.apetit-focus button{font-size:10px}
-
-.compare-box{padding:10px;background:#0e222b;border:1px solid #385158;border-radius:5px;margin:10px 0}.compare-box>strong{font-size:10px}.compare-box input{max-width:140px;background:#18313b;color:#e3eee8;border:1px solid #385158;border-radius:4px;padding:4px;font:10px system-ui}.compare-box>button{width:100%;font-size:10px}.compare-values{display:grid;gap:7px}.compare-values span{display:flex;justify-content:space-between;font-size:10px}.compare-values b{font:10px monospace}.secondary{background:#18313b!important;color:#cfeb9b!important;border:1px solid #385158!important}.climate-toggle{padding:8px 0;border-top:1px solid #385158;border-bottom:1px solid #385158}.climate-toggle small{display:block;color:#a3b6b8;font-size:8px}
-
-.mode-tabs{display:flex;gap:6px;margin:14px 0}.mode-tabs button{background:#18313b;color:#a3b6b8;border:1px solid #385158;font-size:10px}.mode-tabs button.chosen{background:#cfeb9b;color:#14251a}.mode-label{font-size:9px;color:#cfeb9b;letter-spacing:.8px;margin:12px 0}.history-controls{padding:10px;background:#0e222b;border-radius:5px}.history-controls label{font-size:10px}.history-controls input{width:140px;background:#18313b;color:#e3eee8;border:1px solid #385158;border-radius:4px;padding:4px;font-size:10px}.history-controls>button{width:100%;font-size:10px}.history-controls button:disabled{opacity:.5;cursor:wait}.history-summary{border-top:1px solid #385158;padding-top:10px;font-size:10px}.history-summary svg{width:100%;height:55px}.history-summary small{font-size:8px;color:#a3b6b8}
-
-.weather{position:absolute;top:80px;right:16px;width:280px;max-height:calc(100% - 145px);overflow:auto;padding:18px;background:rgba(8,23,30,.94);border:1px solid #385158;border-radius:10px;color:#e3eee8;font:11px system-ui;backdrop-filter:blur(12px)}header{display:flex;justify-content:space-between;gap:8px;font-size:9px;letter-spacing:.8px}header .expand{flex:0;padding:0 5px;background:transparent;color:#cfeb9b;font-size:16px}header span{font-size:8px;color:#e3bc80}header .live{color:#cfea9b}p{line-height:1.6;color:#a3b6b8}b{color:#d3ebba;font-weight:500}label{display:flex;align-items:center;justify-content:space-between;margin:14px 0;gap:12px}select{max-width:180px;color:#e3eee8;background:#152f38;border:1px solid #3a555d;border-radius:4px;font:11px system-ui;padding:5px}.ramp{height:5px;background:linear-gradient(90deg,#163e72,#d2f291);margin-top:16px}.range{display:flex;justify-content:space-between;margin-top:5px;color:#a3b6b8;font-size:9px}dt{font-size:8px;letter-spacing:.8px;color:#a3b6b8;margin-top:12px}dd{margin:4px 0;font:10px monospace;line-height:1.6}.buttons{display:flex;gap:8px}button{flex:1;background:#cfeb9b;border:0;border-radius:4px;padding:7px;color:#14251a;cursor:pointer}.note{font-size:9px}.error{color:#edbb88}a{color:#cfeb9b;font-size:10px}@media(max-width:650px){.weather{top:110px;right:8px;width:235px;max-height:55%}}
+.weather{box-sizing:border-box;padding:16px 12px 28px;color:var(--text,#eef1f6);font-size:12px;line-height:1.5}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.eyebrow{font-size:9px;letter-spacing:.14em;color:#8ee4f1}
+h2{margin:2px 0 4px;font-size:16px;font-weight:600}
+.pill{flex:0 0 auto;padding:2px 8px;border-radius:999px;background:#2a2414;color:#e9cf8c;font-size:10px}
+.pill.live{background:#163a33;color:#9fe8c4}
+.lede{margin:0 0 10px;color:var(--text-dim,#aab);font-size:11px}
+.nav,.buttons,.seg{display:flex;gap:6px;margin:8px 0}
+.card{margin:10px 0;padding:12px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+.card-head{display:flex;align-items:center;justify-content:space-between}
+h3{margin:0;font-size:13px;font-weight:600}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+button{flex:1;padding:7px 8px;border:1px solid #2f5560;border-radius:7px;background:#16303a;color:#cfe3e6;font-size:11px;cursor:pointer;transition:background .15s,border-color .15s}
+button:hover:not(:disabled){border-color:#8ee4f1}
+button:disabled{opacity:.45;cursor:not-allowed}
+.quick button.on,.seg button.on{background:#8ee4f1;border-color:#8ee4f1;color:#0c2229;font-weight:600}
+.nav button,.buttons button:not(.ghost){background:#cfeb9b;border-color:#cfeb9b;color:#14251a}
+button.ghost{background:transparent}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;color:var(--text-dim,#aab);font-size:11px}
+.row small{margin-right:auto;color:var(--text-faint,#889);font-size:10px}
+select,input[type=date]{max-width:190px;padding:5px 6px;border:1px solid #2f5560;border-radius:6px;background:#122a33;color:#e3eee8;font:11px system-ui}
+.ramp{height:8px;margin-top:6px;border-radius:4px}
+.range{display:flex;justify-content:space-between;margin-top:4px;color:var(--text-faint,#889);font-size:10px}
+.note{margin:8px 0 0;color:var(--text-faint,#889);font-size:10px}
+.error{color:#edbb88;font-size:11px}
+.switch{position:relative;width:36px;height:20px;cursor:pointer}
+.switch input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.switch span{position:absolute;inset:0;border-radius:999px;background:#2b3c43;transition:background .2s}
+.switch span::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#dfe9ec;transition:transform .2s}
+.switch input:checked+span{background:#3fb8a3}
+.switch input:checked+span::after{transform:translateX(16px)}
+.fold{padding:0 12px}
+.fold>summary{display:flex;align-items:baseline;gap:8px;padding:11px 0;list-style:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--text,#eef1f6)}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::before{content:'›';color:#8ee4f1;transition:transform .15s}
+.fold[open]>summary::before{transform:rotate(90deg)}
+.fold>summary small{margin-left:auto;font-weight:400;font-size:10px;color:var(--text-faint,#889)}
+.fold[open]{padding-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.stats div{padding:6px 8px;border-radius:7px;background:rgba(255,255,255,.04);color:var(--text-faint,#889);font-size:10px}
+.stats b{display:block;color:var(--text,#eef1f6);font-size:14px;font-weight:600}
+.spark{width:100%;height:50px;margin-top:8px}
+.spark polyline{fill:none;stroke:#8ee4f1;stroke-width:2;vector-effect:non-scaling-stroke}
+dl{margin:10px 0 0}dt{margin-top:8px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint,#889)}dd{margin:2px 0;font:10px ui-monospace,monospace;color:var(--text-dim,#aab)}
+a{color:#8ee4f1;font-size:11px}
 </style>

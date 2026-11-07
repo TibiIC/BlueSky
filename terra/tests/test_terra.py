@@ -91,7 +91,7 @@ class GlobalPhysics(unittest.TestCase):
         from global_model import GlobalForecast,GlobalModel
         f=GlobalForecast(start=time.time());m=GlobalModel(f.start)
         m.advance_to(f.start+3600,f);a=m.frame(f)
-        self.assertEqual(len(a['fields']['moisture_g_m3']),612)
+        self.assertEqual(len(a['fields']['moisture_g_m3']),648)
         self.assertTrue(a['grid']['periodic_longitude'])
         self.assertNotIn('soil_mm',a['fields'])
         json.dumps(a,allow_nan=False)

@@ -40,7 +40,7 @@ Default soil capacity is 450 mm over 1 m (assumed porosity 0.45), adjustable 50�
 
 Read **[PHYSICS.md](PHYSICS.md)** for equations, units, numerical checks and assumptions. Winds and air temperature remain forecast forcing. This is a reduced prescribed-wind engine; there is no prognostic momentum/pressure solver, convection, terrain-induced circulation, radiative energy balance or Richards-equation soil solver. Parameters are not calibrated. The land mask is schematic. Detailed imagery does not add meteorological resolution.
 
-The 36×17 global grid retains the simpler v1 advection/nudging model with 10° spacing and no land physics. Global and Nordic models share the clock but are independently forced; they are not dynamically nested. Polar caps above 85° are unmodeled.
+The 36×18 global grid retains the simpler v1 advection/nudging model with 10° spacing and no land physics. Global and Nordic models share the clock but are independently forced; they are not dynamically nested. Polar bands extend to 90° using sparse-sample interpolation; no polar circulation solver is claimed.
 
 ## Detailed Earth / BlueSky
 
@@ -95,7 +95,7 @@ References: [Open-Meteo historical weather](https://open-meteo.com/en/docs/histo
 
 ## Global filters with Apetit-focused Nordic detail
 
-Weather and live/historical difference filters now cover both the **36×17 global grid** and the **25×29 Nordic grid**, with the regional layer drawn above the coarse background. Global crop-weather screens use a bundled Natural Earth 1:110m cell-center land mask; polar caps above 85° remain outside coverage. The Nordic soil/snow model is still regional only.
+Weather and live/historical difference filters now cover both the **36×18 global grid** and the **25×29 Nordic grid**, with the regional layer drawn above the coarse background. Global crop-weather screens use a bundled Natural Earth 1:110m cell-center land mask; polar bands are sparse-sample interpolation, not a polar circulation solver. The Nordic soil/snow model is still regional only.
 
 The **Climate view** toggle means weather-layer visibility, as requested; it is not a long-term climatology mode. Global fields include temperature, hourly rain, full UTC-day rain, wind and the modeled moisture backdrop. Additional illustrative crop-weather screens flag air temperature ≤0°C, air temperature ≥28°C, mean 10 m wind ≥12 m/s and UTC-day precipitation ≥20 mm. These thresholds are transparent screening assumptions, not validated Apetit crop-damage, harvest or yield rules. Stage, cultivar, actual field boundaries and crop-specific tolerances have not been supplied.
 
