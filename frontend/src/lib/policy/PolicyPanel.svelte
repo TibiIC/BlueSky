@@ -3,6 +3,7 @@
 	import type { Globe } from '../globe/viewer.ts';
 	import { selectedShape } from '../drawing/store.ts';
 	import {
+		COMPLIANCE,
 		POLICIES,
 		POLICY_NOTE,
 		RISKS,
@@ -51,7 +52,8 @@
 	const area = $derived(d ? areaFacts(d.parcels, $selectedShape?.geometry ?? null) : null);
 	const risk = $derived(d && gwl !== null && area ? areaRisk(st.risk, area.cellHa, gwl, d.warming) : null);
 	const peaHeat = $derived(d && gwl !== null && area ? areaRisk('peaHeat', area.cellHa, gwl, d.warming) : null);
-	const out = $derived(prices && area ? outcomes(st.active, st.year, prices, area) : null);
+	const out = $derived(prices && area ? outcomes(st.active, st.year, prices, area, st.compliance) : null);
+	const complianceOption = $derived(COMPLIANCE.options.find((o) => o.share === st.compliance) ?? COMPLIANCE.options[0]);
 	// Bounds of the meter at this year: net zero … current policies.
 	const range = $derived(d ? { lo: warmingAt(1, st.year, d.warming), mid: warmingAt(0.5, st.year, d.warming), hi: warmingAt(0, st.year, d.warming) } : null);
 
@@ -80,7 +82,7 @@
 		const ids = kind === 'none' ? [] : kind === 'adopted' ? POLICIES.filter((p) => p.status === 'adopted').map((p) => p.id) : POLICIES.map((p) => p.id);
 		policyState.update((p) => ({ ...p, active: new Set(ids), lastChange: null }));
 	}
-	const set = <K extends 'year' | 'risk' | 'showMap'>(k: K, v: (typeof st)[K]) => policyState.update((p) => ({ ...p, [k]: v }));
+	const set = <K extends 'year' | 'risk' | 'showMap' | 'compliance'>(k: K, v: (typeof st)[K]) => policyState.update((p) => ({ ...p, [k]: v }));
 
 	const GROUPS: [Group, string, string][] = [
 		['world', 'The world', 'Moves the warming meter'],
@@ -96,6 +98,8 @@
 </script>
 
 <div class="policy">
+	<!-- Two columns on wide screens: readings on the left stay in view while the toggles on the right scroll. -->
+	<div class="col readings">
 	<span class="eyebrow">CLIMATE LENS · SCENARIO</span>
 	<h2>What the world decides, what it means for Apetit</h2>
 
@@ -176,7 +180,7 @@
 					<div class="card">
 						<span>Peat emissions avoided</span>
 						<b>{fmt(out.peatCo2eAvoided)} t CO₂e/yr</b>
-						<em>{out.peatHaOutOfCrops > 0 ? `${fmt(out.peatHaOutOfCrops, 1)} ha leave production` : 'no peat policy on'}</em>
+						<em>{out.peatHaOutOfCrops > 0 ? `${fmt(out.peatHaOutOfCrops, 1)} ha leave production at ${fmt(st.compliance * 100)} % compliance` : 'no peat policy on'}</em>
 					</div>
 					<div class="card">
 						<span>Grower input costs</span>
@@ -186,13 +190,17 @@
 					<div class="card">
 						<span>Catch crops to add</span>
 						<b>{fmt(out.catchCropHaAdded)} ha</b>
-						<em>{area ? `of ${fmt(area.peaSpinachHa)} ha pea and spinach` : ''}</em>
+						<em>{area ? `of ${fmt(area.peaSpinachHa)} ha pea and spinach, at ${fmt(st.compliance * 100)} % compliance` : ''}</em>
 					</div>
 				{/if}
 			</div>
 			{#if area}<p class="sub">{fmt(area.parcels)} parcels · {fmt(area.contractHa)} ha Apetit crops (2025). Draw an area on the globe to focus.</p>{/if}
 		</section>
+	{/if}
+	</div>
 
+	{#if d && gwl !== null && range && prices}
+	<div class="col toggles">
 		<!-- Policies -->
 		{#each GROUPS as [g, title, hint] (g)}
 			<section>
@@ -208,20 +216,56 @@
 						</span>
 					</label>
 				{/each}
+				{#if g === 'here'}
+					<fieldset class="compliance" title={COMPLIANCE.sources.join('\n')}>
+						<legend><strong>{COMPLIANCE.title}</strong> <small>{COMPLIANCE.summary}</small></legend>
+						{#each COMPLIANCE.options as o (o.id)}
+							<label class:on={st.compliance === o.share}>
+								<input type="radio" name="compliance" checked={st.compliance === o.share} onchange={() => set('compliance', o.share)} data-testid="compliance-{o.id}" />
+								{o.label}
+							</label>
+						{/each}
+						<small class="why">{complianceOption.summary} Hover for sources.</small>
+					</fieldset>
+				{/if}
 			</section>
 		{/each}
 		<p class="sub">{POLICY_NOTE}</p>
+	</div>
 	{/if}
 </div>
 
 <style>
 	.policy {
 		box-sizing: border-box;
-		overflow-x: hidden;
+		/* clip, not hidden: hidden would make this a scroll container and break the sticky block */
+		overflow-x: clip;
 		padding: 16px 18px 28px;
 		font-size: 12px;
 		line-height: 1.5;
 		color: var(--text);
+	}
+	/* Wide screens: side by side, each column scrolls on its own (SidePanel widens for this tab). */
+	@media (min-width: 1200px) {
+		.policy {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			flex: 1 1 auto;
+			min-height: 0;
+			padding: 0;
+		}
+		.col {
+			min-height: 0;
+			overflow-y: auto;
+			padding: 16px 18px 28px;
+		}
+		.readings {
+			border-right: 1px solid var(--panel-border);
+		}
+		.toggles > section:first-child {
+			border-top: 0;
+			padding-top: 0;
+		}
 	}
 	.eyebrow {
 		font-size: 9px;
@@ -446,6 +490,44 @@
 	.status.speculative {
 		background: #3a2a40;
 		color: #d7a8ea;
+	}
+	.compliance {
+		margin: 8px 0 0;
+		padding: 8px 0 0;
+		border: 0;
+		border-top: 1px dashed var(--panel-border);
+	}
+	.compliance legend {
+		padding: 0;
+		margin-bottom: 6px;
+	}
+	.compliance legend small,
+	.compliance .why {
+		display: block;
+		color: var(--text-faint);
+		font-size: 10px;
+	}
+	.compliance label {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin: 3px 0;
+		padding: 5px 8px;
+		border: 1px solid #385158;
+		border-radius: 6px;
+		cursor: pointer;
+		color: var(--text-dim);
+	}
+	.compliance label.on {
+		border-color: #cfeb9b;
+		color: var(--text);
+	}
+	.compliance input {
+		margin: 0;
+		accent-color: #cfeb9b;
+	}
+	.compliance .why {
+		margin-top: 6px;
 	}
 	.error {
 		color: #edbb88;

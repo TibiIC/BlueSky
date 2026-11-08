@@ -20,7 +20,7 @@
 	<button class="collapse" aria-label="Collapse panel" title="Collapse panel (])" onclick={() => panelOpen.set(false)}>›</button>
 </div>
 <!-- All three stay mounted so their globe layers persist; only one is visible, and map layers follow $tab. -->
-<div hidden={$tab !== 'scenario'}><PolicyPanel {globe} /></div>
+<div hidden={$tab !== 'scenario'} class="scenario-tab"><PolicyPanel {globe} /></div>
 <div hidden={$tab !== 'area'}><LensPanel {globe} /></div>
 <div hidden={$tab !== 'weather'} class="weather-tab"><WeatherPanel {globe} embedded /></div>
 {#if $tab === 'quality'}<QualityPanel />{/if}
@@ -54,6 +54,18 @@
 		margin-left: auto;
 		font-size: 18px;
 		line-height: 1;
+	}
+	/* Wide screens: the Scenario tab fills the panel height below the tabs (SidePanel is a flex column then). */
+	@media (min-width: 1200px) {
+		.scenario-tab {
+			display: flex;
+			flex-direction: column;
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+		.scenario-tab[hidden] {
+			display: none;
+		}
 	}
 	.weather-tab {
 		padding: 0 6px 24px;

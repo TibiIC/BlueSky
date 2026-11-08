@@ -8,7 +8,8 @@
  * 3. Each climate cell's risk indicators follow their fitted slope against warming level
  *    (lens/build_data.py → warming.json), giving a change vs 1991–2020 scored −1 (worse) … +1 (better).
  * 4. Prices (carbon, ETS2, fertiliser) interpolate between the package's NGFS-style scenarios.
- * 5. "Here" policies change Apetit-specific outcomes (peat, catch crops, input costs) for an area.
+ * 5. "Here" policies change Apetit-specific outcomes (peat, catch crops, input costs) for an area,
+ *    scaled by how far farmers actually comply with them (prices are unaffected).
  */
 import catalogue from './policies.json' with { type: 'json' };
 
@@ -31,6 +32,22 @@ export interface Policy {
 }
 export const POLICIES = catalogue.policies as Policy[];
 export const POLICY_NOTE = catalogue.note;
+
+export interface ComplianceOption {
+	id: string;
+	/** Share of the required practice that actually happens on farms, 0–1. */
+	share: number;
+	label: string;
+	summary: string;
+}
+export const COMPLIANCE = catalogue.compliance as {
+	title: string;
+	summary: string;
+	default: string;
+	options: ComplianceOption[];
+	sources: string[];
+};
+export const DEFAULT_COMPLIANCE = COMPLIANCE.options.find((o) => o.id === COMPLIANCE.default)!.share;
 
 type Scen = 'ssp126' | 'ssp245' | 'ssp585';
 interface Fit {
@@ -206,15 +223,19 @@ export interface Outcomes {
 	fertiliserEurPerKgN: number;
 }
 
-export function outcomes(active: Set<string>, year: number, prices: Prices, area: AreaFacts | null): Outcomes {
+/**
+ * `compliance` (0–1) is the share of each rule's required practice that farms actually carry out.
+ * Catch crops already grown voluntarily count in full; compliance applies to the extra hectares.
+ */
+export function outcomes(active: Set<string>, year: number, prices: Prices, area: AreaFacts | null, compliance = 1): Outcomes {
 	const on = POLICIES.filter((p) => active.has(p.id));
 	const decade = String(year < 2035 ? 2030 : year < 2045 ? 2040 : 2050);
-	const peatShare = Math.max(0, ...on.map((p) => p.effects?.peatRestoredShare?.[decade] ?? 0));
+	const peatShare = Math.max(0, ...on.map((p) => p.effects?.peatRestoredShare?.[decade] ?? 0)) * compliance;
 	const catchShare = Math.max(0, ...on.map((p) => p.effects?.catchCropShare ?? 0));
 	return {
 		peatCo2eAvoided: area ? area.contractPeatCo2e * peatShare : 0,
 		peatHaOutOfCrops: area ? area.organicContractHa * peatShare : 0,
-		catchCropHaAdded: area ? Math.max(0, area.peaSpinachHa * catchShare - area.peaSpinachCatchHa) : 0,
+		catchCropHaAdded: area ? Math.max(0, area.peaSpinachHa * catchShare - area.peaSpinachCatchHa) * compliance : 0,
 		dieselEurPerL: on.some((p) => p.effects?.dieselCarbonPrice) ? DIESEL_T_CO2_PER_L * prices.ets2Price : 0,
 		fertiliserEurPerKgN: on.some((p) => p.effects?.fertiliserCarbonPrice) ? AN_T_CO2E_PER_KG_N * prices.carbonPrice : 0
 	};

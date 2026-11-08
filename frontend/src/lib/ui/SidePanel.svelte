@@ -1,12 +1,13 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { panelOpen } from './panel.ts';
+	import { activeTab, panelOpen } from './panel.ts';
 
 	/** Right-hand panel. Collapses to a thin rail (not to nothing) so it can always be reopened. */
 	let { children }: { children?: Snippet } = $props();
 </script>
 
-<aside class="panel" class:open={$panelOpen}>
+<!-- The Scenario tab widens to two columns on wide screens (readings beside toggles). -->
+<aside class="panel" class:open={$panelOpen} class:wide={$activeTab === 'scenario'}>
 	{#if !$panelOpen}
 		<button class="rail" aria-label="Open panel" title="Open panel (])" onclick={() => panelOpen.set(true)}>
 			<span>‹</span><small>Scenario · Area · Weather</small>
@@ -33,6 +34,18 @@
 		width: min(400px, 100vw);
 		height: 100%;
 		overflow-y: auto;
+	}
+	@media (min-width: 1200px) {
+		.panel.open.wide,
+		.panel.wide .inner {
+			width: 800px;
+		}
+		/* Scenario tab: its two columns scroll on their own, so the panel itself doesn't. */
+		.panel.wide .inner:not([hidden]) {
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
 	}
 	.rail {
 		display: flex;

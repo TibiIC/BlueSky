@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { POLICIES, ambition, warmingAt, pricesAt, cellRisk, riskColor, outcomes, RISKS } from '../src/lib/policy/engine.ts';
+import { POLICIES, COMPLIANCE, DEFAULT_COMPLIANCE, ambition, warmingAt, pricesAt, cellRisk, riskColor, outcomes, RISKS } from '../src/lib/policy/engine.ts';
 import { areaFacts, areaRisk } from '../src/lib/policy/data.ts';
 
 // Small synthetic fixtures with the same shape as warming.json / transition.json.
@@ -103,6 +103,22 @@ test('outcomes: nothing without policies; peat and catch crops follow the active
 	const costs = outcomes(new Set(['eu_ets2', 'eu_cbam_fertiliser']), 2030, p, area);
 	assert.ok(Math.abs(costs.dieselEurPerL - 0.0021 * 50) < 1e-12);
 	assert.ok(Math.abs(costs.fertiliserEurPerKgN - 0.0037 * 150) < 1e-12);
+});
+
+test('compliance scales on-farm outcomes but not prices; options are sourced and below 100 %', () => {
+	const area = { contractPeatCo2e: 1000, organicContractHa: 40, peaSpinachHa: 100, peaSpinachCatchHa: 25 };
+	const p = pricesAt(0.5, 2030, transition);
+	const all = new Set(['eu_nature_restoration', 'cap_catch_crops', 'eu_ets2', 'eu_cbam_fertiliser']);
+	const full = outcomes(all, 2030, p, area), part = outcomes(all, 2030, p, area, 0.7);
+	const near = (a, b) => Math.abs(a - b) < 1e-9;
+	assert.ok(near(part.peatCo2eAvoided, full.peatCo2eAvoided * 0.7));
+	assert.ok(near(part.peatHaOutOfCrops, full.peatHaOutOfCrops * 0.7));
+	assert.ok(Math.abs(part.catchCropHaAdded - 75 * 0.7) < 1e-9, 'voluntary catch crops count in full; compliance scales the extra');
+	assert.equal(part.dieselEurPerL, full.dieselEurPerL);
+	assert.equal(part.fertiliserEurPerKgN, full.fertiliserEurPerKgN);
+	assert.ok(COMPLIANCE.options.length >= 3 && COMPLIANCE.options.length <= 4);
+	assert.ok(COMPLIANCE.options.every((o) => o.share > 0 && o.share < 1 && o.summary));
+	assert.ok(COMPLIANCE.options.some((o) => o.share === DEFAULT_COMPLIANCE) && COMPLIANCE.sources.length > 0);
 });
 
 test('area facts select parcels inside the polygon and weight risk by hectares', () => {

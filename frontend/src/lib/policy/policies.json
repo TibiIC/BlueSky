@@ -60,7 +60,13 @@
 			"group": "here",
 			"title": "Nature Restoration Law: restore drained farmland peat",
 			"status": "adopted",
-			"effects": { "peatRestoredShare": { "2030": 0.3, "2040": 0.4, "2050": 0.5 } },
+			"effects": {
+				"peatRestoredShare": {
+					"2030": 0.3,
+					"2040": 0.4,
+					"2050": 0.5
+				}
+			},
 			"summary": "Restore 30 % of drained organic soils under agriculture by 2030, 40 % by 2040, 50 % by 2050 (national target; applied here proportionally to contract peat as a simplification).",
 			"lever": "L11",
 			"source": "Regulation (EU) 2024/1991 (Nature Restoration), Article 11"
@@ -70,7 +76,13 @@
 			"group": "here",
 			"title": "No annual crops on drained peat from 2030",
 			"status": "speculative",
-			"effects": { "peatRestoredShare": { "2030": 1.0, "2040": 1.0, "2050": 1.0 } },
+			"effects": {
+				"peatRestoredShare": {
+					"2030": 1.0,
+					"2040": 1.0,
+					"2050": 1.0
+				}
+			},
 			"summary": "A stricter national rule. Removes peat emissions under Apetit crops but takes that area out of production.",
 			"lever": "L11",
 			"source": "Scenario; organic-soil factors from package METHODOLOGY.md §5"
@@ -80,7 +92,9 @@
 			"group": "here",
 			"title": "Catch crops required after early harvest",
 			"status": "proposed",
-			"effects": { "catchCropShare": 1.0 },
+			"effects": {
+				"catchCropShare": 1.0
+			},
 			"summary": "Extends Finland's CAP winter-cover eco-scheme into a requirement after pea and spinach. Cuts nitrogen leaching; cost per the lever catalogue.",
 			"lever": "L10",
 			"source": "Finland CAP Strategic Plan 2023–2027 (eco-schemes); package lever L10"
@@ -90,7 +104,9 @@
 			"group": "costs",
 			"title": "EU ETS2: carbon price on fuels from 2028",
 			"status": "adopted",
-			"effects": { "dieselCarbonPrice": true },
+			"effects": {
+				"dieselCarbonPrice": true
+			},
 			"summary": "Puts a carbon price on farm and transport diesel. Price path follows the world scenario.",
 			"source": "Directive (EU) 2023/959; package transition_scenarios.csv"
 		},
@@ -99,9 +115,51 @@
 			"group": "costs",
 			"title": "CBAM on imported fertiliser",
 			"status": "adopted",
-			"effects": { "fertiliserCarbonPrice": true },
+			"effects": {
+				"fertiliserCarbonPrice": true
+			},
 			"summary": "Imported nitrogen fertiliser pays the EU carbon price on its production emissions, levelling with EU-made fertiliser. Raises growers' input costs as the carbon price rises.",
 			"source": "Regulation (EU) 2023/956 (CBAM); AN footprint 3.7 kg CO₂e/kg N from package METHODOLOGY.md §5"
 		}
-	]
+	],
+	"compliance": {
+		"title": "Farmer compliance with regulations",
+		"summary": "Share of the required practice that actually happens on farms. Scales the peat and catch-crop effects of the Finland & EU cards; prices and costs are unaffected.",
+		"default": "typical",
+		"options": [
+			{
+				"id": "high",
+				"share": 0.95,
+				"label": "95 % · Well enforced",
+				"summary": "Simple, well-monitored rules tied to payments, e.g. nitrates derogation conditions in Ireland (88–93 % compliant at inspection, 2017–2022)."
+			},
+			{
+				"id": "typical",
+				"share": 0.85,
+				"label": "85 % · Typical EU estimate",
+				"summary": "The EU-wide picture for CAP cross-compliance: most farmers comply, with nitrates and soil rules among the most-breached areas."
+			},
+			{
+				"id": "patchy",
+				"share": 0.7,
+				"label": "70 % · Patchy",
+				"summary": "New, costly or hard-to-inspect rules. About a quarter of Finnish livestock farms had a breach at welfare inspections (2010–2015); nitrates breaches reach up to 30 % in some member states."
+			},
+			{
+				"id": "weak",
+				"share": 0.55,
+				"label": "55 % · Weak enforcement",
+				"summary": "Risk-targeted water inspections in Ireland found 43 % of farms non-compliant (2025); 40–50 % of manure stores around the Baltic are not properly covered."
+			}
+		],
+		"sources": [
+			"European Court of Auditors, Special Report 26/2016, Making cross-compliance more effective and achieving simplification remains challenging",
+			"Alliance Environnement (2007), Evaluation of the application of cross compliance, for DG AGRI",
+			"Winter & May (2001), Motivation for compliance with environmental regulations, J. Policy Analysis and Management 20(4) — Danish farmers",
+			"Lunn, Lyons & Murphy (2020), Predicting farms' noncompliance with regulations on nitrate pollution, J. Environmental Planning and Management",
+			"Thorsøe et al. (2022), Promise and performance of agricultural nutrient management policy: lessons from the Baltic Sea, Ambio 51",
+			"Väärikkälä et al. (2019), Welfare problems in Finnish cattle and pig farms based on official inspection reports, Animals 9(5)",
+			"EPA Ireland (2026), farm inspection results; Nitrates Article 10 reports"
+		]
+	}
 }
