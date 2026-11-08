@@ -46,6 +46,13 @@ macOS it needs `brew install pango`).
 
 This is an internal screening, not an SBTN validation submission.
 
+## Farm Missions strategy page
+
+`GET /strategy` serves `strategy/Climate_Lens_Nutrient_Review.html`, opened from the globe's
+Scenario tab with the scenario and selected area in the URL fragment.
+`POST /strategy/recommend` writes the per-farm adviser draft with the configured LLM.
+See `strategy/README.md`.
+
 ## LLM providers
 
 Report text comes from Snowflake Cortex when `SNOWFLAKE_ACCOUNT` and

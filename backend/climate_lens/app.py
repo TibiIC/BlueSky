@@ -10,6 +10,8 @@
     POST /sbtn/report/html the same as an HTML page (JSON body, or a form field `payload`)
     POST /sbtn/report/pdf  the same as a PDF download (what the SBTN page's Generate report uses)
     POST /sbtn/map         small map image of a selection (the SBTN page's corner thumbnail)
+    GET  /strategy         Farm Missions strategy page, opened from the globe with its scenario
+    POST /strategy/recommend  AI adviser draft for one farm (Snowflake Cortex)
     GET  /docs             interactive API docs
 """
 
@@ -27,7 +29,7 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
-from . import gemini, llm, sbtn
+from . import gemini, llm, sbtn, strategy
 from .data import CASE_LABELS
 from .report import build_report, options
 
@@ -200,3 +202,27 @@ async def sbtn_map(selection: sbtn.SelectionInput):
     image = await run_in_threadpool(sbtn.area_map.render, selection.selected, parcels, 960, 400,
                                     sbtn.runoff_risk, 4, 16)
     return {"map": image, "attribution": sbtn.area_map.ATTRIBUTION}
+
+
+@app.get("/strategy", response_class=HTMLResponse, include_in_schema=False)
+def strategy_page():
+    try:
+        return HTMLResponse(strategy.page())
+    except strategy.PageMissing as error:
+        raise HTTPException(status_code=404, detail=str(error))
+    except ValueError as error:  # the page changed and a patch no longer applies
+        raise HTTPException(status_code=500, detail=str(error))
+
+
+class RecommendRequest(BaseModel):
+    context: dict = Field(description="One farm's screening metrics, mission and the globe scenario, as the page sends them")
+
+
+@app.post("/strategy/recommend")
+async def strategy_recommend(req: RecommendRequest):
+    if len(json.dumps(req.context)) > 30_000:
+        raise HTTPException(status_code=413, detail="Context too large.")
+    try:
+        return await run_in_threadpool(strategy.recommend, req.context)
+    except llm.LLMUnavailable as error:
+        raise HTTPException(status_code=503, detail=str(error))

@@ -20,6 +20,7 @@
 	import { areaFacts, areaRisk, loadPolicyData, type PolicyData } from './data.ts';
 	import { attachRiskLayer } from './riskLayer.ts';
 	import { policyState } from './state.ts';
+	import { strategyHref } from './strategy.ts';
 	import { activeTab } from '../ui/panel.ts';
 
 	let { globe }: { globe: Globe } = $props();
@@ -53,6 +54,8 @@
 	const risk = $derived(d && gwl !== null && area ? areaRisk(st.risk, area.cellHa, gwl, d.warming) : null);
 	const peaHeat = $derived(d && gwl !== null && area ? areaRisk('peaHeat', area.cellHa, gwl, d.warming) : null);
 	const out = $derived(prices && area ? outcomes(st.active, st.year, prices, area, st.compliance) : null);
+	// The strategy page opens with these Scenario settings (and the selected area, if any).
+	const strategyLink = $derived(strategyHref(st, d, $selectedShape?.geometry ?? null));
 	const complianceOption = $derived(COMPLIANCE.options.find((o) => o.share === st.compliance) ?? COMPLIANCE.options[0]);
 	// Bounds of the meter at this year: net zero … current policies.
 	const range = $derived(d ? { lo: warmingAt(1, st.year, d.warming), mid: warmingAt(0.5, st.year, d.warming), hi: warmingAt(0, st.year, d.warming) } : null);
@@ -195,6 +198,12 @@
 				{/if}
 			</div>
 			{#if area}<p class="sub">{fmt(area.parcels)} parcels · {fmt(area.contractHa)} ha Apetit crops (2025). Draw an area on the globe to focus.</p>{/if}
+		</section>
+
+		<!-- Turn this scenario into a strategy (separate from the Area tab's reporting) -->
+		<section class="strategy">
+			<a class="strategy-link" href={strategyLink} target="_blank" rel="noopener">Open strategy proposals ↗</a>
+			<p class="sub">Farm Missions for {$selectedShape ? 'the drawn area' : 'the whole portfolio'} under this scenario: {st.year}, {st.active.size} polic{st.active.size === 1 ? 'y' : 'ies'} on, {fmt(st.compliance * 100)} % farmer compliance.</p>
 		</section>
 	{/if}
 	</div>
@@ -490,6 +499,21 @@
 	.status.speculative {
 		background: #3a2a40;
 		color: #d7a8ea;
+	}
+	.strategy-link {
+		display: block;
+		padding: 8px;
+		border-radius: 6px;
+		background: #18313b;
+		border: 1px solid #cfeb9b;
+		color: #cfeb9b;
+		font-size: 12px;
+		font-weight: 600;
+		text-align: center;
+		text-decoration: none;
+	}
+	.strategy-link:hover {
+		background: #1f3d49;
 	}
 	.compliance {
 		margin: 8px 0 0;
