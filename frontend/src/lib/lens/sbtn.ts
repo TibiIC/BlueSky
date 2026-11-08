@@ -42,7 +42,8 @@ export interface SbtnInput {
 export function openSbtnReview(shape: ShapeFeature): boolean {
 	const url = new URL(PUBLIC_SBTN_URL);
 	// Must run synchronously in the click handler, or popup blockers stop it.
-	const review = window.open(url, '_blank');
+	// Pass a string, not the URL object: some browser extensions wrap window.open and fail on a URL object.
+	const review = window.open(url.href, '_blank');
 	if (!review) return false;
 
 	const name = `selection-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.geojson`;
