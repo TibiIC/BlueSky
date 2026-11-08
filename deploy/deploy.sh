@@ -22,25 +22,60 @@ fi
 # shellcheck disable=SC1090
 [[ $PROTECT == 1 ]] && source "$SECRETS"
 
+# The two pages that live beside the app, at the same address
+export PUBLIC_STRATEGY_URL="https://$HOST/strategy"
+export PUBLIC_SBTN_URL="https://$HOST/sbtn-review/"
+
 echo "== build (frontend/build)"
 ( cd "$ROOT/frontend" && npm run build >/dev/null )
+
+# The SBTN review page, exported from its Colab notebook for this address (if the notebook is here)
+NOTEBOOK="${SBTN_NOTEBOOK:-$ROOT/sbtn/Climate_Lens_SBTN_Lite.ipynb}"
+if [[ -f "$NOTEBOOK" ]]; then
+  ( cd "$ROOT/sbtn" && SBTN_GLOBE_ORIGINS="https://$HOST" SBTN_REPORT_URL="https://$HOST/sbtn/report/pdf" \
+      SBTN_MAP_URL="https://$HOST/sbtn/map" python3 export.py "$NOTEBOOK" >/dev/null )
+fi
 
 echo "== upload"
 rsync -az --delete -e "ssh ${SSH_OPTS[*]}" "$ROOT/frontend/build/" "root@$IP:/opt/bluesky/app/build/"
 rsync -az -e "ssh ${SSH_OPTS[*]}" "$ROOT/frontend/package.json" "$ROOT/frontend/package-lock.json" "root@$IP:/opt/bluesky/app/"
 rsync -az --delete --exclude __pycache__ --exclude tests -e "ssh ${SSH_OPTS[*]}" "$ROOT/terra/" "root@$IP:/opt/bluesky/terra/"
+# Report backend (strategy page, SBTN report) and the strategy page it serves
+rsync -az --delete --exclude .venv --exclude __pycache__ --exclude .env --exclude tests -e "ssh ${SSH_OPTS[*]}" "$ROOT/backend/" "root@$IP:/opt/bluesky/backend/"
+rsync -az --delete -e "ssh ${SSH_OPTS[*]}" "$ROOT/strategy/" "root@$IP:/opt/bluesky/strategy/"
+[[ -f "$ROOT/backend/.env" ]] && scp -q "${SSH_OPTS[@]}" "$ROOT/backend/.env" "root@$IP:/opt/bluesky/backend/.env"
+[[ -f "$ROOT/sbtn/site/index.html" ]] && rsync -az --delete -e "ssh ${SSH_OPTS[*]}" "$ROOT/sbtn/site/" "root@$IP:/opt/bluesky/sbtn-site/"
 
 # Server environment: only the keys the app needs, never the Anthropic key
 ENVFILE="$(mktemp)"; trap 'rm -f "$ENVFILE"' EXIT
 grep -E '^(PUBLIC_[A-Z_]+|MONGODB_URI|MONGODB_DB)=' "$ROOT/frontend/.env" > "$ENVFILE" || true
-printf 'PORT=3000\nHOST=127.0.0.1\nORIGIN=https://%s\n' "$HOST" >> "$ENVFILE"
+grep -vE '^PUBLIC_(STRATEGY|SBTN)_URL=' "$ENVFILE" > "$ENVFILE.tmp" && mv "$ENVFILE.tmp" "$ENVFILE"
+printf 'PORT=3000\nHOST=127.0.0.1\nORIGIN=https://%s\nPUBLIC_STRATEGY_URL=%s\nPUBLIC_SBTN_URL=%s\n' "$HOST" "$PUBLIC_STRATEGY_URL" "$PUBLIC_SBTN_URL" >> "$ENVFILE"
 scp -q "${SSH_OPTS[@]}" "$ENVFILE" "root@$IP:/opt/bluesky/app/.env"
 
 echo "== install and restart"
 ssh "${SSH_OPTS[@]}" "root@$IP" PROTECT="$PROTECT" SITE_USER="$SITE_USER" SITE_PASSWORD="$SITE_PASSWORD" HOST="$HOST" 'bash -s' <<'REMOTE'
 set -euo pipefail
 cd /opt/bluesky/app && npm ci --omit=dev --no-audit --no-fund --loglevel=error
-chown -R bluesky:bluesky /opt/bluesky && chmod 600 /opt/bluesky/app/.env
+cd /opt/bluesky/backend && { [[ -d .venv ]] || python3 -m venv .venv; } && .venv/bin/pip install -q -r requirements.txt
+touch /opt/bluesky/backend/.env && mkdir -p /opt/bluesky/sbtn-site
+chown -R bluesky:bluesky /opt/bluesky && chmod 600 /opt/bluesky/app/.env /opt/bluesky/backend/.env
+
+cat > /etc/systemd/system/bluesky-backend.service <<UNIT
+[Unit]
+Description=BlueSky report backend (FastAPI: strategy page, SBTN report, port 8000, local only)
+After=network-online.target
+Wants=network-online.target
+[Service]
+User=bluesky
+WorkingDirectory=/opt/bluesky/backend
+EnvironmentFile=/opt/bluesky/backend/.env
+ExecStart=/opt/bluesky/backend/.venv/bin/uvicorn climate_lens.app:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+[Install]
+WantedBy=multi-user.target
+UNIT
 
 cat > /etc/systemd/system/bluesky-app.service <<UNIT
 [Unit]
@@ -84,18 +119,30 @@ $HOST {
 	encode zstd gzip
 	header X-Robots-Tag "noindex, nofollow"
 $AUTH
-	reverse_proxy 127.0.0.1:3000 {
-		flush_interval -1
+	# The report backend: Farm Missions strategy page and the SBTN report/map
+	@backend path /strategy /strategy/* /sbtn/report* /sbtn/map*
+	handle @backend {
+		reverse_proxy 127.0.0.1:8000
+	}
+	# The SBTN screening review page (exported from its notebook)
+	handle_path /sbtn-review/* {
+		root * /opt/bluesky/sbtn-site
+		file_server
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3000 {
+			flush_interval -1
+		}
 	}
 }
 CADDY
 
 systemctl daemon-reload
-systemctl enable --now bluesky-terra bluesky-app >/dev/null 2>&1
-systemctl restart bluesky-terra bluesky-app
+systemctl enable --now bluesky-terra bluesky-backend bluesky-app >/dev/null 2>&1
+systemctl restart bluesky-terra bluesky-backend bluesky-app
 systemctl reload caddy || systemctl restart caddy
 sleep 4
-systemctl is-active bluesky-terra bluesky-app caddy
+systemctl is-active bluesky-terra bluesky-backend bluesky-app caddy
 REMOTE
 
 echo "== check"
