@@ -1,14 +1,9 @@
-"""The AI layer: educated guesses and explanations, never edits.
+"""One plain-English sentence per flagged number, written by Claude Haiku 5.5.
 
-Boundaries:
-- The model sees ONE record and the evidence code computed about it, never the dataset.
-- It returns structured output (Pydantic schema). It cannot change a value: anything it proposes
-  is tested by code against the evidence, and stays labelled as model judgement (level F).
-- Every call and answer is cached in quality/out/ai_cache.json with the model and prompt hash,
-  so results are auditable and repeat runs cost nothing.
-- Without ANTHROPIC_API_KEY the pipeline runs exactly the same, minus these notes.
-
-Model: Claude Haiku 5.5 (claude-haiku-5-5), the cheapest current Claude model.
+The model only explains. It sees one item and the facts the method computed about it, and returns
+one sentence. It never changes a number or a status. Answers are cached in quality/out/ai_cache.json
+(keyed by model, schema and prompt), so a re-run costs nothing. Without ANTHROPIC_API_KEY
+(environment or frontend/.env) the pipeline runs the same, minus the sentences.
 """
 from __future__ import annotations
 
@@ -17,44 +12,43 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
 
 from pydantic import BaseModel, Field
-
-from quality.evidence import MECHANISMS, TOLERANCE, explain
 
 MODEL = 'claude-haiku-5-5'
 REPO = Path(__file__).resolve().parent.parent
 CACHE = REPO / 'quality/out/ai_cache.json'
-MECH_IDS = [m[0] for m in MECHANISMS]
 
 SYSTEM = (
-    "You assist a data-quality reviewer at a Nordic food company (synthetic hackathon data). "
-    "You see one record and the evidence that deterministic checks computed about it. "
-    "Reason only from what is given. Never invent figures, sources or thresholds. "
-    "Prefer the simplest explanation. If the evidence does not support a conclusion, say so."
+    'You explain data-curation findings to a sustainability manager at a Nordic food company. '
+    'Write exactly one plain-English sentence of at most 25 words. If it was fixed automatically: say what '
+    'went wrong and what it was fixed to. If a person decides: say what probably went wrong and the one thing '
+    'to check. Use only the facts given, including the stated likely cause and applied value; never invent '
+    'numbers, causes or sources. No jargon.'
 )
 
-
-class Hypothesis(BaseModel):
-    mechanism: Literal[tuple(MECH_IDS + ['legitimate', 'unknown'])] = Field(description='One mechanism id from the library, "legitimate" if the value is plausibly correct, or "unknown".')
-    reasoning: str = Field(description='Two sentences at most, citing the given evidence.')
-    what_would_confirm: str = Field(description='One concrete check that would confirm or refute it.')
-
-
-class ReviewNote(BaseModel):
-    explanation: str = Field(description='Plain English for a sustainability manager, two sentences at most.')
-    verdict: Literal['likely_error', 'unclear', 'likely_legitimate'] = Field(description=(
-        'Your honest call on the evidence given. likely_error: the evidence and the explanation fit well and a '
-        'legitimate reading would need a coincidence. likely_legitimate: a normal business reason explains the '
-        'value better. unclear: the evidence genuinely cannot separate the two. Do not default to unclear.'))
-    legitimate_reason: str = Field(description='The best case that the record is correct after all, one sentence.')
-    suggested_check: str = Field(description='The single most useful check a person could do next.')
+# The known cause behind each typo, per kind of record, so the model does not have to guess it.
+UNIT_CAUSE = {'energy': 'kWh typed into the MWh column', 'refrigerants': 'grams typed as kilograms',
+              'fuel': 'litres and cubic metres mixed up', 'waste': 'kilograms and tonnes mixed up',
+              'pcf': 'footprint given per tonne instead of per kilogram', 'commuting': 'metres typed as kilometres',
+              'purchases': 'kilograms and tonnes mixed up', 'purchases_price': 'kilograms and tonnes mixed up'}
 
 
-class LabelChoice(BaseModel):
-    code: str = Field(description='Exactly one code from the allowed list, or "none".')
-    reasoning: str
+def cause(it) -> str:
+    d = it.default
+    if d in ('div1000', 'mul1000'):
+        return UNIT_CAUSE.get(it.series, 'a unit mix-up (a factor of 1,000)')
+    if d.startswith(('div1', 'mul1')):
+        return 'a misplaced decimal point'
+    if d == 'sek':
+        return 'a Swedish-krona amount booked as euros'
+    return {'gas': 'the wrong gas code for this system', 'goo': 'the internal log disagrees with the national registry',
+            'soil': 'the farmer\'s soil answer disagrees with the soil map', 'missing': 'a missing monthly reading'}.get(
+        it.series, 'no known typo explains it; the value may be real or a different mistake')
+
+
+class Note(BaseModel):
+    sentence: str = Field(description='One sentence, at most 30 words.')
 
 
 def _key() -> str | None:
@@ -68,31 +62,43 @@ def _key() -> str | None:
     return None
 
 
+def facts(it, label: str) -> str:
+    opts = '; '.join(f"{o['label']} ({o['tco2e']:+,.0f} t CO2e)" for o in it.options)
+    applied = next((o for o in it.options if o['id'] == it.default), None)
+    status = 'fixed automatically' if it.status == 'fixed' else 'a person decides; our best guess is applied meanwhile'
+    lines = [f'Record: {label}, {it.context} ({it.record_key}, {it.year}).',
+             f'Recorded: {it.recorded} {it.unit}. Expected: {it.expected} {it.unit}, from {it.expected_from}.',
+             f'What the method found: {it.explanation}',
+             f'Likely cause: {cause(it)}.',
+             f"Applied now: {applied['label']} -> {applied['value']} {it.unit}." if applied else '',
+             f'Status: {status}.',
+             f'Options: {opts}.']
+    return '\n'.join(x for x in lines if x)
+
+
 class AI:
     def __init__(self, enabled: bool = True):
-        self.key = _key() if enabled else None
+        key = _key() if enabled else None
         self.cache = json.loads(CACHE.read_text()) if CACHE.exists() else {}
-        self.calls = 0
-        self.errors: list[str] = []
-        self.client = None
-        if self.key:
+        self.calls, self.errors, self.client = 0, [], None
+        if key:
             import anthropic
-            self.client = anthropic.Anthropic(api_key=self.key)
+            self.client = anthropic.Anthropic(api_key=key)
 
     @property
     def available(self) -> bool:
         return self.client is not None
 
-    def _ask(self, prompt: str, schema: type[BaseModel]) -> dict | None:
-        h = hashlib.sha256(f'{MODEL}\n{json.dumps(schema.model_json_schema(), sort_keys=True)}\n{prompt}'.encode()).hexdigest()
+    def sentence(self, prompt: str) -> str | None:
+        h = hashlib.sha256(f'{MODEL}\n{SYSTEM}\n{json.dumps(Note.model_json_schema(), sort_keys=True)}\n{prompt}'.encode()).hexdigest()
         if h in self.cache:
-            return self.cache[h]['answer']
+            return self.cache[h]['sentence']
         if not self.client:
             return None
         import anthropic
         try:
-            resp = self.client.messages.parse(model=MODEL, max_tokens=2048, system=SYSTEM,
-                                              messages=[{'role': 'user', 'content': prompt}], output_format=schema)
+            resp = self.client.messages.parse(model=MODEL, max_tokens=3000, system=SYSTEM,
+                                              messages=[{'role': 'user', 'content': prompt}], output_format=Note)
         except anthropic.RateLimitError as e:
             self.errors.append(f'rate limited: {e}')
             return None
@@ -102,62 +108,28 @@ class AI:
         except anthropic.APIConnectionError as e:
             self.errors.append(f'connection: {e}')
             return None
-        except ValueError as e:  # pydantic ValidationError: truncated or malformed answer
-            self.calls += 1
+        except ValueError as e:  # truncated or malformed answer
             self.errors.append(f'invalid answer: {str(e)[:120]}')
             return None
         self.calls += 1
         if resp.stop_reason == 'refusal' or resp.parsed_output is None:
             self.errors.append(f'no answer (stop_reason={resp.stop_reason})')
             return None
-        answer = resp.parsed_output.model_dump()
-        self.cache[h] = {'model': MODEL, 'schema': schema.__name__, 'at': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'answer': answer}
-        return answer
+        s = resp.parsed_output.sentence.strip()
+        self.cache[h] = {'model': MODEL, 'at': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'sentence': s}
+        return s
+
+    def explain(self, items, labels: dict, limit: int = 250, workers: int = 8):
+        """Adds it.ai = {model, sentence} to the items with the most tonnes at stake (requests in parallel)."""
+        from concurrent.futures import ThreadPoolExecutor
+        todo = sorted(items, key=lambda i: -i.at_stake)[:limit]
+        prompts = [facts(it, labels.get(it.series, {}).get('label', it.series)) for it in todo]
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            answers = list(pool.map(self.sentence, prompts))
+        for it, s in zip(todo, answers):
+            if s:
+                it.ai = {'model': MODEL, 'sentence': s}
 
     def save(self):
         CACHE.parent.mkdir(parents=True, exist_ok=True)
         CACHE.write_text(json.dumps(self.cache, indent=1, ensure_ascii=False))
-
-    # ---------------------------------------------------------------- tasks
-
-    def hypothesize(self, f, record: dict) -> None:
-        """For an anomaly no known mechanism explains: ask for the likeliest mechanism, then
-        TEST it in code against the evidence value. Only a fitting mechanism becomes a proposal."""
-        library = '\n'.join(f'- {m}: {d}' for m, d, _ in MECHANISMS)
-        prompt = (f"Record ({f.table}, {f.record_key}):\n{json.dumps(record, default=str)}\n\n"
-                  f"Evidence computed by code: {f.evidence}\nField: {f.field}, observed {f.observed}, "
-                  f"value the evidence points to: {f.locator.get('reference')}\n\n"
-                  f"Known error mechanisms:\n{library}\n\nWhich explanation is most likely?")
-        a = self._ask(prompt, Hypothesis)
-        if not a:
-            return
-        test = None
-        if a['mechanism'] in MECH_IDS and f.locator.get('reference') and f.observed is not None:
-            hyp = [h for h in explain(float(f.observed), float(f.locator['reference'])) if h.mechanism == a['mechanism']]
-            if hyp:
-                test = {'mechanism': a['mechanism'], 'proposed': round(hyp[0].proposed, 6), 'misfit': round(hyp[0].misfit, 4),
-                        'fits': hyp[0].misfit <= TOLERANCE['E'] and a['mechanism'] != 'none'}
-        f.ai = {'model': MODEL, 'task': 'hypothesis', 'answer': a, 'code_test': test}
-        if test and test['fits']:
-            f.status, f.action, f.proposed = 'proposed', 'correct', test['proposed']
-            f.level, f.confidence = 'F', 0.5
-            f.sources.append({'level': 'F', 'source': f'{MODEL} (tested by code)', 'statement':
-                              f"Model suggests {a['mechanism']}; code confirms it lands {test['misfit']:.0%} from the evidence.", 'value': test['proposed']})
-
-    def review(self, f, record: dict) -> None:
-        """Plain-English note and a second opinion for a review-queue item. Changes nothing."""
-        ev = '\n'.join(f"- [{s['level']}] {s['statement']}" for s in f.sources)
-        prompt = (f"Finding: {f.issue_type} on {f.record_key} ({f.table}).\nRecord: {json.dumps(record, default=str)}\n"
-                  f"Proposed: {f.field} {f.observed} -> {f.proposed} ({f.action}).\nEvidence (level A strongest .. E weakest):\n{ev}\n"
-                  f"Estimated inventory impact if applied: {f.impact_tco2e} t CO2e.\n\n"
-                  "Explain it for the reviewer, and say whether the record could be legitimate after all.")
-        a = self._ask(prompt, ReviewNote)
-        if a:
-            f.ai = {**(f.ai or {}), 'model': MODEL, 'task': (f.ai or {}).get('task', 'review'), 'review': a}
-
-    def map_label(self, value: str, allowed: list[str], context: str) -> dict | None:
-        """Map a free-text label to one allowed code. The caller must check the code is allowed."""
-        a = self._ask(f'Context: {context}\nLabel: "{value}"\nAllowed codes: {allowed}\nWhich code is it?', LabelChoice)
-        if a and a['code'] not in allowed:
-            a['code'] = 'none'
-        return a
