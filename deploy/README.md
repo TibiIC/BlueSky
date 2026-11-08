@@ -24,6 +24,9 @@ deploy/deploy.sh SERVER_IP                                                # buil
 The site is at `https://SERVER-IP-WITH-DASHES.sslip.io` (user `bluesky`, password in `deploy/.secrets`,
 created on the first deploy and never committed).
 
+The Climate Lens data (`frontend/static/data/lens/`) is committed, so a fresh clone deploys as is.
+After the Apetit data changes, rebuild it with `python3 lens/build_data.py` and commit.
+
 ## Every update
 
 ```sh
