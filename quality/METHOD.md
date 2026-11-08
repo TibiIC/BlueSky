@@ -120,6 +120,10 @@ Scored on the organisers' published 2023–2024 answers:
 
 ## Commands
 
+> **This branch is the "linear regression" variant** (robust spread: 1.4826 × MAD, flagged beyond 4σ).
+> Its results live in their own MongoDB database: set `MONGODB_DB=bluesky_linreg` in `frontend/.env`
+> to view or republish them. The main database `bluesky` holds the Tukey (box-plot) variant.
+
 All commands run from the repository root (`BlueSky/`) unless noted.
 
 **One-time setup**
