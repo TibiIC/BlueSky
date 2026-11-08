@@ -1,23 +1,26 @@
 #!/usr/bin/env bash
 # Build locally and (re)deploy BlueSky to the Vultr server.  Usage, from the repository root:
-#   deploy/deploy.sh SERVER_IP
+#   deploy/deploy.sh SERVER_IP              public site (not indexed by search engines)
+#   deploy/deploy.sh SERVER_IP --password   behind a password kept in deploy/.secrets
 # Needs: frontend/.env (keys), the SSH key ~/.ssh/bluesky_vultr, and deploy/setup.sh run once on the server.
-# The site is served at https://SERVER-IP-WITH-DASHES.sslip.io behind a password kept in deploy/.secrets.
+# The site is served at https://SERVER-IP-WITH-DASHES.sslip.io.
 set -euo pipefail
-IP="${1:?usage: deploy/deploy.sh SERVER_IP}"
+IP="${1:?usage: deploy/deploy.sh SERVER_IP [--password]}"
+PROTECT=0; [[ "${2:-}" == "--password" ]] && PROTECT=1
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 KEY="${SSH_KEY:-$HOME/.ssh/bluesky_vultr}"
 SSH_OPTS=(-i "$KEY" -o StrictHostKeyChecking=accept-new)
 HOST="${SITE_HOST:-$(echo "$IP" | tr . -).sslip.io}"
 SECRETS="$ROOT/deploy/.secrets"
 
-# The site password: created once, kept out of git (deploy/.secrets is gitignored)
-if [[ ! -f "$SECRETS" ]]; then
+# The site password (only with --password): created once, kept out of git (deploy/.secrets is gitignored)
+SITE_USER=""; SITE_PASSWORD=""
+if [[ $PROTECT == 1 && ! -f "$SECRETS" ]]; then
   umask 077
   printf 'SITE_USER=bluesky\nSITE_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | cut -c1-16)" > "$SECRETS"
 fi
 # shellcheck disable=SC1090
-source "$SECRETS"
+[[ $PROTECT == 1 ]] && source "$SECRETS"
 
 echo "== build (frontend/build)"
 ( cd "$ROOT/frontend" && npm run build >/dev/null )
@@ -34,7 +37,7 @@ printf 'PORT=3000\nHOST=127.0.0.1\nORIGIN=https://%s\n' "$HOST" >> "$ENVFILE"
 scp -q "${SSH_OPTS[@]}" "$ENVFILE" "root@$IP:/opt/bluesky/app/.env"
 
 echo "== install and restart"
-ssh "${SSH_OPTS[@]}" "root@$IP" SITE_USER="$SITE_USER" SITE_PASSWORD="$SITE_PASSWORD" HOST="$HOST" 'bash -s' <<'REMOTE'
+ssh "${SSH_OPTS[@]}" "root@$IP" PROTECT="$PROTECT" SITE_USER="$SITE_USER" SITE_PASSWORD="$SITE_PASSWORD" HOST="$HOST" 'bash -s' <<'REMOTE'
 set -euo pipefail
 cd /opt/bluesky/app && npm ci --omit=dev --no-audit --no-fund --loglevel=error
 chown -R bluesky:bluesky /opt/bluesky && chmod 600 /opt/bluesky/app/.env
@@ -70,13 +73,17 @@ RestartSec=5
 WantedBy=multi-user.target
 UNIT
 
-HASH="$(caddy hash-password --plaintext "$SITE_PASSWORD")"
+AUTH=""
+if [[ "$PROTECT" == 1 ]]; then
+  AUTH="	basic_auth {
+		$SITE_USER $(caddy hash-password --plaintext "$SITE_PASSWORD")
+	}"
+fi
 cat > /etc/caddy/Caddyfile <<CADDY
 $HOST {
 	encode zstd gzip
-	basic_auth {
-		$SITE_USER $HASH
-	}
+	header X-Robots-Tag "noindex, nofollow"
+$AUTH
 	reverse_proxy 127.0.0.1:3000 {
 		flush_interval -1
 	}
@@ -92,6 +99,7 @@ systemctl is-active bluesky-terra bluesky-app caddy
 REMOTE
 
 echo "== check"
-code=$(curl -s -o /dev/null -w '%{http_code}' -u "$SITE_USER:$SITE_PASSWORD" "https://$HOST/api/dev" || true)
+AUTHARG=(); [[ $PROTECT == 1 ]] && AUTHARG=(-u "$SITE_USER:$SITE_PASSWORD")
+code=$(curl -s -o /dev/null -w '%{http_code}' "${AUTHARG[@]}" "https://$HOST/api/dev" || true)
 echo "https://$HOST/api/dev -> $code"
-echo "Site: https://$HOST   user: $SITE_USER   password: in deploy/.secrets"
+if [[ $PROTECT == 1 ]]; then echo "Site: https://$HOST   user: $SITE_USER   password: in deploy/.secrets"; else echo "Site: https://$HOST   (public, not indexed)"; fi
