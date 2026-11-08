@@ -124,6 +124,7 @@ $AUTH
 	handle @backend {
 		reverse_proxy 127.0.0.1:8000
 	}
+	redir /sbtn-review /sbtn-review/ permanent
 	# The SBTN screening review page (exported from its notebook)
 	handle_path /sbtn-review/* {
 		root * /srv/bluesky-sbtn
