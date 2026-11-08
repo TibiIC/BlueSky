@@ -5,47 +5,51 @@ import unittest
 import numpy as np
 
 from quality import gaps
-from quality.gaps import DECIMAL, T, UNIT, fitting_typos, flagged, issue_type, noise
+from quality.gaps import DECIMAL, T, UNIT, box, fitting_typos, flagged, issue_type
 
 
-class Noise(unittest.TestCase):
+class Box(unittest.TestCase):
     def test_robust_to_a_few_typos(self):
         rng = np.random.default_rng(1)
         clean = rng.normal(0, 0.05, 500)
         dirty = np.concatenate([clean, [3.0] * 10])  # 2 % of the values are 1000x off
-        self.assertAlmostEqual(noise(dirty), noise(clean), delta=0.01)
+        self.assertAlmostEqual(box(dirty)['iqr'], box(clean)['iqr'], delta=0.01)
 
-    def test_floor_for_exact_evidence(self):
-        self.assertGreater(noise(np.zeros(50)), 0)
+    def test_normal_fences_never_narrower_than_5_percent(self):
+        b = box(np.zeros(50))  # exact evidence: IQR = 0
+        self.assertLessEqual(b['normal'][0], -0.02)
+        self.assertGreaterEqual(b['normal'][1], 0.02)
 
 
 class Flag(unittest.TestCase):
-    def test_needs_both_many_sigmas_and_a_real_ratio(self):
-        self.assertTrue(flagged(3.0, 0.05))
-        self.assertFalse(flagged(0.3, 0.05))   # 6 sigma, but only 2x off
-        self.assertFalse(flagged(1.0, 0.3))    # 10x off, but within this series' natural spread
+    def setUp(self):
+        self.tight = box(np.random.default_rng(2).normal(0, 0.05, 1000))   # IQR ~ 0.07
+        self.loose = box(np.random.default_rng(3).normal(0, 0.4, 1000))    # IQR ~ 0.54
+
+    def test_far_out_and_a_real_ratio(self):
+        self.assertTrue(flagged(3.0, self.tight))
+        self.assertFalse(flagged(0.3, self.tight))   # beyond the far-out fence, but only 2x off
+        self.assertFalse(flagged(1.0, self.loose))   # 10x off, but inside this series' far-out fences
 
 
 class Typos(unittest.TestCase):
     def test_grams_as_kg(self):
-        # 85,150 kg against a usual 50 kg: only "divide by 1,000" explains it
-        g = math.log10(85150 / 50.0)
-        fits = fitting_typos(g, 0.1, UNIT)
-        self.assertEqual([t[0] for t in fits], ['div1000'])
+        # 85,150 kg against a usual 50 kg: only "divide by 1,000" brings it back inside the normal fences
+        b = box(np.random.default_rng(4).normal(0, 0.1, 500))
+        self.assertEqual([t[0] for t in fitting_typos(math.log10(85150 / 50.0), b, UNIT)], ['div1000'])
 
     def test_exact_evidence_needs_exact_fit(self):
-        # tonnes typed as kg against the shipment record: exact
-        self.assertEqual(fitting_typos(-3.0, 0.005, UNIT + DECIMAL)[0][0], 'mul1000')
-        # 900x off is not a typo when the evidence is exact
-        self.assertEqual(fitting_typos(math.log10(900), 0.005, UNIT + DECIMAL), [])
+        b = box(np.zeros(500))
+        self.assertEqual(fitting_typos(-3.0, b, UNIT + DECIMAL)[0][0], 'mul1000')
+        self.assertEqual(fitting_typos(math.log10(900), b, UNIT + DECIMAL), [])  # 900x is not a typo
 
-    def test_ten_and_krona_are_ambiguous_in_noisy_data(self):
-        fits = fitting_typos(1.03, 0.05, [T['sek'], T['div10']])
-        self.assertEqual(len(fits), 2)  # both fit: a person chooses
+    def test_ten_and_krona_are_ambiguous_in_loose_data(self):
+        b = box(np.random.default_rng(5).normal(0, 0.06, 500))
+        self.assertEqual(len(fitting_typos(1.03, b, [T['sek'], T['div10']])), 2)  # both fit: a person chooses
 
     def test_krona(self):
-        fits = fitting_typos(math.log10(11.4), 0.01, [T['sek'], T['div10']])
-        self.assertEqual([t[0] for t in fits], ['sek'])
+        b = box(np.zeros(500))
+        self.assertEqual([t[0] for t in fitting_typos(math.log10(11.4), b, [T['sek'], T['div10']])], ['sek'])
 
 
 class Labels(unittest.TestCase):
@@ -61,7 +65,7 @@ class Labels(unittest.TestCase):
 class Choice(unittest.TestCase):
     def item(self):
         return gaps.Item(key='k|f', series='energy', table='energy_meter_readings', record_key='k', year=2025, field='value', index=0,
-                         unit='MWh', recorded=1000.0, expected=1.0, expected_from='', context='', gap=3.0, noise=0.01, status='fixed',
+                         unit='MWh', recorded=1000.0, expected=1.0, expected_from='', context='', gap=3.0, fences=None, status='fixed',
                          issue_type='unit_error', explanation='', default='div1000',
                          options=[{'id': 'div1000', 'value': 1.0}, {'id': 'expected', 'value': 1.0}, {'id': 'keep', 'value': 1000.0}])
 

@@ -3,10 +3,11 @@
 	type Item = {
 		itemKey: string; series: string; record_key: string; year: number; field: string; unit: string;
 		recorded: number | string; expected: number | string; expected_from: string; context: string;
-		gap: number | null; status: 'fixed' | 'check'; explanation: string; options: Option[];
+		gap: number | null; fences?: Box | null; status: 'fixed' | 'check'; explanation: string; options: Option[];
 		default: string; inForce: string; tco2e: number; at_stake: number; ai?: { model: string; sentence: string } | null;
 	};
-	type Series = { label: string; expectedFrom: string; noise?: number; intercept?: number; n?: number; flagged: number };
+	type Box = { q1: number; q3: number; iqr: number; normal: [number, number]; farOut: [number, number] };
+	type Series = { label: string; expectedFrom: string; box?: Box; n?: number; flagged: number };
 	type Point = { s: string; x: number; y: number; st: 'ok' | 'fixed' | 'check'; k: string };
 	type Run = {
 		runId: string; method: string; series: Record<string, Series>; points: Point[];
@@ -84,8 +85,6 @@
 		typeof v !== 'number' ? (v ?? '—') : Number.isInteger(v) && v > 1900 && v < 2100 ? String(v) : fmt(v, Math.abs(v) < 10 ? 2 : 0);
 	const signed = (t: number) => (Math.abs(t) < 0.5 ? '0 t' : `${t > 0 ? '+' : '−'}${fmt(Math.abs(t))} t`);
 	const big = (t: number) => (t >= 1e6 ? `${fmt(t / 1e6, 1)} Mt` : t >= 1e4 ? `${fmt(t / 1e3, 0)} kt` : `${fmt(t)} t`);
-	const pct = (logSpread: number) => `±${fmt((10 ** logSpread - 1) * 100, 0)} %`;
-	const times = (logGap: number) => `×${fmt(10 ** logGap, 10 ** logGap < 10 ? 1 : 0)}`;
 	function offBy(it: Item) {
 		if (typeof it.recorded !== 'number' || typeof it.expected !== 'number' || !it.expected || !it.recorded) return '';
 		const r = it.recorded / it.expected;
@@ -98,7 +97,7 @@
 	const total = (t: Record<string, number> | undefined) => (t ? (t.scope1_total ?? 0) + (t.scope2_market_total ?? 0) + (t.scope3_total ?? 0) : 0);
 	const raw25 = $derived(data ? total(data.run.totals.raw['2025']) : 0);
 	const cur25 = $derived(data ? total(data.run.totals.curated['2025']) : 0);
-	const checked = $derived(data ? Object.values(data.run.series).reduce((s, v) => s + (v.noise ? (v.n ?? 0) : 0), 0) : 0);
+	const checked = $derived(data ? Object.values(data.run.series).reduce((s, v) => s + (v.box ? (v.n ?? 0) : 0), 0) : 0);
 	const items = $derived(data ? data.items.filter((i) => !year || i.year === year) : []);
 	const nFixed = $derived(items.filter((i) => i.status === 'fixed').length);
 	const nCheck = $derived(items.filter((i) => i.status === 'check').length);
@@ -126,11 +125,18 @@
 	});
 	const sx = (v: number) => PL + ((v - dom.lo) / (dom.hi - dom.lo || 1)) * (W - PL - PR);
 	const sy = (v: number) => H - PB - ((v - dom.lo) / (dom.hi - dom.lo || 1)) * (H - PB - PT);
-	const a = $derived(meta?.intercept ?? 0);
-	const band = $derived(Math.max(4 * (meta?.noise ?? 0.02), Math.log10(2.5))); // the flag threshold, both sides
-	const bandPath = $derived(
-		`M${sx(dom.lo)},${sy(dom.lo + a - band)} L${sx(dom.hi)},${sy(dom.hi + a - band)} L${sx(dom.hi)},${sy(dom.hi + a + band)} L${sx(dom.lo)},${sy(dom.lo + a + band)} Z`
-	);
+	const a = 0; // no offset: the gap is simply log10(recorded / predicted)
+	const MIN = Math.log10(2.5); // a flagged number is also at least 2.5x off
+	// Box plot of the gaps: normal fences (1.5 IQR) and far-out fences (3 IQR, at least 2.5x)
+	const normal = $derived(meta?.box?.normal ?? [-0.02, 0.02]);
+	const farOut = $derived([Math.min(meta?.box?.farOut[0] ?? -MIN, -MIN), Math.max(meta?.box?.farOut[1] ?? MIN, MIN)]);
+	const strip = (lo: number, hi: number) =>
+		`M${sx(dom.lo)},${sy(dom.lo + lo)} L${sx(dom.hi)},${sy(dom.hi + lo)} L${sx(dom.hi)},${sy(dom.hi + hi)} L${sx(dom.lo)},${sy(dom.lo + hi)} Z`;
+	const ratio = (g: number) => {
+		const f = 10 ** Math.abs(g);
+		if (f < 1.5) return `${g < 0 ? '−' : '+'}${fmt((f - 1) * 100, 0)} %`; // small ranges read better as percentages
+		return `${g >= 0 ? '×' : '÷'}${fmt(f, f < 10 ? 1 : 0)}`;
+	};
 	const typoLines = [
 		{ off: 3, label: '×1,000' }, { off: 1, label: '×10' }, { off: -1, label: '÷10' }, { off: -3, label: '÷1,000' }
 	];
@@ -172,8 +178,8 @@
 			<h3>What happened</h3>
 			<ol class="funnel">
 				<li><i class="n">1</i><div><b>{fmt(checked)}</b> numbers compared with a prediction<small>each against an independent record: the shipment, the same month in other years, the usual top-up…</small></div></li>
-				<li><i class="n">2</i><div><b>{fmt(data.run.counts.items)}</b> far outside their normal spread<small>flagged for 2023–2025, plus missing months, gas codes, certificates and soil</small></div></li>
-				<li class="ok"><i class="n">✓</i><div><b>{fmt(data.run.counts.fixed)}</b> fixed automatically<small>exactly one typo explains the gap, e.g. kWh typed as MWh</small></div></li>
+				<li><i class="n">2</i><div><b>{fmt(data.run.counts.items)}</b> beyond the box plot's far-out fences<small>flagged for 2023–2025, plus missing months, gas codes, certificates and soil</small></div></li>
+				<li class="ok"><i class="n">✓</i><div><b>{fmt(data.run.counts.fixed)}</b> fixed automatically<small>undoing exactly one typo puts it back in the normal range, e.g. kWh typed as MWh</small></div></li>
 				<li class="you"><i class="n">?</i><div><b>{fmt(data.run.counts.check)}</b> need your decision<small>{fmt(data.run.awaitingTonnes['2025'] ?? 0)} t of 2025 CO₂ ride on them; our best guess is in until you decide</small></div></li>
 			</ol>
 		</section>
@@ -186,17 +192,18 @@
 					{#each chartSeries as [k, s] (k)}<option value={k}>{s.label} ({s.flagged} flagged)</option>{/each}
 				</select>
 			</label>
-			{#if meta?.noise}
+			{#if meta?.box}
 				<div class="facts">
 					<span><b>{fmt(meta.n ?? 0)}</b> numbers</span>
-					<span>normal spread <b>{pct(meta.noise)}</b></span>
-					<span>flagged beyond <b>{times(band)}</b></span>
+					<span>normal: <b>{ratio(normal[0])}</b> to <b>{ratio(normal[1])}</b></span>
+					<span>flagged beyond <b>{ratio(farOut[0])}</b> / <b>{ratio(farOut[1])}</b></span>
 				</div>
 			{/if}
 			<svg viewBox="0 0 {W} {H}" role="img" aria-label="Predicted against recorded values, log scale">
 				<defs><clipPath id="plot"><rect x={PL} y={PT} width={W - PL - PR} height={H - PB - PT} /></clipPath></defs>
 				<g clip-path="url(#plot)">
-					<path d={bandPath} class="band" />
+					<path d={strip(farOut[0], farOut[1])} class="band far" />
+					<path d={strip(normal[0], normal[1])} class="band" />
 					{#each typoLines as t (t.off)}
 						<line x1={sx(dom.lo)} y1={sy(dom.lo + a + t.off)} x2={sx(dom.hi)} y2={sy(dom.hi + a + t.off)} class="typo" />
 					{/each}
@@ -217,15 +224,17 @@
 				<text x={PL + 2} y={PT + 9} class="ax">↑ recorded</text>
 			</svg>
 			<div class="legend">
-				<span><i class="sw band"></i>normal spread</span>
+				<span><i class="sw band"></i>normal (box plot)</span>
+				<span><i class="sw band far"></i>up to the far-out fence</span>
 				<span><i class="sw dot ok"></i>matches</span>
 				<span><i class="sw dot fixed"></i>fixed</span>
 				<span><i class="sw dot check"></i>your call</span>
 				<span><i class="sw dash"></i>exact typo</span>
 			</div>
 			<p class="sub">
-				Each dot is one number, predicted from {meta?.expectedFrom}. Dots inside the band are normal. A typo multiplies a
-				number by an exact factor, so it lands on a dashed line: ×10 or ×1,000. Click a coloured dot to open it.
+				Each dot is one number, predicted from {meta?.expectedFrom}. The bands are a box plot of recorded ÷ predicted: dark =
+				normal, light = still tolerated. Beyond the light band a number is flagged. A typo multiplies a number by an exact
+				factor, so it lands on a dashed line (×10, ×1,000); if undoing it puts the dot back in the dark band, it is fixed.
 			</p>
 		</section>
 
@@ -284,10 +293,10 @@
 			<details>
 				<summary>How the statistics work</summary>
 				<ol class="stats-explain">
-					<li><b>Gap on a log scale.</b> For each number: gap = log₁₀(recorded ÷ predicted). A gap of 0 means it matches, 1 means 10× too high, 3 means 1,000× too high.</li>
-					<li><b>Normal spread.</b> Within each kind of record we measure how much the gaps normally vary, using the median absolute deviation (× 1.4826). It's a robust standard deviation: a few typos can't inflate it.</li>
-					<li><b>Flag.</b> A number is flagged when its gap is more than 4 spreads from the median and at least 2.5× off. With honest noise only about 1 number in 16,000 would cross 4 spreads by chance.</li>
-					<li><b>Typo test.</b> A typo multiplies the true value by 10, 1,000 or 11.4 (krona). If undoing one of them puts the number back within 3 spreads of the prediction, that typo explains it. Exactly one → fixed. Several or none → your decision.</li>
+					<li><b>Ratio.</b> For each number: recorded ÷ predicted, on a log scale. 1 means it matches, 10 means ten times too high.</li>
+					<li><b>Box plot.</b> For each kind of record we take the box plot of those ratios: the middle half of them (the box, quartile to quartile) and Tukey's fences. Normal fences sit 1.5 box-widths beyond the box, far-out fences 3 box-widths. Quartiles ignore extremes, so typos can't widen the box.</li>
+					<li><b>Flag.</b> A number is flagged when its ratio is beyond the far-out fences and at least 2.5× off.</li>
+					<li><b>Typo test.</b> A typo multiplies the true value by 10, 1,000 or 11.4 (krona). If undoing exactly one of them puts the ratio back inside the normal fences, that typo is fixed. Several or none → your decision.</li>
 					<li><b>Tonnes at stake.</b> Change in the number × its emission factor, from Apetit's own calculator factors. The list is sorted by it.</li>
 				</ol>
 			</details>
@@ -335,7 +344,8 @@
 	.facts span { padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); color: var(--text-faint); font-size: 10px; }
 	.facts b { color: var(--text); }
 	svg { display: block; width: 100%; height: auto; margin-top: 6px; border-radius: 8px; background: rgba(255, 255, 255, 0.025); }
-	.band { fill: rgba(159, 198, 240, 0.13); }
+	.band { fill: rgba(159, 198, 240, 0.2); }
+	.band.far { fill: rgba(159, 198, 240, 0.08); }
 	.diag { stroke: #9fc6f0; stroke-width: 1.2; }
 	.typo { stroke: #f0b35a; stroke-opacity: 0.55; stroke-dasharray: 4 3; stroke-width: 1; }
 	.axis { stroke: #385158; }
@@ -347,7 +357,8 @@
 	.legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; color: var(--text-faint); font-size: 10px; }
 	.legend span { display: inline-flex; align-items: center; gap: 4px; }
 	.sw { display: inline-block; width: 10px; height: 10px; }
-	.sw.band { background: rgba(159, 198, 240, 0.3); border-radius: 2px; }
+	.sw.band { background: rgba(159, 198, 240, 0.4); border-radius: 2px; }
+	.sw.band.far { background: rgba(159, 198, 240, 0.15); }
 	.sw.dot { border-radius: 50%; } .sw.ok { background: #8aa0a8; } .sw.fixed { background: #6fd39a; } .sw.check { background: #f0b35a; }
 	.sw.dash { height: 0; width: 12px; border-top: 2px dashed #f0b35a; }
 

@@ -7,17 +7,18 @@ For each number that drives the footprint there is an *expected* value from an i
 typical source: the shipment record for a purchase, the same month in other years for a meter,
 the system's usual top-up for a refrigerant log, and so on (SERIES below).
 
-1. Gap. g = log10(recorded / expected), minus the median gap of the series. This is a regression
-   of log(recorded) on log(expected) with slope 1; the intercept absorbs any systematic offset.
-   The noise level s is the robust spread of the gaps (1.4826 x median absolute deviation).
-2. Flag. |g| > 4 s, and the value is at least 2.5x off.
-3. Typo test. Typos multiply the true value by a known factor: 1000, 100, 10 (or divide by them),
-   or 11.4 for Swedish krona booked as euros. A factor k explains the gap if
-   |g - log10 k| <= max(3 s, 0.02): after undoing it, the value looks normal.
-4. Decide. Exactly one factor explains the gap -> fixed automatically. Otherwise the best guess
+1. Ratio. r = recorded / expected, looked at on a log scale: g = log10(r). 0 means it matches,
+   3 means 1,000x too high.
+2. Box plot. Per kind of record, the quartiles Q1, Q3 of g and IQR = Q3 - Q1 give Tukey's fences:
+   normal fences at 1.5 IQR beyond the quartiles, far-out fences at 3 IQR.
+3. Flag. g is beyond the far-out fences, and the value is at least 2.5x off.
+4. Typo test. Typos multiply the true value by a known factor: 1000, 100, 10 (or divide by them),
+   or 11.4 for Swedish krona booked as euros. A factor k explains the gap if undoing it puts the
+   number back inside the normal fences (widened to at least +-5 %).
+5. Decide. Exactly one factor explains the gap -> fixed automatically. Otherwise the best guess
    (the best-fitting factor, else the expected value) goes in, and a person confirms it, picks
    another option, or keeps the original.
-5. Tonnes at stake. How much the footprint moves if the fix is applied, with the package's own
+6. Tonnes at stake. How much the footprint moves if the fix is applied, with the package's own
    emission factors (quality.impact).
 """
 from __future__ import annotations
@@ -31,10 +32,10 @@ import pandas as pd
 
 from quality.impact import Context, farm_impact, impact
 
-FLAG_SIGMAS = 4.0
-MIN_RATIO = 2.5
-FIT_SIGMAS = 3.0
-MIN_TOL = 0.02          # 5 %: the tightest fit we ask of a typo, even when the evidence is exact
+FAR_OUT = 3.0           # Tukey's far-out fences: 3 IQR beyond the quartiles -> flagged
+NORMAL = 1.5            # Tukey's normal fences: 1.5 IQR -> a typo is undone if it lands back inside
+MIN_RATIO = 2.5         # and a flagged number must be at least 2.5x off (tight series have a tiny IQR)
+MIN_TOL = 0.02          # 5 %: the normal fences are never narrower than this, even for exact evidence
 SEK = 11.4              # FX_PER_EUR['SEK'] in the package; checked at runtime
 
 # (id, factor the typo multiplied the true value by, label shown to the reviewer, kind)
@@ -77,8 +78,8 @@ class Item:
     expected: float | str
     expected_from: str       # where the expected value comes from, in words
     context: str             # what the record is (material, site, system…)
-    gap: float | None        # log10 gap after the series intercept
-    noise: float | None      # the series' noise level s, in log10 units
+    gap: float | None        # log10(recorded / expected)
+    fences: dict | None      # the series' box plot: q1, q3, iqr and the fences, in log10 units
     status: str              # fixed | check
     issue_type: str          # the organisers' label, for the error list
     explanation: str
@@ -248,23 +249,26 @@ SERIES = {
 
 # ------------------------------------------------------------------ the method
 
-def noise(gaps: np.ndarray) -> float:
-    """Robust spread of the log gaps: 1.4826 x MAD (equals the standard deviation for normal noise)."""
-    if len(gaps) == 0:
-        return MIN_TOL
-    mad = float(np.median(np.abs(gaps - np.median(gaps))))
-    return max(1.4826 * mad, MIN_TOL / FIT_SIGMAS)
+def box(gaps: np.ndarray) -> dict:
+    """Tukey's box plot of the log ratios: quartiles, IQR, normal (1.5 IQR) and far-out (3 IQR) fences."""
+    q1, q3 = (float(x) for x in np.percentile(gaps, [25, 75])) if len(gaps) else (0.0, 0.0)
+    iqr = q3 - q1
+    return {'q1': q1, 'q3': q3, 'iqr': iqr,
+            'normal': (min(q1 - NORMAL * iqr, -MIN_TOL), max(q3 + NORMAL * iqr, MIN_TOL)),
+            'farOut': (q1 - FAR_OUT * iqr, q3 + FAR_OUT * iqr)}
 
 
-def fitting_typos(g: float, s: float, typos=TYPOS) -> list[tuple]:
-    """Typos that explain a gap g (log10): undoing them leaves the value within the noise. Best first."""
-    tol = max(FIT_SIGMAS * s, MIN_TOL)
-    fits = [(abs(g - math.log10(k)), t) for t in typos for k in [t[1]] if abs(g - math.log10(k)) <= tol]
+def flagged(g: float, b: dict) -> bool:
+    """Beyond the far-out fences and at least 2.5x off."""
+    lo, hi = b['farOut']
+    return (g < lo or g > hi) and abs(g) >= math.log10(MIN_RATIO)
+
+
+def fitting_typos(g: float, b: dict, typos=TYPOS) -> list[tuple]:
+    """Typos that explain a gap g: undoing them puts the number back inside the normal fences. Best first."""
+    lo, hi = b['normal']
+    fits = [(abs(g - math.log10(t[1])), t) for t in typos if lo <= g - math.log10(t[1]) <= hi]
     return [t for _, t in sorted(fits, key=lambda x: x[0])]
-
-
-def flagged(g: float, s: float) -> bool:
-    return abs(g) > FLAG_SIGMAS * s and abs(g) > math.log10(MIN_RATIO)
 
 
 def issue_type(series: str, typo) -> str:
@@ -330,15 +334,14 @@ def evaluate(raw, imp: Impact | None = None):
         d = d[(d.recorded > 0) & (d.expected > 0)].copy()
         if d.empty:
             continue
-        raw_gap = np.log10(d.recorded.astype(float).values / d.expected.astype(float).values)
-        intercept = float(np.median(raw_gap))
-        d['gap'] = raw_gap - intercept
-        s = noise(d.gap.values)
-        d['flag'] = [flagged(g, s) and y in REPORT_YEARS for g, y in zip(d.gap, d.year)]
-        meta[name] = {'label': label, 'expectedFrom': expected_from, 'noise': round(s, 4), 'intercept': round(intercept, 4),
-                      'n': int(len(d)), 'flagged': int(d.flag.sum())}
+        d['gap'] = np.log10(d.recorded.astype(float).values / d.expected.astype(float).values)
+        b = box(d.gap.values)
+        d['flag'] = [flagged(g, b) and y in REPORT_YEARS for g, y in zip(d.gap, d.year)]
+        fences = {'q1': round(b['q1'], 4), 'q3': round(b['q3'], 4), 'iqr': round(b['iqr'], 4),
+                  'normal': [round(x, 4) for x in b['normal']], 'farOut': [round(x, 4) for x in b['farOut']]}
+        meta[name] = {'label': label, 'expectedFrom': expected_from, 'box': fences, 'n': int(len(d)), 'flagged': int(d.flag.sum())}
         for r in d[d.flag].itertuples():
-            fits = [t for t in fitting_typos(r.gap, s, typos)]
+            fits = fitting_typos(r.gap, b, typos)
             best = fits[0] if fits else None
             exp = float(r.expected)
             options = [{'id': t[0], 'label': t[2], 'value': round(float(r.recorded) / t[1], 6)} for t in fits]
@@ -355,7 +358,7 @@ def evaluate(raw, imp: Impact | None = None):
                 why += 'No typo explains it: check whether it is real.'
             it = Item(key=f'{r.record_key}|{fld}', series=name, table=table, record_key=r.record_key, year=int(r.year), field=fld,
                       index=int(r.index), unit=str(r.unit), recorded=float(r.recorded), expected=round(exp, 6), expected_from=expected_from,
-                      context=str(r.context), gap=round(float(r.gap), 4), noise=round(s, 4), status='fixed' if len(fits) == 1 else 'check',
+                      context=str(r.context), gap=round(float(r.gap), 4), fences=fences, status='fixed' if len(fits) == 1 else 'check',
                       issue_type=issue_type(name, best), explanation=why, options=options,
                       default=best[0] if best else NO_TYPO_DEFAULT.get(name, 'keep'))
             for o in options:
@@ -393,7 +396,7 @@ def organic_share(raw) -> pd.Series:
 def _categorical(imp, *, key, series, table, record_key, year, field, index, recorded, expected, expected_from, context,
                  issue, why, use_label, keep_label, unit=''):
     it = Item(key=key, series=series, table=table, record_key=record_key, year=year, field=field, index=index, unit=unit,
-              recorded=recorded, expected=expected, expected_from=expected_from, context=context, gap=None, noise=None,
+              recorded=recorded, expected=expected, expected_from=expected_from, context=context, gap=None, fences=None,
               status='check', issue_type=issue, explanation=why, default='use',
               options=[{'id': 'use', 'label': use_label, 'value': expected}, {'id': 'keep', 'label': keep_label, 'value': recorded}])
     for o in it.options:
@@ -488,7 +491,7 @@ def soil(raw, imp: Impact) -> list[Item]:
             continue
         it = Item(key=f'farm_survey:{r.survey_id}|soil', series='soil', table='farm_survey', record_key=f'farm_survey:{r.survey_id}',
                   year=int(r.year), field='soil', index=int(i), unit='peat share', recorded='Mineral soil', expected=round(float(s), 3),
-                  expected_from='the soil map', context=f'{r.farm_id} {r.crop}', gap=None, noise=None, status='check',
+                  expected_from='the soil map', context=f'{r.farm_id} {r.crop}', gap=None, fences=None, status='check',
                   issue_type='soil_misreport', default='map',
                   explanation=f'The farmer ticked mineral soil; the soil map puts {s:.0%} of this {r.crop} area on peat. The map is right about 88 % of the time.',
                   options=[{'id': 'map', 'label': f'Use the soil map ({s:.0%} peat)', 'value': round(float(s), 3)},

@@ -40,12 +40,21 @@ source:
 
 ### 2. Compare
 
-We compare recorded and expected **on a log scale**: gap = log₁₀(recorded ÷ expected). This is a
-regression of log(recorded) on log(expected) with slope 1. Clean records sit on the diagonal, and
-the spread around it is the series' noise. We measure it robustly (1.4826 × the median absolute
-deviation), so the errors themselves can't widen it.
+We divide each number by its prediction: **ratio = recorded ÷ expected**, looked at on a log scale
+(log₁₀ of the ratio: 0 means it matches, 3 means 1,000× too high).
 
-A number is **flagged** when it is more than 4 noise-widths from the line *and* at least 2.5× off.
+For each kind of record we then draw a **box plot** of those ratios. The box holds the middle half
+of them, from the first to the third quartile, and its width is the IQR. Tukey's fences mark how
+far is still normal:
+
+- **normal fences:** 1.5 box-widths beyond the box (never narrower than ±5 %);
+- **far-out fences:** 3 box-widths beyond the box.
+
+Quartiles ignore extreme values, so the typos themselves can't widen the box.
+
+A number is **flagged** when its ratio is beyond the far-out fences *and* it is at least 2.5× off.
+The second condition matters for exact predictions like the shipment record, where almost every
+ratio is exactly 1 and the box has no width.
 
 On a log scale typos are easy to recognise, because they land on **exact lines** parallel to the
 diagonal:
@@ -62,13 +71,16 @@ compared with the shipment in tonnes, an invoice in krona with the supplier's ty
 krona, and litres are only ever compared with litres. A big number in a bigger unit is therefore
 never mistaken for a typo. The 150 tonne lines all match their shipments exactly and none is flagged.
 
+On the chart in the Dev tab the dark band is the normal range and the light band reaches the
+far-out fences; the dashed lines are where exact typos land.
+
 Each kind of record is tested only for the typos that really happen to it: grams/kg for
 refrigerants, kWh/MWh for meters, a misplaced decimal point for farm answers, krona for invoices.
 
 ### 3. Decide, and rank by tonnes at stake
 
-- **Fixed automatically:** exactly one typo explains the gap, and after undoing it the value sits
-  within the normal spread. Example: the meter reading of 1,708,632 "MWh" against a usual 1,785
+- **Fixed automatically:** undoing exactly one typo puts the number back inside the box plot's
+  normal fences. Example: the meter reading of 1,708,632 "MWh" against a usual 1,785
   is fixed to 1,708.6.
 - **For a person:** everything else. Our best guess goes into the numbers until they decide: the
   best-fitting typo, the registry, the soil map, or, for meters, the same month in other years.
@@ -171,11 +183,11 @@ cd frontend && npm run check                           # type-check the app
 | `--out DIR` | where results go (default `quality/out/`) |
 
 **What `quality/out/` contains:** `A1_issues_submission.csv` and `A2_inventory_2025_submission.csv`
-(the hackathon deliverables), `summary.json` (scores, totals, noise per series), `items.json` (every
+(the hackathon deliverables), `summary.json` (scores, totals, the box plot per series), `items.json` (every
 flagged number), `points.json` (the scatter plot), `inventory.json`, and `processed/*.parquet` (the
 corrected tables).
 
-MongoDB collections: `dev_runs` (method, noise per series, scores, totals, scatter points),
+MongoDB collections: `dev_runs` (method, box plot per series, scores, totals, scatter points),
 `dev_items` (every flagged number with its options and tonnes), `dev_decisions` (people's choices),
 `inventory`, and the corrected tables `proc_*`.
 

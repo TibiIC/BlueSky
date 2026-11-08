@@ -97,7 +97,7 @@ class AI:
             return None
         import anthropic
         try:
-            resp = self.client.messages.parse(model=MODEL, max_tokens=1500, system=SYSTEM,
+            resp = self.client.messages.parse(model=MODEL, max_tokens=3000, system=SYSTEM,
                                               messages=[{'role': 'user', 'content': prompt}], output_format=Note)
         except anthropic.RateLimitError as e:
             self.errors.append(f'rate limited: {e}')

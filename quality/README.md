@@ -10,8 +10,9 @@ grams typed as kg, kWh typed as MWh, supplier footprints per tonne instead of pe
 
 1. **Predict** each number from an independent record: the shipment for a purchase, the same month
    in other years for a meter, the system's usual top-up for a refrigerant log.
-2. **Compare** on a log scale. Typos land on exact lines (×10, ×1,000, krona as euros). If exactly
-   one typo explains a gap, it is fixed.
+2. **Compare** with a box plot of recorded ÷ predicted. A number beyond Tukey's far-out fences is
+   flagged. Typos multiply by exact factors (×10, ×1,000, krona as euros); if undoing exactly one
+   puts the number back inside the normal fences, it is fixed.
 3. **Rank** everything else by tonnes of CO₂ at stake. A person decides in the app's **Dev** tab.
    Claude Haiku 5.5 adds one plain sentence per item; it explains, it never decides.
 
