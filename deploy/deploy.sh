@@ -117,6 +117,13 @@ fi
 cat > /etc/caddy/Caddyfile <<CADDY
 $HOST {
 	encode zstd gzip
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 20MiB
+			roll_keep 3
+		}
+		format json
+	}
 	header X-Robots-Tag "noindex, nofollow"
 $AUTH
 	# The report backend: Farm Missions strategy page and the SBTN report/map
