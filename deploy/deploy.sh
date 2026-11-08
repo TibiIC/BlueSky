@@ -44,7 +44,7 @@ rsync -az --delete --exclude __pycache__ --exclude tests -e "ssh ${SSH_OPTS[*]}"
 rsync -az --delete --exclude .venv --exclude __pycache__ --exclude .env --exclude tests -e "ssh ${SSH_OPTS[*]}" "$ROOT/backend/" "root@$IP:/opt/bluesky/backend/"
 rsync -az --delete -e "ssh ${SSH_OPTS[*]}" "$ROOT/strategy/" "root@$IP:/opt/bluesky/strategy/"
 [[ -f "$ROOT/backend/.env" ]] && scp -q "${SSH_OPTS[@]}" "$ROOT/backend/.env" "root@$IP:/opt/bluesky/backend/.env"
-[[ -f "$ROOT/sbtn/site/index.html" ]] && rsync -az --delete -e "ssh ${SSH_OPTS[*]}" "$ROOT/sbtn/site/" "root@$IP:/opt/bluesky/sbtn-site/"
+[[ -f "$ROOT/sbtn/site/index.html" ]] && rsync -az --delete -e "ssh ${SSH_OPTS[*]}" "$ROOT/sbtn/site/" "root@$IP:/srv/bluesky-sbtn/"
 
 # Server environment: only the keys the app needs, never the Anthropic key
 ENVFILE="$(mktemp)"; trap 'rm -f "$ENVFILE"' EXIT
@@ -58,7 +58,7 @@ ssh "${SSH_OPTS[@]}" "root@$IP" PROTECT="$PROTECT" SITE_USER="$SITE_USER" SITE_P
 set -euo pipefail
 cd /opt/bluesky/app && npm ci --omit=dev --no-audit --no-fund --loglevel=error
 cd /opt/bluesky/backend && { [[ -d .venv ]] || python3 -m venv .venv; } && .venv/bin/pip install -q -r requirements.txt
-touch /opt/bluesky/backend/.env && mkdir -p /opt/bluesky/sbtn-site
+touch /opt/bluesky/backend/.env && mkdir -p /srv/bluesky-sbtn && chmod 755 /srv/bluesky-sbtn
 chown -R bluesky:bluesky /opt/bluesky && chmod 600 /opt/bluesky/app/.env /opt/bluesky/backend/.env
 
 cat > /etc/systemd/system/bluesky-backend.service <<UNIT
@@ -126,7 +126,7 @@ $AUTH
 	}
 	# The SBTN screening review page (exported from its notebook)
 	handle_path /sbtn-review/* {
-		root * /opt/bluesky/sbtn-site
+		root * /srv/bluesky-sbtn
 		file_server
 	}
 	handle {
