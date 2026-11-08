@@ -24,3 +24,6 @@ frontend/static/data/lens/
 
 # Data-quality outputs are derived from the team-only package: rebuild with python3 -m quality.pipeline
 quality/out/
+
+# Vultr deploy: the site password
+deploy/.secrets
