@@ -7,7 +7,7 @@ Colab notebook and is self-contained (inline CSS and JS, no network calls).
 ## Run locally
 
 ```sh
-cp ~/Downloads/Climate_Lens_SBTN_Lite.ipynb sbtn/   # once, or after each Colab change
+# the notebook is in the repo: sbtn/Climate_Lens_SBTN_Lite.ipynb (replace it after each Colab change)
 sbtn/run.sh                                          # http://localhost:8300
 ```
 
