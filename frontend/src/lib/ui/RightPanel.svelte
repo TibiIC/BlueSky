@@ -3,7 +3,7 @@
 	import PolicyPanel from '../policy/PolicyPanel.svelte';
 	import LensPanel from '../lens/LensPanel.svelte';
 	import WeatherPanel from '../weather/WeatherPanel.svelte';
-	import QualityPanel from '../quality/QualityPanel.svelte';
+	import DevPanel from '../dev/DevPanel.svelte';
 	import { panelOpen, activeTab as tab } from './panel.ts';
 	import { selectedShape } from '../drawing/store.ts';
 
@@ -16,14 +16,14 @@
 		Area{#if $selectedShape}<i></i>{/if}
 	</button>
 	<button role="tab" aria-selected={$tab === 'weather'} class:on={$tab === 'weather'} onclick={() => ($tab = 'weather')}>Weather</button>
-	<button role="tab" aria-selected={$tab === 'quality'} class:on={$tab === 'quality'} onclick={() => ($tab = 'quality')}>Data quality</button>
+	<button role="tab" aria-selected={$tab === 'dev'} class:on={$tab === 'dev'} onclick={() => ($tab = 'dev')}>Dev</button>
 	<button class="collapse" aria-label="Collapse panel" title="Collapse panel (])" onclick={() => panelOpen.set(false)}>›</button>
 </div>
 <!-- All three stay mounted so their globe layers persist; only one is visible, and map layers follow $tab. -->
 <div hidden={$tab !== 'scenario'} class="scenario-tab"><PolicyPanel {globe} /></div>
 <div hidden={$tab !== 'area'}><LensPanel {globe} /></div>
 <div hidden={$tab !== 'weather'} class="weather-tab"><WeatherPanel {globe} embedded /></div>
-{#if $tab === 'quality'}<QualityPanel />{/if}
+{#if $tab === 'dev'}<DevPanel />{/if}
 
 <style>
 	.tabs {

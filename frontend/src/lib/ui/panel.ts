@@ -4,5 +4,5 @@ import { writable } from 'svelte/store';
 export const panelOpen = writable(true);
 
 /** Which right-panel tab is open. Map layers follow it so tabs don't stack layers on the same fields. */
-export type PanelTab = 'scenario' | 'area' | 'weather' | 'quality';
+export type PanelTab = 'scenario' | 'area' | 'weather' | 'dev';
 export const activeTab = writable<PanelTab>('scenario');
