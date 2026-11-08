@@ -55,11 +55,13 @@
 		const shape = $selectedShape;
 		layer?.highlight(shape ? shape.geometry : null);
 	});
+	// Selecting (or drawing) an area opens the panel on the Scenario tab, once per area.
 	let lastOpened: string | null = null;
 	$effect(() => {
 		const id = $selectedShape?.properties.id ?? null;
-		if (id && report && id !== lastOpened) {
+		if (id && id !== lastOpened) {
 			lastOpened = id;
+			activeTab.set('scenario');
 			panelOpen.set(true);
 		}
 	});
