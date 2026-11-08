@@ -172,7 +172,7 @@ def s_energy(raw):
     med = med[m.index]
     key = 'energy:' + m.site_id + ':' + m.year.astype(str) + '-' + m.month.map('{:02d}'.format) + ':' + m.carrier
     return pd.DataFrame({'index': m.index, 'record_key': key, 'year': m.year, 'recorded': m.value,
-                         'expected': med, 'unit': m.unit, 'context': m.site_id + ' ' + m.carrier})
+                         'expected': med, 'unit': m.unit, 'context': m.site_id + ' · ' + m.carrier})
 
 
 def _by_group_median(df, value, by, min_n=3):
@@ -186,21 +186,21 @@ def s_refrigerants(raw):
     """Top-ups vs the same system's usual top-up."""
     r, med = _by_group_median(raw['refrigerants'], 'kg_added', ['site_id', 'system'])
     return pd.DataFrame({'index': r.index, 'record_key': 'refrigerant:' + r.event_id, 'year': r.year, 'recorded': r.kg_added,
-                         'expected': med, 'unit': 'kg', 'context': r.site_id + ' ' + r.system + ' (' + r.refrigerant + ')'})
+                         'expected': med, 'unit': 'kg', 'context': r.site_id + ' · ' + r.system + ' (' + r.refrigerant + ')'})
 
 
 def s_fuel(raw):
     """Fuel deliveries vs the carrier's usual delivery."""
     f, med = _by_group_median(raw['fuel_deliveries'], 'quantity', ['carrier', 'unit'])
     return pd.DataFrame({'index': f.index, 'record_key': 'fuel:' + f.delivery_id.astype(str), 'year': f.year, 'recorded': f.quantity,
-                         'expected': med, 'unit': f.unit, 'context': f.site_id + ' ' + f.carrier})
+                         'expected': med, 'unit': f.unit, 'context': f.site_id + ' · ' + f.carrier})
 
 
 def s_waste(raw):
     """Waste notes vs the stream's usual note at that site."""
     w, med = _by_group_median(raw['waste'], 'quantity', ['site_id', 'waste_stream'])
     return pd.DataFrame({'index': w.index, 'record_key': 'waste:' + w.transfer_note.astype(str), 'year': w.year, 'recorded': w.quantity,
-                         'expected': med, 'unit': w.unit, 'context': w.site_id + ' ' + w.waste_stream})
+                         'expected': med, 'unit': w.unit, 'context': w.site_id + ' · ' + w.waste_stream})
 
 
 def s_pcf(raw):
@@ -211,7 +211,7 @@ def s_pcf(raw):
     prev = {(r.supplier_id, r.material_id, int(r.year)): r.value for r in pc.itertuples()}
     exp = [prev.get((r.supplier_id, r.material_id, int(r.year) - 1)) or default.get(r.material_id) for r in pc.itertuples()]
     d = pd.DataFrame({'index': pc.index, 'record_key': 'pcf:' + pc.supplier_id + ':' + pc.material_id + ':' + pc.year.astype(str),
-                      'year': pc.year, 'recorded': pc.value, 'expected': exp, 'unit': 'kg CO2e/kg', 'context': pc.supplier_id + ' ' + pc.material_id})
+                      'year': pc.year, 'recorded': pc.value, 'expected': exp, 'unit': 'kg CO2e/kg', 'context': pc.supplier_id + ' · ' + pc.material_id})
     return d[d.expected.notna() & (d.expected > 0)]
 
 
@@ -219,14 +219,14 @@ def s_commuting(raw):
     """One-way commuting distances vs the site's typical distance (the survey is from 2025)."""
     c, med = _by_group_median(raw['commuting'], 'one_way_km', ['site_id'])
     return pd.DataFrame({'index': c.index, 'record_key': 'commute:' + c.response_id.astype(str), 'year': 2025, 'recorded': c.one_way_km,
-                         'expected': med, 'unit': 'km', 'context': c.site_id + ' ' + c['mode'].astype(str)})
+                         'expected': med, 'unit': 'km', 'context': c.site_id + ' · ' + c['mode'].astype(str)})
 
 
 def s_farm(raw, col, label):
     sv = raw['farm_survey']
     s, med = _by_group_median(sv, col, ['crop', 'year'], min_n=5)
     return pd.DataFrame({'index': s.index, 'record_key': 'farm_survey:' + s.survey_id, 'year': s.year, 'recorded': s[col],
-                         'expected': med, 'unit': label, 'context': s.farm_id + ' ' + s.crop})
+                         'expected': med, 'unit': label, 'context': s.farm_id + ' · ' + s.crop})
 
 
 # name -> (label, table, field, builder, expected_from, typos)
@@ -380,9 +380,26 @@ def evaluate(raw, imp: Impact | None = None):
         items += new
         meta[name] = {'label': label, 'expectedFrom': new[0].expected_from if new else '', 'flagged': len(new)}
     items += soil(raw, imp)
+    friendly(raw, items)
     meta['soil'] = {'label': 'Soil type (farm survey vs soil map)', 'expectedFrom': 'the soil map', 'n': int((raw['farm_survey'].soil_type_reported == 'Mineral soil').sum()),
                     'flagged': sum(1 for i in items if i.series == 'soil')}
     return items, points, meta
+
+
+def friendly(raw, items) -> None:
+    """Plain names instead of codes in each item's context: sites, materials, suppliers, carriers, crops."""
+    import re
+    sites = dict(zip(raw['sites'].site_id, raw['sites'].name))
+    mats = raw['materials']
+    erp_names = dict(zip(mats.erp_name, mats.name_en))
+    mat_ids = dict(zip(mats.material_id, mats.name_en))
+    for it in items:
+        c = erp_names.get(it.context, it.context)
+        c = re.sub(r'\bS-[A-Z]{2,3}\b', lambda m: sites.get(m.group(0), m.group(0)), c)
+        c = re.sub(r'\bSUP0*(\d+)\b', r'Supplier \1', c)
+        c = re.sub(r'\bM\d{3}\b', lambda m: mat_ids.get(m.group(0), m.group(0)), c)
+        c = re.sub(r'\bF(\d{4})\b', r'farm F\1', c)
+        it.context = c.replace('_', ' ')
 
 
 def organic_share(raw) -> pd.Series:
@@ -422,7 +439,7 @@ def missing_months(raw, imp: Impact) -> list[Item]:
             rk = f'energy:{site}:{int(year)}-{month:02d}:{carrier}'
             it = _categorical(imp, key=f'{rk}|missing', series='missing', table='energy_meter_readings', record_key=rk, year=int(year),
                               field='missing', index=-1, recorded='missing', expected=round(float(exp), 3), unit='MWh',
-                              expected_from='the same month in the other years', context=f'{site} {carrier}', issue='missing_record',
+                              expected_from='the same month in the other years', context=f'{site} · {carrier}', issue='missing_record',
                               why=f'No reading for {year}-{month:02d}; the same month in the other years was about {exp:,.0f} MWh.',
                               use_label=f'Add the expected {exp:,.0f} MWh', keep_label='Leave the month empty')
             it.options[1]['value'] = None
@@ -443,7 +460,7 @@ def gas(raw, imp: Impact) -> list[Item]:
         for i, x in g[(g.refrigerant != usual) & g.year.isin(REPORT_YEARS)].iterrows():
             out.append(_categorical(imp, key=f'refrigerant:{x.event_id}|refrigerant', series='gas', table='refrigerant_service_log',
                                     record_key=f'refrigerant:{x.event_id}', year=int(x.year), field='refrigerant', index=int(i),
-                                    recorded=x.refrigerant, expected=usual, expected_from='the gas this system uses', context=f'{site} {system}',
+                                    recorded=x.refrigerant, expected=usual, expected_from='the gas this system uses', context=f'{site} · {system}',
                                     issue='wrong_gas_code', why=f'{system} uses {usual} in {counts.iloc[0]} of {counts.sum()} services; this one says {x.refrigerant}.',
                                     use_label=f'Use {usual}', keep_label=f'Keep {x.refrigerant}'))
     return out
@@ -465,14 +482,14 @@ def goo(raw, imp: Impact) -> list[Item]:
         if int(r.vintage_year) != int(r.year):
             out.append(_categorical(imp, key=f'{rk}|vintage_year', series='goo', table='goo_cancellations', record_key=rk, year=int(r.year),
                                     field='vintage_year', index=int(i), recorded=int(r.vintage_year), expected=int(r.year),
-                                    expected_from='the national registry', context=f'{r.site_id} certificates',
+                                    expected_from='the national registry', context=f'{r.site_id} · certificates',
                                     issue='certificate_mismatch', why=f'The log says the certificates were produced in {int(r.vintage_year)}; the registry says {int(r.year)}, the year they are used for.',
                                     use_label=f'Use the registry ({int(r.year)})', keep_label=f'Keep {int(r.vintage_year)}'))
         mwh = float(tot[k])
         if abs(r.mwh_cancelled - mwh) > max(1.0, 0.01 * mwh):
             out.append(_categorical(imp, key=f'{rk}|mwh_cancelled', series='goo', table='goo_cancellations', record_key=rk, year=int(r.year),
                                     field='mwh_cancelled', index=int(i), recorded=float(r.mwh_cancelled), expected=round(mwh, 3), unit='MWh',
-                                    expected_from='the national registry', context=f'{r.site_id} certificates',
+                                    expected_from='the national registry', context=f'{r.site_id} · certificates',
                                     issue='certificate_mismatch', why=f'The log says {r.mwh_cancelled:,.0f} MWh; the registry shows {mwh:,.0f} MWh.',
                                     use_label=f'Use the registry ({mwh:,.0f} MWh)', keep_label=f'Keep {r.mwh_cancelled:,.0f} MWh'))
     return out
@@ -491,7 +508,7 @@ def soil(raw, imp: Impact) -> list[Item]:
             continue
         it = Item(key=f'farm_survey:{r.survey_id}|soil', series='soil', table='farm_survey', record_key=f'farm_survey:{r.survey_id}',
                   year=int(r.year), field='soil', index=int(i), unit='peat share', recorded='Mineral soil', expected=round(float(s), 3),
-                  expected_from='the soil map', context=f'{r.farm_id} {r.crop}', gap=None, fences=None, status='check',
+                  expected_from='the soil map', context=f'{r.farm_id} · {r.crop}', gap=None, fences=None, status='check',
                   issue_type='soil_misreport', default='map',
                   explanation=f'The farmer ticked mineral soil; the soil map puts {s:.0%} of this {r.crop} area on peat. The map is right about 88 % of the time.',
                   options=[{'id': 'map', 'label': f'Use the soil map ({s:.0%} peat)', 'value': round(float(s), 3)},
