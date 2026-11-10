@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # One-time setup of a fresh Ubuntu 24.04 Vultr server for BlueSky. Run from the repository root:
 #   ssh -i ~/.ssh/bluesky_vultr root@SERVER_IP 'bash -s' < deploy/setup.sh
-# Installs Node 22, Caddy (HTTPS + password) and a firewall; Python 3 comes with Ubuntu.
+# Installs Node 22, Caddy (HTTPS + password), a firewall, and what the report backend needs:
+# python3-venv, plus Pango/HarfBuzz and a font for WeasyPrint's PDF reports.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y curl ca-certificates gnupg rsync python3 ufw debian-keyring debian-archive-keyring apt-transport-https
+apt-get install -y curl ca-certificates gnupg rsync python3 ufw debian-keyring debian-archive-keyring apt-transport-https \
+  python3-venv libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core
 
 # Node.js 22 from NodeSource (the package source linked from nodejs.org)
 if ! command -v node >/dev/null || [[ "$(node -v)" != v22* ]]; then

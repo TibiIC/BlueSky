@@ -1,0 +1,87 @@
+# Deploys BlueSky to the Vultr server on every push to main (and on demand from the Actions tab).
+# Runs the same deploy/deploy.sh as a manual deploy, with keys from the repository's Actions secrets:
+#   VULTR_SERVER_IP   the server's IPv4 address
+#   VULTR_SSH_KEY     private SSH key that can log in as root (the contents of ~/.ssh/bluesky_vultr)
+#   FRONTEND_ENV      contents of frontend/.env (Cesium/NLS keys, MONGODB_URI, ...)
+#   BACKEND_ENV       contents of backend/.env (SNOWFLAKE_ACCOUNT, SNOWFLAKE_PAT, ...)
+# Until VULTR_SERVER_IP and VULTR_SSH_KEY are set, the job skips instead of failing.
+# Commits pushed by other workflows (e.g. the Colab sync) don't trigger it; GitHub doesn't chain those.
+name: Deploy to Vultr
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-vultr
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SERVER_IP: ${{ secrets.VULTR_SERVER_IP }}
+    steps:
+      - name: Check deploy secrets
+        id: ready
+        env:
+          HAS_KEY: ${{ secrets.VULTR_SSH_KEY != '' }}
+        run: |
+          if [[ -n "$SERVER_IP" && "$HAS_KEY" == "true" ]]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping deploy: set the VULTR_SERVER_IP and VULTR_SSH_KEY repository secrets to enable it."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.ready.outputs.ok == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.ready.outputs.ok == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        if: steps.ready.outputs.ok == 'true'
+        run: npm ci --no-audit --no-fund
+        working-directory: frontend
+
+      - name: Write keys and env files (never committed)
+        if: steps.ready.outputs.ok == 'true'
+        env:
+          SSH_KEY_CONTENT: ${{ secrets.VULTR_SSH_KEY }}
+          FRONTEND_ENV: ${{ secrets.FRONTEND_ENV }}
+          BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY_CONTENT" > ~/.ssh/bluesky_vultr && chmod 600 ~/.ssh/bluesky_vultr
+          umask 077
+          printf '%s\n' "$FRONTEND_ENV" > frontend/.env
+          [[ -n "$BACKEND_ENV" ]] && printf '%s\n' "$BACKEND_ENV" > backend/.env || true
+
+      - name: Deploy
+        if: steps.ready.outputs.ok == 'true'
+        run: deploy/deploy.sh "$SERVER_IP"
+
+      - name: Check the live site
+        if: steps.ready.outputs.ok == 'true'
+        run: |
+          HOST="$(echo "$SERVER_IP" | tr . -).sslip.io"
+          for path in api/dev strategy sbtn-review/; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "https://$HOST/$path" || true)
+            echo "https://$HOST/$path -> $code"
+            [[ "$code" == 200 ]] || { echo "::error::https://$HOST/$path returned $code"; exit 1; }
+          done
+          echo "::notice::Deployed to https://$HOST"
+
+      - name: Remove keys from the runner
+        if: always()
+        run: rm -f ~/.ssh/bluesky_vultr frontend/.env backend/.env

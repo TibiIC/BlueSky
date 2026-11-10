@@ -56,6 +56,9 @@ scp -q "${SSH_OPTS[@]}" "$ENVFILE" "root@$IP:/opt/bluesky/app/.env"
 echo "== install and restart"
 ssh "${SSH_OPTS[@]}" "root@$IP" PROTECT="$PROTECT" SITE_USER="$SITE_USER" SITE_PASSWORD="$SITE_PASSWORD" HOST="$HOST" 'bash -s' <<'REMOTE'
 set -euo pipefail
+# Report backend system packages (also in setup.sh; installed here for servers set up before they were added)
+PKGS="python3-venv libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core"
+dpkg -s $PKGS >/dev/null 2>&1 || { apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq $PKGS >/dev/null; }
 cd /opt/bluesky/app && npm ci --omit=dev --no-audit --no-fund --loglevel=error
 cd /opt/bluesky/backend && { [[ -d .venv ]] || python3 -m venv .venv; } && .venv/bin/pip install -q -r requirements.txt
 touch /opt/bluesky/backend/.env && mkdir -p /srv/bluesky-sbtn && chmod 755 /srv/bluesky-sbtn
@@ -155,6 +158,8 @@ REMOTE
 
 echo "== check"
 AUTHARG=(); [[ $PROTECT == 1 ]] && AUTHARG=(-u "$SITE_USER:$SITE_PASSWORD")
-code=$(curl -s -o /dev/null -w '%{http_code}' "${AUTHARG[@]}" "https://$HOST/api/dev" || true)
-echo "https://$HOST/api/dev -> $code"
+for path in api/dev strategy sbtn-review/; do
+  code=$(curl -s -o /dev/null -w '%{http_code}' "${AUTHARG[@]}" "https://$HOST/$path" || true)
+  echo "https://$HOST/$path -> $code"
+done
 if [[ $PROTECT == 1 ]]; then echo "Site: https://$HOST   user: $SITE_USER   password: in deploy/.secrets"; else echo "Site: https://$HOST   (public, not indexed)"; fi

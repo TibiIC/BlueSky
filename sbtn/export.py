@@ -70,8 +70,9 @@ async function download(){
   const blob=await res.blob(),a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=(res.headers.get('Content-Disposition')||'').match(/filename="([^"]+)"/)?.[1]||'SBTN-screening.pdf';
-  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-  status.textContent='Report downloaded: '+a.download;
+  document.body.appendChild(a);a.click();a.remove();
+  // Safari may hold back a download that starts long after the click; this link is a fresh click it always allows.
+  status.innerHTML='Report ready: <a href="'+a.href+'" download="'+esc(a.download)+'">Download PDF</a> (if it didn’t download by itself)';
  }catch(e){status.textContent='Could not generate the report: '+e.message+'. Is the backend running (backend/run.sh)?'}
  finally{btn.disabled=false;btn.textContent='Generate PDF report'}
 }
