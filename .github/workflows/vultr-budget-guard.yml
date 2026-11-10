@@ -1,0 +1,67 @@
+# Budget guard: once a day, checks the Vultr account's remaining credit. If it drops below
+# MIN_CREDIT_USD (default $3, about a week of a $10/month server), it deletes the BlueSky server
+# (the instance whose IP is VULTR_SERVER_IP) and disables the deploy workflow, so the card on file
+# is never charged. Deleting is what stops billing: Vultr also bills stopped servers.
+# Nothing is lost: the code is in git and saved reports/reviews are in MongoDB Atlas.
+#
+# Needs repository secrets VULTR_API_KEY (Vultr console → API; allow any IPv4 for GitHub's runners)
+# and VULTR_SERVER_IP. Optional repository variable MIN_CREDIT_USD.
+# Safety catch: it only reports until the repository variable BUDGET_GUARD_ARMED is "true".
+# Run it by hand first (Actions → Vultr budget guard → Run workflow) to check the numbers, then arm it.
+name: Vultr budget guard
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only report the credit; never delete anything"
+        type: boolean
+        default: true
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    env:
+      VULTR_API_KEY: ${{ secrets.VULTR_API_KEY }}
+      SERVER_IP: ${{ secrets.VULTR_SERVER_IP }}
+      MIN_CREDIT_USD: ${{ vars.MIN_CREDIT_USD || '3' }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+      ARMED: ${{ vars.BUDGET_GUARD_ARMED == 'true' }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check credit and act
+        run: |
+          set -euo pipefail
+          if [[ -z "$VULTR_API_KEY" || -z "$SERVER_IP" ]]; then
+            echo "::notice::Budget guard inactive: set the VULTR_API_KEY and VULTR_SERVER_IP secrets."; exit 0
+          fi
+          api() { curl -sS --fail-with-body -H "Authorization: Bearer $VULTR_API_KEY" "$@"; }
+
+          account=$(api https://api.vultr.com/v2/account)
+          # Vultr reports credit as a negative balance; pending charges are this month's usage so far.
+          read -r balance pending remaining < <(jq -r '.account | [.balance, .pending_charges, (-(.balance) - .pending_charges)] | @tsv' <<<"$account")
+          echo "balance $balance | pending charges $pending | remaining credit \$$remaining | minimum \$$MIN_CREDIT_USD"
+
+          if awk -v r="$remaining" -v m="$MIN_CREDIT_USD" 'BEGIN { exit !(r >= m) }'; then
+            echo "Credit OK."; exit 0
+          fi
+
+          id=$(api "https://api.vultr.com/v2/instances?per_page=500" | jq -r --arg ip "$SERVER_IP" '.instances[] | select(.main_ip == $ip) | .id')
+          echo "::warning::Remaining credit \$$remaining is below \$$MIN_CREDIT_USD."
+          if [[ "$DRY_RUN" == "true" || "$ARMED" != "true" ]]; then
+            echo "Not deleting (dry run, or BUDGET_GUARD_ARMED isn't true): would delete instance ${id:-<none found for $SERVER_IP>} and disable deploys."; exit 0
+          fi
+          if [[ -n "$id" ]]; then
+            api -X DELETE "https://api.vultr.com/v2/instances/$id"
+            echo "::warning::Deleted the BlueSky server ($SERVER_IP, instance $id) to stop charges."
+          else
+            echo "No instance with IP $SERVER_IP found (already deleted?)."
+          fi
+          gh workflow disable deploy.yml --repo "$GITHUB_REPOSITORY" || true
+          echo "::warning::Disabled the deploy workflow. Re-enable it after adding credit and a new server."
