@@ -1,4 +1,75 @@
-# BlueSky / TERRA
+# BlueSky · Climate Lens
+
+A climate-and-nature decision tool for **Apetit**, a Finnish food company sourcing peas, vegetables and
+oilseeds from contract suppliers. On a 3D globe you set how the world and the EU act on climate, then
+see what that means for Apetit's supplier fields, screen an area against SBTN Steps 1–2, and turn the
+scenario into trial plans with suppliers.
+
+All farm, supplier and company figures are synthetic: *Apetit Climate & Nature Navigator synthetic dataset,
+Since AI ry 2026* ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)). Results are not Apetit's actual
+emissions or facts about real farms.
+
+## Live demo
+
+**https://78-141-197-63.sslip.io** (public; first load takes a few seconds while the globe streams in)
+
+What to try:
+
+1. **Draw an area** around Säkylä, south-west Finland: pick **Freehand** in the top-left toolbar and drag a
+   loop (or hold Shift while dragging). The side panel opens.
+2. **Scenario** tab: switch world and EU/Finnish policies on and off and watch the warming meter, the crop
+   risks and Apetit's costs change. Set **farmer compliance** to see how much of each rule actually happens.
+3. **Open strategy proposals ↗** (Scenario tab): Farm Missions picks suppliers to start with and writes an
+   AI adviser draft that takes your scenario into account.
+4. **Area** tab → section 6 → **Open SBTN screening review ↗**: click through the three steps, then
+   **Generate PDF report** for an SBTN Step 1–2 screening with a map, catchment ranking and AI-written text.
+5. **Weather** and **Dev** tabs: live TERRA weather physics, and the data-quality review of Apetit's records.
+
+## What's in the repository
+
+| Folder | What it is |
+|---|---|
+| [`frontend/`](frontend/README.md) | The globe (SvelteKit + CesiumJS): Scenario, Area, Weather and Dev tabs |
+| [`terra/`](terra/README.md) | TERRA: live weather, moisture transport, snow/soil water and catchment routing |
+| [`backend/`](backend/README.md) | Report service (FastAPI): SBTN PDF reports and the strategy page's AI, via Snowflake Cortex |
+| [`sbtn/`](sbtn/README.md) | SBTN screening review page (exported from its notebook) |
+| [`strategy/`](strategy/README.md) | Farm Missions strategy page |
+| [`lens/`](lens/README.md) | Builds the Climate Lens data (`frontend/static/data/lens/`) from the challenge package |
+| [`quality/`](quality/README.md) | Data-quality pipeline behind the Dev tab |
+| [`deploy/`](deploy/README.md) | Vultr hosting, deployed by GitHub Actions on every push to `main` |
+
+## Run it locally
+
+Needs Python 3.10+, Node 22.17+ and, for PDF reports on macOS, `brew install pango`.
+Four terminals, from the repository root:
+
+```sh
+python3 terra/server.py                     # 1. TERRA weather          http://127.0.0.1:8765
+cd frontend && npm ci && npm run dev        # 2. the globe              http://localhost:5173
+backend/run.sh                              # 3. reports and strategy   http://localhost:8000
+sbtn/run.sh                                 # 4. SBTN review page       http://localhost:8300
+```
+
+Open **http://localhost:5173**. Everything runs without keys, with fewer features. Copy
+`frontend/.env.example` to `frontend/.env` and `backend/.env.example` to `backend/.env`, then add what you have:
+
+| Key | File | Unlocks |
+|---|---|---|
+| `PUBLIC_CESIUM_ION_TOKEN`, `PUBLIC_GOOGLE_MAPS_API_KEY`, `PUBLIC_NLS_API_KEY` | `frontend/.env` | Satellite imagery, 3D cities, Finnish orthophotos |
+| `MONGODB_URI` | `frontend/.env` | Saved area reports, the review log and the Dev tab |
+| `ANTHROPIC_API_KEY` | `frontend/.env` | AI reviewer notes in the data-quality pipeline |
+| `SNOWFLAKE_ACCOUNT`, `SNOWFLAKE_PAT` | `backend/.env` | AI-written report text and strategy recommendations (otherwise template text) |
+
+Never commit the `.env` files.
+
+## Deploy
+
+Pushing to `main` deploys to Vultr through GitHub Actions; see [`deploy/README.md`](deploy/README.md) for the
+one-time server and secrets setup.
+
+---
+
+# TERRA weather and land model
 
 Whole-Earth Cesium viewer with API-driven weather, conservative Nordic moisture transport, snow/soil water balance, historical replay and global crop-weather screening for an Apetit-focused prototype.
 
