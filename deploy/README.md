@@ -45,7 +45,9 @@ variables → Actions), and skips until the first two exist:
 | `FRONTEND_ENV` | the whole `frontend/.env` |
 | `BACKEND_ENV` | the whole `backend/.env` (Snowflake keys for report text and recommendations) |
 
-The run fails if `/api/dev`, `/strategy` or `/sbtn-review/` don't answer 200 afterwards. Deploys are
+On a fresh server the workflow runs `deploy/setup.sh` first, so a new Vultr server only needs the SSH
+key added at creation and its IP on MongoDB Atlas's access list. The run fails if `/api/dev`, `/strategy`
+or `/sbtn-review/` don't answer 200 afterwards. Deploys are
 public (no `--password`).
 
 ## Every update

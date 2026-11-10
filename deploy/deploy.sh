@@ -58,7 +58,7 @@ ssh "${SSH_OPTS[@]}" "root@$IP" PROTECT="$PROTECT" SITE_USER="$SITE_USER" SITE_P
 set -euo pipefail
 # Report backend system packages (also in setup.sh; installed here for servers set up before they were added)
 PKGS="python3-venv libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core"
-dpkg -s $PKGS >/dev/null 2>&1 || { apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq $PKGS >/dev/null; }
+dpkg -s $PKGS >/dev/null 2>&1 || { apt-get -o DPkg::Lock::Timeout=600 update -qq && DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install -y -qq $PKGS >/dev/null; }
 cd /opt/bluesky/app && npm ci --omit=dev --no-audit --no-fund --loglevel=error
 cd /opt/bluesky/backend && { [[ -d .venv ]] || python3 -m venv .venv; } && .venv/bin/pip install -q -r requirements.txt
 touch /opt/bluesky/backend/.env && mkdir -p /srv/bluesky-sbtn && chmod 755 /srv/bluesky-sbtn

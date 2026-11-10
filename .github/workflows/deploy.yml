@@ -5,6 +5,7 @@
 #   FRONTEND_ENV      contents of frontend/.env (Cesium/NLS keys, MONGODB_URI, ...)
 #   BACKEND_ENV       contents of backend/.env (SNOWFLAKE_ACCOUNT, SNOWFLAKE_PAT, ...)
 # Until VULTR_SERVER_IP and VULTR_SSH_KEY are set, the job skips instead of failing.
+# A fresh server (no Caddy/Node/service account yet) is prepared with deploy/setup.sh first.
 # Commits pushed by other workflows (e.g. the Colab sync) don't trigger it; GitHub doesn't chain those.
 name: Deploy to Vultr
 
@@ -67,6 +68,19 @@ jobs:
           printf '%s\n' "$FRONTEND_ENV" > frontend/.env
           [[ -n "$BACKEND_ENV" ]] && printf '%s\n' "$BACKEND_ENV" > backend/.env || true
 
+      - name: Prepare the server (first deploy only)
+        if: steps.ready.outputs.ok == 'true'
+        run: |
+          SSH=(ssh -i ~/.ssh/bluesky_vultr -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 "root@$SERVER_IP")
+          # A just-created server can take a minute to accept SSH
+          for i in $(seq 1 12); do "${SSH[@]}" true && break; echo "waiting for SSH ($i)"; sleep 10; done
+          if "${SSH[@]}" 'command -v caddy && command -v node && id bluesky' >/dev/null 2>&1; then
+            echo "Server already prepared"
+          else
+            echo "Fresh server: running deploy/setup.sh"
+            "${SSH[@]}" 'bash -s' < deploy/setup.sh
+          fi
+
       - name: Deploy
         if: steps.ready.outputs.ok == 'true'
         run: deploy/deploy.sh "$SERVER_IP"
@@ -75,8 +89,13 @@ jobs:
         if: steps.ready.outputs.ok == 'true'
         run: |
           HOST="$(echo "$SERVER_IP" | tr . -).sslip.io"
+          # On a fresh server Caddy first fetches an HTTPS certificate, so allow a few minutes.
           for path in api/dev strategy sbtn-review/; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "https://$HOST/$path" || true)
+            for attempt in $(seq 1 18); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "https://$HOST/$path" || true)
+              [[ "$code" == 200 ]] && break
+              sleep 10
+            done
             echo "https://$HOST/$path -> $code"
             [[ "$code" == 200 ]] || { echo "::error::https://$HOST/$path returned $code"; exit 1; }
           done

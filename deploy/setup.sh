@@ -5,21 +5,23 @@
 # python3-venv, plus Pango/HarfBuzz and a font for WeasyPrint's PDF reports.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -y
-apt-get install -y curl ca-certificates gnupg rsync python3 ufw debian-keyring debian-archive-keyring apt-transport-https \
+# A fresh server runs unattended upgrades on first boot; wait for the package lock instead of failing.
+APT=(apt-get -o DPkg::Lock::Timeout=600)
+"${APT[@]}" update -y
+"${APT[@]}" install -y curl ca-certificates gnupg rsync python3 ufw debian-keyring debian-archive-keyring apt-transport-https \
   python3-venv libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core
 
 # Node.js 22 from NodeSource (the package source linked from nodejs.org)
 if ! command -v node >/dev/null || [[ "$(node -v)" != v22* ]]; then
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-  apt-get install -y nodejs
+  "${APT[@]}" install -y nodejs
 fi
 
 # Caddy from its official apt repository: automatic HTTPS certificates and the site password
 if ! command -v caddy >/dev/null; then
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' > /etc/apt/sources.list.d/caddy-stable.list
-  apt-get update -y && apt-get install -y caddy
+  "${APT[@]}" update -y && "${APT[@]}" install -y caddy
 fi
 
 # A service account that owns the app; nobody logs in as it
