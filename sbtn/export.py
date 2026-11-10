@@ -45,7 +45,8 @@ function load(d){
  evidence();draw();cornerMap();
 }
 window.addEventListener('message',e=>{
- if(e.source!==window.opener||!GLOBE_ORIGINS.includes(e.origin))return;
+ // Accept by origin only: Safari doesn't report the opener as e.source, so an identity check drops the globe's reply.
+ if(!GLOBE_ORIGINS.includes(e.origin))return;
  if(e.data?.type==='sbtn:input')load(e.data.data);
  else if(e.data?.type==='sbtn:error')$('status').textContent='The globe could not prepare this selection: '+e.data.message;
 });
