@@ -41,7 +41,16 @@ jobs:
           if [[ -z "$VULTR_API_KEY" || -z "$SERVER_IP" ]]; then
             echo "::notice::Budget guard inactive: set the VULTR_API_KEY and VULTR_SERVER_IP secrets."; exit 0
           fi
-          api() { curl -sS --fail-with-body -H "Authorization: Bearer $VULTR_API_KEY" "$@"; }
+          # On failure, show Vultr's error body instead of only curl's exit code.
+          api() {
+            local out
+            if ! out=$(curl -sS --fail-with-body -H "Authorization: Bearer $VULTR_API_KEY" "$@"); then
+              echo "::error::Vultr API request failed: ${out:-no response body}" >&2
+              echo "A 401 means the key is wrong, or its Access Control (Vultr console → Account → API) doesn't allow GitHub's runners: allow any IPv4." >&2
+              return 1
+            fi
+            printf '%s\n' "$out"
+          }
 
           account=$(api https://api.vultr.com/v2/account)
           # Vultr reports credit as a negative balance; pending charges are this month's usage so far.
